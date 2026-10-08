@@ -14,8 +14,10 @@
         const affordable = ResourcesManager.canAfford(b.price);
         const unlocked = b.unlocked;
         const queued = window.QueueEngine ? QueueEngine.queuedCount(s, 'building', name) : 0;
+        const queuedState = window.QueueEngine ? QueueEngine.queuedState(s, 'building', name) : null;
         const queueFull = window.QueueEngine ? QueueEngine.isFull(s) : false;
-        const blocked = queued > 0 || queueFull;
+        /* 资源足够就直接建成，不占用队列；只有「买不起 + 队列满」时不能下单 */
+        const blocked = !affordable && queueFull;
 
         let cls = 'card compact';
         if (!unlocked) cls += ' locked';
@@ -28,7 +30,7 @@
         let html = '<div class="' + cls + ' clickable" data-act="' + G.esc(primaryAct) + '" data-tip="build|' + G.esc(name) + '">';
         html += '<div class="card-head"><div class="card-name">' + G.esc(name) +
             (st.modeName ? '<span class="tag">' + G.esc(st.modeName) + '</span>' : '') +
-            (queued > 0 ? '<span class="tag queue">建造中 ×' + queued + '</span>' : '') +
+            (queued > 0 ? '<span class="tag queue">' + (queuedState === 'building' ? '施工中' : '排队中') + ' ×' + queued + '</span>' : '') +
             (b.active > 0 && st.efficiency < 0.995 ? '<span class="tag warn">受限 ' + U.fmtPct(st.efficiency, 0) + '</span>' : '') +
             '</div>';
         html += '<div class="card-count">' + Math.round(b.active) + '<small> / ' + b.count + '</small></div></div>';
@@ -51,11 +53,11 @@
 
         /* 只保留操作按钮，其余信息交给悬浮提示 */
         html += '<div class="card-actions">';
-        html += '<button class="btn primary wide-action" data-act="buy|' + G.esc(name) + '|1"' + (queued > 0 ? ' disabled' : '') + '>' +
-            (queued > 0 ? '队列中 ×' + queued : (queueFull ? '队列已满' : '建造 ×1')) + '</button>';
-        html += '<button class="btn tiny" data-act="buy|' + G.esc(name) + '|5"' + (affordable && !blocked ? '' : ' disabled') + '>+5</button>';
-        html += '<button class="btn tiny" data-act="buy|' + G.esc(name) + '|10"' + (affordable && !blocked ? '' : ' disabled') + '>+10</button>';
-        html += '<button class="btn tiny" data-act="buy|' + G.esc(name) + '|max"' + (affordable && !blocked ? '' : ' disabled') + '>最大</button>';
+        html += '<button class="btn primary wide-action" data-act="buy|' + G.esc(name) + '|1"' + (blocked ? ' disabled' : '') + '>' +
+            (blocked ? '队列已满' : (affordable ? '建造 ×1' : '排队等待 ×1')) + '</button>';
+        html += '<button class="btn tiny" data-act="buy|' + G.esc(name) + '|5"' + (blocked ? ' disabled' : '') + '>+5</button>';
+        html += '<button class="btn tiny" data-act="buy|' + G.esc(name) + '|10"' + (blocked ? ' disabled' : '') + '>+10</button>';
+        html += '<button class="btn tiny" data-act="buy|' + G.esc(name) + '|max"' + (affordable && !queueFull ? '' : ' disabled') + '>最大</button>';
         html += '<button class="btn tiny" data-act="toggle|' + G.esc(name) + '">' + (b.active > 0 ? '停用' : '启用') + '</button>';
         html += '</div>';
         html += '</div>';

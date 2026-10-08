@@ -420,29 +420,36 @@
         if (!window.QueueEngine) return;
         const items = QueueEngine.items(s);
         const slots = QueueEngine.slots(s);
-        const sig = items.map(it => it.id).join(',') + '|' + slots;
+        const sig = items.map(it => it.id + ':' + it.state).join(',') + '|' + slots;
 
         if (box.__sig !== sig) {
             box.__sig = sig;
-            let html = '<div class="panel-title">建造队列<span class="right">' + items.length + ' / ' + slots + ' 槽</span></div>';
+            const buildingCount = items.filter(it => it.state === 'building').length;
+            const waitingCount = items.length - buildingCount;
+            let html = '<div class="panel-title">建造队列<span class="right">' + items.length + ' / ' + slots + ' 槽' +
+                (items.length ? '（施工 ' + buildingCount + ' · 等待 ' + waitingCount + '）' : '') + '</span></div>';
             if (!items.length) {
-                html += '<div class="hint">队列空闲。在「建筑」「科技」「升级」里点击卡片即可排队；' +
-                    '槽位可以并行施工，扩容靠传承强化与工程类英雄。</div>';
+                html += '<div class="hint">队列空闲。资源足够时点击卡片会<b>立即建成</b>；资源不足时会作为订单进入这里等待，' +
+                    '资源凑齐后自动开工。槽位可以并行施工，扩容靠传承强化与工程类英雄。</div>';
                 G.setHTML(box, html);
                 return;
             }
             html += '<div class="queue-list">';
             for (const it of items) {
-                html += '<div class="queue-item" data-tip="queue|' + G.esc(it.id) + '">';
+                const building = it.state === 'building';
+                html += '<div class="queue-item' + (building ? '' : ' waiting') + '" data-tip="queue|' + G.esc(it.id) + '">';
                 html += '<div class="q-head"><span class="q-kind">' + G.esc(QueueEngine.KIND_LABEL[it.kind]) + '</span>' +
                     '<span class="q-name">' + G.esc(it.name) + (it.count > 1 ? ' ×' + it.count : '') + '</span>' +
                     '<span class="q-time" data-q-time="' + G.esc(it.id) + '"></span></div>';
-                html += G.bar(0).replace('class="bar "', 'class="bar" data-q-bar="' + G.esc(it.id) + '"');
-                html += '<div class="q-foot"><button class="btn tiny danger" data-act="queuecancel|' + G.esc(it.id) + '">取消并退回材料</button></div>';
+                if (building) html += G.bar(0).replace('class="bar "', 'class="bar" data-q-bar="' + G.esc(it.id) + '"');
+                else html += '<div class="q-est">需要：' + G.priceHtml(it.est) + '</div>';
+                html += '<div class="q-foot"><button class="btn tiny danger" data-act="queuecancel|' + G.esc(it.id) + '">' +
+                    (building ? '取消并退回材料' : '取消订单') + '</button></div>';
                 html += '</div>';
             }
             html += '</div>';
-            html += '<div class="hint mt6">施工速度 ×' + QueueEngine.speed(s).toFixed(2) + '；点击条目可查看花费与进度。</div>';
+            html += '<div class="hint mt6">施工速度 ×' + QueueEngine.speed(s).toFixed(2) +
+                '；「等待」中的订单会在资源凑齐后自动开工。</div>';
             G.setHTML(box, html);
             for (const it of items) {
                 queueRefs[it.id] = {
@@ -455,9 +462,13 @@
         for (const it of items) {
             const ref = queueRefs[it.id];
             if (!ref) continue;
-            const p = QueueEngine.progress(s, it);
-            G.setText(ref.time, U.fmtDuration(QueueEngine.remaining(s, it)) + '（' + U.fmtPct(p, 0) + '）');
-            if (ref.bar && ref.bar.firstElementChild) ref.bar.firstElementChild.style.width = (p * 100).toFixed(1) + '%';
+            if (it.state === 'building') {
+                const p = QueueEngine.progress(s, it);
+                G.setText(ref.time, U.fmtDuration(QueueEngine.remaining(s, it)) + '（' + U.fmtPct(p, 0) + '）');
+                if (ref.bar && ref.bar.firstElementChild) ref.bar.firstElementChild.style.width = (p * 100).toFixed(1) + '%';
+            } else {
+                G.setText(ref.time, '等待资源');
+            }
         }
     }
 
@@ -478,7 +489,20 @@
         html += '<h3>' + G.esc(ev.title) + '</h3><p>' + G.esc(ev.text) + '</p>';
         html += '<div class="event-choices">';
         ev.choices.forEach((c, i) => {
-            html += '<button class="btn wide" data-act="eventchoice|' + i + '" data-tip="text|' + G.esc(c.hint || '') + '">' + G.esc(c.text) + '</button>';
+            /* 资源（或军力）不够的选项不能点击，并标出缺多少 */
+            const payable = EventEngine.choicePayable ? EventEngine.choicePayable(s, c) : true;
+            html += '<div class="event-choice">';
+            html += '<button class="btn wide' + (payable ? '' : ' locked') + '" data-act="eventchoice|' + i + '"' +
+                (payable ? '' : ' disabled') + ' data-tip="text|' + G.esc(c.hint || '') + '">' + G.esc(c.text) + '</button>';
+            const needs = [];
+            if (c.cost && Object.keys(c.cost).length) needs.push('消耗 ' + G.costHtml(c.cost));
+            if (c.needPower) {
+                const okPower = s.localResources.power.amount + 1e-9 >= c.needPower;
+                needs.push('<span class="' + (okPower ? '' : 'lack') + '">需要军力 ' + U.fmtNum(c.needPower) +
+                    '（当前 ' + U.fmtNum(s.localResources.power.amount) + '）</span>');
+            }
+            if (needs.length) html += '<div class="choice-need">' + needs.join('　') + '</div>';
+            html += '</div>';
         });
         html += '</div></div>';
         G.setHTML(box, html);

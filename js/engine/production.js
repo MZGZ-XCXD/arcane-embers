@@ -50,6 +50,13 @@
         return stdCost(cfg.cost, cfg.growth, u.level, costMultiplier(state));
     }
 
+    /* 指定等级时的升级价格（队列里批量升级需要预扣多级成本） */
+    function upgradePriceCount(state, name, level) {
+        const cfg = UPGRADES_CONFIG[name];
+        if (!cfg) return {};
+        return stdCost(cfg.cost, cfg.growth, level, costMultiplier(state));
+    }
+
     /* 民望软上限：极高的民望收益递减，避免无限叠乘 */
     function happinessSoftCap(state, happiness) {
         const relic = ResourcesManager.amount('奥术遗物');
@@ -428,6 +435,7 @@
         buildingPrice,
         buildingPriceCount,
         upgradePrice,
+        upgradePriceCount,
         getBuildingStats,
         getResourceContributions,
         activeConfig,

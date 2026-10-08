@@ -66,6 +66,14 @@
         if (!state.artifacts) state.artifacts = { inventory: [], equipped: [], slots: 3 };
         if (!Array.isArray(state.artifacts.equipped)) state.artifacts.equipped = [];
         if (!state.queue || !Array.isArray(state.queue.items)) state.queue = { items: [] };
+        /* v1.1 的旧队列条目没有 state 字段（那时是「先付款、后施工」），统一转成施工中 */
+        for (const it of state.queue.items) {
+            if (!it.state) {
+                it.state = 'building';
+                if (!it.dur || !it.end) { it.dur = 30; it.start = state.gameDays; it.end = state.gameDays + 30; }
+            }
+            if (!it.est) it.est = it.cost || {};
+        }
         if (!state.heroes) state.heroes = freshHeroes();
         else {
             if (!state.heroes.owned) state.heroes.owned = {};

@@ -64,11 +64,40 @@
         for (const ev of EVENTS_CONFIG) {
             if (state.gameDays < ev.minDay) continue;
             if (ev.once && state.stats['ev_' + ev.id]) continue;
+            /* 只出现「资源仓储量够用」的事件：所有选项的消耗都不能超过对应资源的上限 */
+            if (!eventFitsStorage(state, ev)) continue;
             let ok = true;
             try { ok = ev.require(state); } catch (e) { ok = false; }
             if (ok) out.push(ev);
         }
         return out;
+    }
+
+    /* 单项消耗是否落在仓储上限之内 */
+    function costFitsCaps(state, cost) {
+        for (const r in (cost || {})) {
+            const res = state.resources[r];
+            if (!res) return false;                      // 该资源还没解锁
+            if (res.cap + 1e-9 < cost[r]) return false;
+        }
+        return true;
+    }
+
+    /* 整个事件是否够格出现：任一选项的需求超出上限就跳过这个事件 */
+    function eventFitsStorage(state, ev) {
+        for (const c of ev.choices) {
+            if (!costFitsCaps(state, c.cost)) return false;
+            if (c.needPower && state.localResources.power.capacity + 1e-9 < c.needPower) return false;
+        }
+        return true;
+    }
+
+    /* 选项此刻是否点得动：看「现有存量」是否够，而不是上限 */
+    function choicePayable(state, choice) {
+        if (!choice) return false;
+        if (choice.cost && Object.keys(choice.cost).length && !ResourcesManager.canAfford(choice.cost)) return false;
+        if (choice.needPower && state.localResources.power.amount + 1e-9 < choice.needPower) return false;
+        return true;
     }
 
     function scheduleNext(state) {
@@ -98,6 +127,9 @@
         if (!ev) return null;
         const choice = ev.choices[index];
         if (!choice) return null;
+        if (!choicePayable(state, choice)) {
+            return { ok: false, msg: '资源或军力不足，无法选择这个选项。' };
+        }
         const api = makeApi(state);
         try { choice.run(api); } catch (err) { console.error('事件执行出错', err); }
         state.stats['ev_' + ev.id] = true;
@@ -108,5 +140,8 @@
         return choice;
     }
 
-    window.EventEngine = { tick, tickEffects, buff, addLog, current, resolve, availableEvents, scheduleNext };
+    window.EventEngine = {
+        tick, tickEffects, buff, addLog, current, resolve, availableEvents, scheduleNext,
+        choicePayable, costFitsCaps, eventFitsStorage,
+    };
 })();

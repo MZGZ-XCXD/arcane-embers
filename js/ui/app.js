@@ -230,7 +230,8 @@
             }
             case 'eventchoice': {
                 const choice = EventEngine.resolve(s, Number(arg1));
-                if (choice) G.toast('你选择了：' + choice.text);
+                if (choice && choice.ok === false) G.toast(choice.msg, 'bad');
+                else if (choice && choice.text) G.toast('你选择了：' + choice.text);
                 break;
             }
             case 'save':

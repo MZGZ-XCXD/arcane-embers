@@ -441,6 +441,19 @@ h1, h2, h3, .serif { font-family: "Palatino Linotype", "Songti SC", Georgia, ser
 .q-time { color: var(--accent-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .q-foot { margin-top: 5px; }
 .card-name .tag.queue { color: var(--accent); border-color: var(--accent); }
+.queue-item.waiting { border-left: 3px solid var(--warn); }
+.q-est { font-size: .72rem; color: var(--text-secondary); margin: 4px 0 0; display: flex; flex-wrap: wrap; gap: 4px 8px; }
+.q-est span.lack { color: var(--bad); }
+
+/* 事件选项：需求不足时置灰并标出缺口 */
+.event-choice { display: flex; flex-direction: column; gap: 3px; }
+.event-choice .btn.locked { opacity: .55; cursor: not-allowed; }
+.choice-need {
+    font-size: .7rem; color: var(--text-dim); padding: 0 4px;
+    display: flex; flex-wrap: wrap; gap: 2px 10px;
+}
+.choice-need span.lack { color: var(--bad); }
+.choice-need span { color: var(--text-secondary); }
 
 /* ---------------- 传送阵（召唤） ---------------- */
 .summon-panel {

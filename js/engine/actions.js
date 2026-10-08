@@ -4,11 +4,11 @@
 (function () {
 
     /* ---------------- 建筑 ---------------- */
-    /* 购买建筑 = 加入建造队列；真正「建成」由 QueueEngine.complete 结算 */
+    /* 购买建筑：资源足够立即建成；不足则作为订单进入队列等待资源 */
     function buyBuilding(state, name, amount) {
         const res = QueueEngine.enqueue(state, 'building', name, amount === undefined ? 1 : amount);
         if (!res.ok) return { ok: false, msg: res.msg };
-        return { ok: true, built: 0, queued: res.item.count, msg: res.msg };
+        return { ok: true, built: res.instant || 0, queued: res.queued || 0, msg: res.msg };
     }
 
     function setBuildingActive(state, name, active) {
@@ -266,7 +266,6 @@
         for (const name in state.buildings) {
             const b = state.buildings[name];
             if (!b.unlocked || b.visible === false) continue;
-            if (QueueEngine.queuedCount(state, 'building', name) > 0) continue;   // 已在队列中就不重复排
             const price = ProductionEngine.buildingPrice(state, name);
             if (!ResourcesManager.canAfford(price)) continue;
             let total = 0;
@@ -274,7 +273,8 @@
             if (!best || total < bestPrice) { best = name; bestPrice = total; }
         }
         if (!best) return null;
-        return buyBuilding(state, best, 1);
+        /* 自动化只做「立即建成」，不会把买不起的东西塞进队列 */
+        return QueueEngine.enqueue(state, 'building', best, 1, { queueIfUnaffordable: false });
     }
 
     function autoExpeditionStep(state) {
