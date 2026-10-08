@@ -1,8 +1,11 @@
-# 魔法重建者 · Arcane Rebuilder
+# 秘法余烬 · Arcane Embers
 
 一个**中世纪魔法题材的单机放置（Idle / Incremental）建造游戏**，纯前端实现、零依赖、可离线运行。
 玩法结构参考了同类网页放置游戏（人口约束 → 建筑效率 → 科技解锁 → 多层重置传承），
 但世界观、资源链、建筑、科技、事件与全部数值都是为本作重新设计的。
+
+> 旧名《魔法重建者 / Arcane Rebuilder》，自 v1.1.1 起更名为《**秘法余烬 / Arcane Embers**》，
+> 玩法、存档与代码结构都保持连续（旧存档会自动迁移）。
 
 ## 世界观
 
@@ -15,7 +18,7 @@
 * **在线试玩**：<https://mzgz-xcxd.github.io/arcane-rebuilder/>
   （由本仓库 `main` 分支根目录经 GitHub Pages 直接托管，纯静态页面、不需要任何构建步骤；更新 `main` 后会自动重新发布。）
 * **本地运行**：双击 `index.html`，或把整个目录拖进浏览器。全部脚本都是普通 `<script>`，`file://` 下可直接运行，不需要本地服务器。
-* **单文件版**（方便分享或离线保存）：执行 `node tools/build-single-file.js`，脚本会把样式与全部脚本内联，生成 `dist/arcane-rebuilder.html` 这一个独立文件。
+* **单文件版**（方便分享或离线保存）：执行 `node tools/build-single-file.js`，脚本会把样式与全部脚本内联，生成 `dist/arcane-embers.html` 这一个独立文件。
 
 存档保存在浏览器 `localStorage`，关闭页面后再次打开会结算离线收益；也可以在「设置」里导出 / 导入存档文本。
 
@@ -79,7 +82,7 @@
 ## 文件结构
 
 ```
-arcane-rebuilder/
+arcane-embers/
 ├── index.html                  入口（双击即玩）
 ├── README.md
 ├── CHANGELOG.md                更新日志（每次改动都写在这里）
@@ -117,7 +120,7 @@ arcane-rebuilder/
 ├── tools/
 │   └── build-single-file.js    单文件版打包脚本
 ├── dist/
-│   └── arcane-rebuilder.html   打包产物（单文件版，可直接双击运行）
+│   └── arcane-embers.html      打包产物（单文件版，可直接双击运行）
 └── screenshots/                README 使用的界面截图
 ```
 
@@ -159,7 +162,7 @@ node tools/build-single-file.js
 ```
 
 脚本读取 `index.html`，把 `css/style.css` 与全部 `js/**/*.js` 内联进一个 HTML，
-输出到 `dist/arcane-rebuilder.html`。只需要 Node，无需任何依赖；改了源码后重新执行一次即可。
+输出到 `dist/arcane-embers.html`。只需要 Node，无需任何依赖；改了源码后重新执行一次即可。
 
 ## 兼容性
 

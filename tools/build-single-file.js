@@ -3,7 +3,7 @@
  * 单文件版打包脚本
  *
  * 用法：node tools/build-single-file.js
- * 输出：dist/arcane-rebuilder.html
+ * 输出：dist/arcane-embers.html
  *
  * 作用：把 index.html 里引用的 css/style.css 与全部 js/**\/*.js 内联进一个 HTML，
  *       生成可以直接双击运行、也方便分享的单文件版本。
@@ -13,7 +13,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
-const OUT = path.join(ROOT, 'dist', 'arcane-rebuilder.html');
+const OUT = path.join(ROOT, 'dist', 'arcane-embers.html');
 
 let html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 const inlined = [];

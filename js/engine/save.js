@@ -1,6 +1,22 @@
 /* 存档：本地存储、导入导出、离线收益 */
 (function () {
-    const SAVE_KEY = 'magic-rebuilder-save';
+    /* 存档键：改名后使用新键，但会读取旧键并自动迁移，避免老玩家丢档 */
+    const SAVE_KEY = 'arcane-embers-save';
+    const LEGACY_SAVE_KEYS = ['magic-rebuilder-save'];
+
+    function readRaw() {
+        try {
+            const cur = localStorage.getItem(SAVE_KEY);
+            if (cur) return { raw: cur, key: SAVE_KEY };
+        } catch (e) { /* 忽略 */ }
+        for (const k of LEGACY_SAVE_KEYS) {
+            try {
+                const old = localStorage.getItem(k);
+                if (old) return { raw: old, key: k };
+            } catch (e) { /* 忽略 */ }
+        }
+        return null;
+    }
 
     function serialize(state) {
         const data = {};
@@ -24,7 +40,7 @@
     }
 
     function hasSave() {
-        try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; }
+        return !!readRaw();
     }
 
     /* 把存档数据应用到全局状态（缺失字段用默认值补齐） */
@@ -75,17 +91,22 @@
     }
 
     function load(state) {
-        let raw;
-        try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { return false; }
-        if (!raw) return false;
+        const found = readRaw();
+        if (!found) return false;
         try {
-            const data = JSON.parse(raw);
+            const data = JSON.parse(found.raw);
             if (!data || typeof data !== 'object') return false;
             const seconds = data.lastTick ? Math.max(0, (Date.now() - data.lastTick) / 1000) : 0;
             applyData(state, data);
             state.pendingEvent = null;
             if (seconds > 60) applyOffline(state, seconds);
             state.lastTick = Date.now();
+            if (found.key !== SAVE_KEY) {
+                /* 从旧名字的存档迁移到新键 */
+                save(state);
+                try { localStorage.removeItem(found.key); } catch (e) { /* 忽略 */ }
+                EventEngine.addLog(state, '📜 存档已迁移到新版本（秘法余烬）。');
+            }
             return true;
         } catch (e) {
             console.error('读档失败', e);
@@ -152,9 +173,12 @@
     }
 
     function hardReset() {
-        try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+        try {
+            localStorage.removeItem(SAVE_KEY);
+            for (const k of LEGACY_SAVE_KEYS) localStorage.removeItem(k);
+        } catch (e) {}
         location.reload();
     }
 
-    window.SaveEngine = { save, load, hasSave, exportSave, importSave, hardReset, applyOffline, applyData, SAVE_KEY };
+    window.SaveEngine = { save, load, hasSave, exportSave, importSave, hardReset, applyOffline, applyData, SAVE_KEY, LEGACY_SAVE_KEYS };
 })();

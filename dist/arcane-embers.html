@@ -4,11 +4,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>魔法重建者 · Arcane Rebuilder</title>
-<meta name="description" content="中世纪魔法题材的放置建造游戏：从一座倒塌的法师塔开始，重建被大崩坏摧毁的魔法文明。">
+<title>秘法余烬 · Arcane Embers</title>
+<meta name="description" content="秘法余烬（Arcane Embers）：中世纪魔法题材的放置建造游戏，从一座倒塌的法师塔开始，重建被大崩坏摧毁的魔法文明。">
 <style>
 /* =========================================================
-   魔法重建者 · 样式表
+   秘法余烬（Arcane Embers）· 样式表
    深色「秘法」主题为默认，浅色「羊皮卷」主题可切换
    ========================================================= */
 
@@ -624,8 +624,8 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
   <header class="topbar">
     <div class="brand">
       <span class="brand-rune">✦</span>
-      <h1>魔法重建者</h1>
-      <span class="brand-sub">Arcane Rebuilder</span>
+      <h1>秘法余烬</h1>
+      <span class="brand-sub">Arcane Embers</span>
     </div>
     <div class="topbar-stats">
       <div class="top-stat"><span class="top-label">时代</span><span id="stat-era">灰烬时代</span></div>
@@ -4787,7 +4787,23 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 /* ===== js/engine/save.js ===== */
 /* 存档：本地存储、导入导出、离线收益 */
 (function () {
-    const SAVE_KEY = 'magic-rebuilder-save';
+    /* 存档键：改名后使用新键，但会读取旧键并自动迁移，避免老玩家丢档 */
+    const SAVE_KEY = 'arcane-embers-save';
+    const LEGACY_SAVE_KEYS = ['magic-rebuilder-save'];
+
+    function readRaw() {
+        try {
+            const cur = localStorage.getItem(SAVE_KEY);
+            if (cur) return { raw: cur, key: SAVE_KEY };
+        } catch (e) { /* 忽略 */ }
+        for (const k of LEGACY_SAVE_KEYS) {
+            try {
+                const old = localStorage.getItem(k);
+                if (old) return { raw: old, key: k };
+            } catch (e) { /* 忽略 */ }
+        }
+        return null;
+    }
 
     function serialize(state) {
         const data = {};
@@ -4811,7 +4827,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     }
 
     function hasSave() {
-        try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; }
+        return !!readRaw();
     }
 
     /* 把存档数据应用到全局状态（缺失字段用默认值补齐） */
@@ -4862,17 +4878,22 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     }
 
     function load(state) {
-        let raw;
-        try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { return false; }
-        if (!raw) return false;
+        const found = readRaw();
+        if (!found) return false;
         try {
-            const data = JSON.parse(raw);
+            const data = JSON.parse(found.raw);
             if (!data || typeof data !== 'object') return false;
             const seconds = data.lastTick ? Math.max(0, (Date.now() - data.lastTick) / 1000) : 0;
             applyData(state, data);
             state.pendingEvent = null;
             if (seconds > 60) applyOffline(state, seconds);
             state.lastTick = Date.now();
+            if (found.key !== SAVE_KEY) {
+                /* 从旧名字的存档迁移到新键 */
+                save(state);
+                try { localStorage.removeItem(found.key); } catch (e) { /* 忽略 */ }
+                EventEngine.addLog(state, '📜 存档已迁移到新版本（秘法余烬）。');
+            }
             return true;
         } catch (e) {
             console.error('读档失败', e);
@@ -4939,11 +4960,14 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     }
 
     function hardReset() {
-        try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+        try {
+            localStorage.removeItem(SAVE_KEY);
+            for (const k of LEGACY_SAVE_KEYS) localStorage.removeItem(k);
+        } catch (e) {}
         location.reload();
     }
 
-    window.SaveEngine = { save, load, hasSave, exportSave, importSave, hardReset, applyOffline, applyData, SAVE_KEY };
+    window.SaveEngine = { save, load, hasSave, exportSave, importSave, hardReset, applyOffline, applyData, SAVE_KEY, LEGACY_SAVE_KEYS };
 })();
 
 </script>
@@ -7116,7 +7140,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 
     /* ---------------- 欢迎 / 引导 ---------------- */
     function welcomeModal() {
-        const html = '<h2>魔法重建者</h2>' +
+        const html = '<h2>秘法余烬</h2>' +
             '<p>大崩坏那天，浮空城从天上落了下来，魔网断裂成无数碎片。你是最后一位仍然记得咒式的学徒，' +
             '面前只有一座倒塌的法师塔和一片灰烬。</p>' +
             '<h3>第一件事</h3><ul>' +
