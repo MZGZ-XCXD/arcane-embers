@@ -15,7 +15,7 @@
 
 ## 快速开始
 
-* **在线试玩**：<https://mzgz-xcxd.github.io/arcane-rebuilder/>
+* **在线试玩**：<https://mzgz-xcxd.github.io/arcane-embers/>
   （由本仓库 `main` 分支根目录经 GitHub Pages 直接托管，纯静态页面、不需要任何构建步骤；更新 `main` 后会自动重新发布。）
 * **本地运行**：双击 `index.html`，或把整个目录拖进浏览器。全部脚本都是普通 `<script>`，`file://` 下可直接运行，不需要本地服务器。
 * **单文件版**（方便分享或离线保存）：执行 `node tools/build-single-file.js`，脚本会把样式与全部脚本内联，生成 `dist/arcane-embers.html` 这一个独立文件。
