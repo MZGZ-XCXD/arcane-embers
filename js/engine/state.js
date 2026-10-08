@@ -1,6 +1,6 @@
 /* 游戏状态与资源管理 */
 (function () {
-    const SAVE_VERSION = 3;
+    const SAVE_VERSION = 4;
 
     /* 全局唯一状态对象（引用始终不变，便于各模块共享） */
     const GameState = {
@@ -20,6 +20,8 @@
         achievements: {},
         challenges: {},
         artifacts: { inventory: [], equipped: [], slots: 3 },
+        queue: { items: [] },
+        heroes: null,
         market: { resources: {}, heat: {}, volume: 0, trades: 0 },
         expedition: { active: null, auto: false, history: [] },
         activeEffects: [],
@@ -62,6 +64,18 @@
         };
     }
 
+    /* 英雄与召唤的初始状态 */
+    function freshHeroes() {
+        return {
+            owned: {},                          // 英雄 id → 觉醒等级（0~5）
+            pity: { A: 0, S: 0, EX: 0 },        // 距离上次获得该档位以上的抽数
+            pulls: 0,
+            byRarity: { C: 0, B: 0, A: 0, S: 0, EX: 0 },
+            dupRelics: 0,
+            history: [],
+        };
+    }
+
     function initState() {
         const s = GameState;
         s.version = SAVE_VERSION;
@@ -80,6 +94,8 @@
         s.achievements = {};
         s.challenges = {};
         s.artifacts = { inventory: [], equipped: [], slots: 3 };
+        s.queue = { items: [] };
+        s.heroes = freshHeroes();
         s.market = { resources: {}, heat: {}, volume: 0, trades: 0 };
         s.expedition = { active: null, auto: false, history: [] };
         s.activeEffects = [];
@@ -175,6 +191,7 @@
 
     window.GameState = GameState;
     window.initState = initState;
+    window.freshHeroes = freshHeroes;
     window.SAVE_VERSION = SAVE_VERSION;
     window.ResourcesManager = ResourcesManager;
 })();

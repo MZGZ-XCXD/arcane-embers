@@ -1,0 +1,104 @@
+/* =========================================================
+   英雄与传送阵（抽卡）
+   RARITIES  : C < B < A < S < EX 五档，mult 是效果倍率
+   CATEGORIES: 英雄的分类与基础效果（实际效果 = 基础效果 × 稀有度倍率 × 觉醒加成）
+   HEROES    : 卡池中的英雄；extra 用于少数英雄的额外效果
+   GACHA     : 召唤消耗、概率权重、保底次数
+   ========================================================= */
+(function () {
+    const RARITIES = {
+        C:  { key: 'C',  name: 'C 级',  title: '学徒', weight: 42,  mult: 1,   dupRelic: 1,  color: '#9aa4b2' },
+        B:  { key: 'B',  name: 'B 级',  title: '能手', weight: 26,  mult: 2.2, dupRelic: 3,  color: '#57d99a' },
+        A:  { key: 'A',  name: 'A 级',  title: '大师', weight: 12,  mult: 4.5, dupRelic: 8,  color: '#5aa9ff' },
+        S:  { key: 'S',  name: 'S 级',  title: '传奇', weight: 4.5, mult: 9,   dupRelic: 25, color: '#c98bff' },
+        EX: { key: 'EX', name: 'EX 级', title: '神话', weight: 0.8, mult: 20,  dupRelic: 100, color: '#ff6b6b' },
+    };
+
+    const CATEGORIES = {
+        战力: { key: '战力', icon: '⚔️', desc: '提升军力与远征战力',   effect: { powerMult: 0.15, expeditionPower: 0.1 } },
+        资源: { key: '资源', icon: '🌾', desc: '提升所有建筑的产出',   effect: { globalProd: 0.08 } },
+        仓储: { key: '仓储', icon: '📦', desc: '提升所有资源的存量上限', effect: { capAll: 0.15 } },
+        知识: { key: '知识', icon: '📖', desc: '提升魔法知识产出',     effect: { knowledgeProd: 0.2 } },
+        工程: { key: '工程', icon: '🔧', desc: '加快建造与研究速度',   effect: { queueSpeed: 0.15 } },
+        经济: { key: '经济', icon: '🪙', desc: '提升贸易规模与黄金产出', effect: { marketVolume: 0.3, resourceProd: { 黄金: 0.25 } } },
+        民生: { key: '民生', icon: '🏡', desc: '提升民望与人口上限',   effect: { happiness: 40, populationCap: 0.08 } },
+        远征: { key: '远征', icon: '🧭', desc: '提升远征收益',        effect: { expeditionReward: 0.3, expeditionPower: 0.12 } },
+        幸运: { key: '幸运', icon: '🍀', desc: '提升抽卡运气并降低召唤消耗', effect: { luck: 0.3, summonDiscount: 0.06 } },
+        命运: { key: '命运', icon: '🌌', desc: '提升重置时获得的奥术遗物', effect: { relicGain: 0.12 } },
+    };
+
+    const HEROES = [];
+    function H(name, rarity, category, desc, extra) {
+        HEROES.push({ id: name, name: name, rarity: rarity, category: category, desc: desc, extra: extra || null });
+    }
+
+    /* ---------------- C 级：学徒 ---------------- */
+    H('拾荒学徒', 'C', '资源', '背着破麻袋在废墟里翻找，总能带回点别人不要的东西。');
+    H('见习修士', 'C', '知识', '负责抄写和点灯，手指常年沾着墨水。');
+    H('半精灵斥候', 'C', '远征', '脚步很轻，能记住三天前走过的路。');
+    H('石匠帮工', 'C', '仓储', '力气大，搬石头时从不抱怨。');
+    H('集市伙计', 'C', '经济', '记得每个摊位的价格，也记得谁欠谁的钱。');
+    H('草药学徒', 'C', '民生', '分得清哪种叶子能止血、哪种只会让人发笑。');
+    H('塔楼守卫', 'C', '战力', '整夜不睡，只为了盯住北边那条路。');
+    H('铭文学徒', 'C', '工程', '刻坏过一百块石板，现在很少刻错了。');
+
+    /* ---------------- B 级：能手 ---------------- */
+    H('巡回讲法师', 'B', '知识', '带着一车书在各个聚落之间来回讲课。');
+    H('符文刻工', 'B', '工程', '手上有一层洗不掉的石粉，刻出来的符文从不出错。');
+    H('银月游侠', 'B', '远征', '只在新月之夜出没，箭袋里总多带三支。');
+    H('炼金术士', 'B', '资源', '能把没用的矿渣变成能用的粉末。');
+    H('商队护卫', 'B', '经济', '收钱办事，但从不护送明显送死的活。');
+    H('战地医师', 'B', '民生', '在血腥味里吃饭也不皱眉。');
+    H('铁砧锻造师', 'B', '仓储', '打的货架能压住三头牛。');
+    H('塔盾队长', 'B', '战力', '一面盾能挡住一整条巷子。');
+
+    /* ---------------- A 级：大师 ---------------- */
+    H('咒法学院首席', 'A', '知识', '把六十三项咒式背成了呼吸的节奏。');
+    H('秘银锻造大师', 'A', '仓储', '他造的箱子连空间都塞得进去。');
+    H('龙脉守望者', 'A', '战力', '守着一道早已断裂的龙脉，谁靠近谁死。');
+    H('星象术士', 'A', '工程', '按星位安排工期，说哪天动土就哪天动土。');
+    H('瘟疫医师', 'A', '民生', '戴着鸟嘴面具走街串巷，救活过一整座城。');
+    H('命运之骰', 'A', '幸运', '一名赌徒。据说他从来只输给自己。');
+
+    /* ---------------- S 级：传奇 ---------------- */
+    H('时之贤者', 'S', '工程', '她的工坊里同时进行着昨天和明天的活。', { queueSlots: 1 });
+    H('世界树祭司', 'S', '资源', '在世界树的根系之间走动，脚下的土地都变得更肥。');
+    H('虚空织法者', 'S', '知识', '把虚空当作织机，把知识当作线。');
+    H('圣殿大主教', 'S', '民生', '一开口，争吵的人都安静下来。');
+    H('星界舰长', 'S', '远征', '她的船不需要空气，也不需要方向。');
+    H('遗物守护者', 'S', '命运', '能听见时间线崩塌时碎片落下的声音。');
+
+    /* ---------------- EX 级：神话 ---------------- */
+    H('最后一位浮空城主', 'EX', '战力', '大崩坏那天他没有逃。他把整座城压成了一个人的脊梁。', { powerMult: 0.5 });
+    H('原初之龙·灰烬之翼', 'EX', '资源', '它睡在灰烬森林深处。呼吸之间，土地重新长出东西。', { globalProd: 0.25 });
+    H('世界意志·静默之声', 'EX', '幸运', '它不说话，只是让你想要的东西更容易来到你手里。',
+        { queueSlots: 2, queueSpeed: 0.5, luck: 0.5, summonDiscount: 0.15 });
+
+    const GACHA = {
+        /* 每次召唤的消耗（×10 时享受 batchDiscount 折扣） */
+        costs: { 魔力: 1200, 魔晶: 80, 符文: 40 },
+        batchSize: 10,
+        batchDiscount: 0.1,
+        /* 非英雄结果 */
+        rewardWeight: 12,
+        emptyWeight: 2.7,
+        /* 保底：连续多少次没有获得该档位以上，则下一次必定获得 */
+        pity: { A: 10, S: 60, EX: 250 },
+        /* 幸运（luck）只影响这两档的权重 */
+        luckRarities: ['S', 'EX'],
+        luckCap: 2,            // 幸运最多把 S / EX 权重提升到 3 倍
+        discountCap: 0.8,      // 召唤消耗最多减免 80%
+        awakeningMax: 5,
+        awakeningStep: 0.3,
+        /* 资源奖励按玩家当前上限的比例发放 */
+        rewardRes: ['木材', '石料', '铁矿', '木炭', '食物', '黄金', '铁锭', '魔晶', '符文'],
+        rewardMin: 0.12,
+        rewardMax: 0.35,
+        rewardCount: [1, 3],
+    };
+
+    window.HERO_RARITIES = RARITIES;
+    window.HERO_CATEGORIES = CATEGORIES;
+    window.HEROES_CONFIG = HEROES;
+    window.GACHA_CONFIG = GACHA;
+})();

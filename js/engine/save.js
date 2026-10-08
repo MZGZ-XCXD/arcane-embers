@@ -49,6 +49,16 @@
         for (const c of CHALLENGES_CONFIG) if (!state.challenges[c.id]) state.challenges[c.id] = { active: false, completed: false };
         if (!state.artifacts) state.artifacts = { inventory: [], equipped: [], slots: 3 };
         if (!Array.isArray(state.artifacts.equipped)) state.artifacts.equipped = [];
+        if (!state.queue || !Array.isArray(state.queue.items)) state.queue = { items: [] };
+        if (!state.heroes) state.heroes = freshHeroes();
+        else {
+            if (!state.heroes.owned) state.heroes.owned = {};
+            if (!state.heroes.pity) state.heroes.pity = { A: 0, S: 0, EX: 0 };
+            if (state.heroes.pulls === undefined) state.heroes.pulls = 0;
+            if (!state.heroes.byRarity) state.heroes.byRarity = { C: 0, B: 0, A: 0, S: 0, EX: 0 };
+            if (state.heroes.dupRelics === undefined) state.heroes.dupRelics = 0;
+            if (!Array.isArray(state.heroes.history)) state.heroes.history = [];
+        }
         if (!state.expedition) state.expedition = { active: null, auto: false, history: [] };
         if (!state.stats) state.stats = { playSeconds: 0, resets: { relic: 0, star: 0, core: 0 }, expeditions: 0, expeditionsFailed: 0, artifactsFound: 0, maxChallengeStars: 0, events: 0, history: [] };
         if (!state.settings) state.settings = { theme: 'dark', autosave: true, autoBuild: true, autoExpedition: true, buyAmount: 1 };

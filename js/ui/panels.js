@@ -225,6 +225,47 @@
             return html;
         }
 
+        if (type === 'queue') {
+            if (!window.QueueEngine) return null;
+            const it = GameState.queue.items.find(x => x.id === arg);
+            if (!it) return null;
+            let html = '<h4>' + G.esc(it.name) + (it.count > 1 ? ' ×' + it.count : '') +
+                ' · ' + G.esc(QueueEngine.KIND_LABEL[it.kind]) + '</h4>';
+            html += '<div class="kv"><span>进度</span><span>' + U.fmtPct(QueueEngine.progress(GameState, it), 0) + '</span></div>';
+            html += '<div class="kv"><span>剩余</span><span>' + U.fmtDuration(QueueEngine.remaining(GameState, it)) + '</span></div>';
+            html += '<div class="kv"><span>总工期</span><span>' + U.fmtDuration(it.dur) + '</span></div>';
+            if (it.cost && Object.keys(it.cost).length) {
+                html += '<hr><div>已预扣材料：</div><div>' + G.priceHtml(it.cost) + '</div>';
+            }
+            html += '<hr><div class="dim">取消该项会全额退回材料。</div>';
+            return html;
+        }
+
+        if (type === 'hero') {
+            if (!window.Heroes) return null;
+            const hero = Heroes.heroById(arg);
+            if (!hero) return null;
+            const owned = s.heroes.owned[arg];
+            const r = HERO_RARITIES[hero.rarity];
+            const cat = HERO_CATEGORIES[hero.category];
+            let html = '<h4>' + G.esc(hero.name) + ' · ' + r.name + '</h4>';
+            html += '<div class="dim">' + cat.icon + ' ' + G.esc(cat.key) + '：' + G.esc(cat.desc) + '</div>';
+            html += '<div class="dim">' + G.esc(hero.desc) + '</div><hr>';
+            if (owned === undefined) {
+                html += '<div class="neg">尚未召唤到这位英雄。</div>';
+                html += '<hr><div class="dim">基础效果（' + r.name + ' × ' + r.mult + '）：' +
+                    G.esc(G.effectLines(Heroes.heroEffect(hero)).join('；')) + '</div>';
+            } else {
+                html += '<div class="kv"><span>觉醒等级</span><span class="gold">' + owned + ' / ' + GACHA_CONFIG.awakeningMax + '</span></div>';
+                for (const line of (window.TabSummon ? TabSummon.effectLines(hero, owned) : [])) {
+                    html += '<div class="kv"><span>' + G.esc(line) + '</span><span></span></div>';
+                }
+                html += '<hr><div class="dim">重复召唤会提升觉醒等级（每级 +' +
+                    Math.round(GACHA_CONFIG.awakeningStep * 100) + '%），满觉后再抽到会转化为奥术遗物。</div>';
+            }
+            return html;
+        }
+
         if (type === 'text') return G.esc(parts.slice(1).join('|'));
         return null;
     }
@@ -371,6 +412,55 @@
     }
 
     /* ---------------- 事件面板 ---------------- */
+    const queueRefs = {};
+    function renderQueue() {
+        const s = GameState;
+        const box = document.getElementById('panel-queue');
+        if (!box) return;
+        if (!window.QueueEngine) return;
+        const items = QueueEngine.items(s);
+        const slots = QueueEngine.slots(s);
+        const sig = items.map(it => it.id).join(',') + '|' + slots;
+
+        if (box.__sig !== sig) {
+            box.__sig = sig;
+            let html = '<div class="panel-title">建造队列<span class="right">' + items.length + ' / ' + slots + ' 槽</span></div>';
+            if (!items.length) {
+                html += '<div class="hint">队列空闲。在「建筑」「科技」「升级」里点击卡片即可排队；' +
+                    '槽位可以并行施工，扩容靠传承强化与工程类英雄。</div>';
+                G.setHTML(box, html);
+                return;
+            }
+            html += '<div class="queue-list">';
+            for (const it of items) {
+                html += '<div class="queue-item" data-tip="queue|' + G.esc(it.id) + '">';
+                html += '<div class="q-head"><span class="q-kind">' + G.esc(QueueEngine.KIND_LABEL[it.kind]) + '</span>' +
+                    '<span class="q-name">' + G.esc(it.name) + (it.count > 1 ? ' ×' + it.count : '') + '</span>' +
+                    '<span class="q-time" data-q-time="' + G.esc(it.id) + '"></span></div>';
+                html += G.bar(0).replace('class="bar "', 'class="bar" data-q-bar="' + G.esc(it.id) + '"');
+                html += '<div class="q-foot"><button class="btn tiny danger" data-act="queuecancel|' + G.esc(it.id) + '">取消并退回材料</button></div>';
+                html += '</div>';
+            }
+            html += '</div>';
+            html += '<div class="hint mt6">施工速度 ×' + QueueEngine.speed(s).toFixed(2) + '；点击条目可查看花费与进度。</div>';
+            G.setHTML(box, html);
+            for (const it of items) {
+                queueRefs[it.id] = {
+                    time: box.querySelector('[data-q-time="' + it.id + '"]'),
+                    bar: box.querySelector('[data-q-bar="' + it.id + '"]'),
+                };
+            }
+        }
+
+        for (const it of items) {
+            const ref = queueRefs[it.id];
+            if (!ref) continue;
+            const p = QueueEngine.progress(s, it);
+            G.setText(ref.time, U.fmtDuration(QueueEngine.remaining(s, it)) + '（' + U.fmtPct(p, 0) + '）');
+            if (ref.bar && ref.bar.firstElementChild) ref.bar.firstElementChild.style.width = (p * 100).toFixed(1) + '%';
+        }
+    }
+
     function renderEvent() {
         const s = GameState;
         const ev = EventEngine.current(s);
@@ -518,7 +608,7 @@
 
     window.Panels = {
         tipHtml, renderHeader, renderPopulation, renderResources, renderActions,
-        renderEvent, renderExpeditionPanel, renderLog, renderStats,
+        renderEvent, renderExpeditionPanel, renderLog, renderStats, renderQueue,
         settingsModal, exportModal, importModal, offlineModal,
     };
 })();

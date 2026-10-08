@@ -422,6 +422,85 @@ h1, h2, h3, .serif { font-family: "Palatino Linotype", "Songti SC", Georgia, ser
 
 /* ---------------- 进度条 / 远征 ---------------- */
 .expedition-region { display: flex; flex-direction: column; gap: 6px; font-size: .78rem; }
+
+/* ---------------- 建造队列 ---------------- */
+.queue-list { display: flex; flex-direction: column; gap: 6px; max-height: 34vh; overflow-y: auto; }
+.queue-item {
+    background: var(--bg-card); border: 1px solid var(--border-card);
+    border-radius: 9px; padding: 6px 8px; cursor: help;
+}
+.q-head { display: flex; gap: 6px; align-items: baseline; font-size: .76rem; }
+.q-kind {
+    font-size: .62rem; padding: 1px 5px; border-radius: 5px;
+    background: var(--bg-sunken); color: var(--text-dim); border: 1px solid var(--border);
+}
+.q-name {
+    font-weight: 600; color: var(--text); flex: 1 1 auto;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.q-time { color: var(--accent-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.q-foot { margin-top: 5px; }
+.card-name .tag.queue { color: var(--accent); border-color: var(--accent); }
+
+/* ---------------- 传送阵（召唤） ---------------- */
+.summon-panel {
+    display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+    background: var(--bg-card); border: 1px solid var(--border-card);
+    border-radius: 12px; padding: 14px; margin-bottom: 10px;
+}
+.summon-circle {
+    position: relative; width: 112px; height: 112px; flex: 0 0 112px;
+    border-radius: 50%; border: 2px solid var(--accent);
+    box-shadow: var(--glow);
+    display: flex; align-items: center; justify-content: center;
+}
+.summon-circle span { font-size: 2rem; color: var(--accent-2); }
+.summon-circle i, .summon-circle b {
+    position: absolute; inset: 9px; border-radius: 50%;
+    border: 1px dashed var(--border-hover);
+    animation: summon-spin 14s linear infinite;
+}
+.summon-circle b { inset: 24px; border-style: dotted; animation-direction: reverse; animation-duration: 9s; }
+@keyframes summon-spin { to { transform: rotate(360deg); } }
+.summon-controls { flex: 1 1 260px; display: flex; flex-direction: column; gap: 6px; }
+.summon-cost { font-size: .76rem; color: var(--text-secondary); }
+.pity-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; margin-bottom: 6px; }
+.pity { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 9px; padding: 7px 9px; font-size: .76rem; }
+.summon-log { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.summon-item {
+    display: flex; flex-direction: column; gap: 1px;
+    padding: 6px 8px; border-radius: 8px;
+    background: var(--bg-card); border: 1px solid var(--border-card);
+    border-left: 3px solid var(--rar);
+}
+.summon-item .si-rar { font-size: .62rem; color: var(--rar); letter-spacing: 1px; }
+.summon-item .si-name { font-size: .78rem; font-weight: 600; color: var(--text); }
+.summon-item .si-sub { font-size: .68rem; color: var(--text-dim); }
+.hero-group { margin-bottom: 12px; }
+.hero-group-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 9px; border-radius: 9px; margin-bottom: 8px;
+    background: var(--bg-panel); border: 1px solid var(--border);
+    border-left: 3px solid var(--rar);
+}
+.hero-group-head .right { margin-left: auto; }
+.rar {
+    font-size: .66rem; padding: 1px 6px; border-radius: 6px;
+    color: var(--rar); border: 1px solid var(--rar); letter-spacing: 1px;
+}
+.hero-card {
+    background: var(--bg-card); border: 1px solid var(--border-card);
+    border-left: 3px solid var(--rar); border-radius: 10px; padding: 9px 10px;
+}
+.hero-card.locked { opacity: .55; }
+.hero-card.owned { background: linear-gradient(180deg, rgba(255,255,255,.035), transparent); }
+.hero-head { display: flex; align-items: center; gap: 6px; font-size: .68rem; color: var(--text-dim); }
+.hero-awaken { margin-left: auto; color: var(--accent-2); }
+.hero-name { font-size: .92rem; font-weight: 600; color: var(--text-heading); margin: 3px 0; }
+.hero-desc { font-size: .74rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 5px; }
+.hero-eff { font-size: .74rem; }
+.hero-eff .row { display: flex; justify-content: space-between; gap: 8px; }
+.hero-eff.dim { color: var(--text-dim); }
 .chip-row { display: flex; flex-wrap: wrap; gap: 5px; }
 .chip {
     font-size: .72rem; padding: 2px 7px; border-radius: 20px;

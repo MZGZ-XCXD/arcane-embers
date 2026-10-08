@@ -9,6 +9,8 @@
         'populationCap', 'relicGain', 'resetGain', 'expeditionPower',
         'expeditionReward', 'speed', 'marketVolume', 'artifactQuality',
         'capPerRelic', 'knowledgeCapPerRelic', 'offlineHours',
+        /* 建造队列与英雄召唤相关 */
+        'queueSlots', 'queueSpeed', 'powerMult', 'luck', 'summonDiscount', 'heroPower',
     ];
 
     function emptyEffects() {
@@ -132,6 +134,20 @@
         for (const art of state.artifacts.equipped) {
             if (!art) continue;
             for (const eff of art.effects) applyEffect(e, eff, 1, '秘宝·' + art.name);
+        }
+
+        /* 英雄：分类效果 × 稀有度倍率 × 觉醒加成 × 传承「英雄共鸣」加成 */
+        if (state.heroes && state.heroes.owned && window.Heroes) {
+            const heroMult = 1 + (e.heroPower || 0);
+            for (const item of Heroes.ownedEffects(state)) {
+                const scaled = {}, plain = {};
+                for (const k in item.effect) {
+                    if (k === 'queueSlots') plain[k] = item.effect[k];   // 槽位是整数，不随觉醒缩放
+                    else scaled[k] = item.effect[k];
+                }
+                applyEffect(e, scaled, item.mult * heroMult, '英雄·' + item.hero.name);
+                applyEffect(e, plain, 1, '英雄·' + item.hero.name);
+            }
         }
 
         /* 随机事件带来的临时效果 */

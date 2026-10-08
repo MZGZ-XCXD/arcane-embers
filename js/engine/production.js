@@ -37,6 +37,13 @@
         return stdCost(cfg.cost, cfg.growth, b.count, costMultiplier(state));
     }
 
+    /* 指定「已建数量」时的价格（队列里批量建造需要预扣多座的成本） */
+    function buildingPriceCount(state, name, count) {
+        const cfg = BUILDINGS_CONFIG[name];
+        if (!cfg) return {};
+        return stdCost(cfg.cost, cfg.growth, count, costMultiplier(state));
+    }
+
     function upgradePrice(state, name) {
         const cfg = UPGRADES_CONFIG[name];
         const u = state.upgrades[name];
@@ -171,7 +178,10 @@
             }
             for (const lr in r.providesLocal) {
                 const v = r.providesLocal[lr] * effActive;
-                state.localResources[lr].capacity += (lr === 'population') ? v * (1 + (e.populationCap || 0)) : v;
+                let mult = 1;
+                if (lr === 'population') mult = 1 + (e.populationCap || 0);
+                else if (lr === 'power') mult = 1 + (e.powerMult || 0);
+                state.localResources[lr].capacity += v * mult;
             }
             for (const lr in r.requiresLocal) {
                 state.localResources[lr].used += r.requiresLocal[lr] * effActive;
@@ -416,6 +426,7 @@
         computeProductionAndCaps,
         updatePrices,
         buildingPrice,
+        buildingPriceCount,
         upgradePrice,
         getBuildingStats,
         getResourceContributions,

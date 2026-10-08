@@ -4,36 +4,11 @@
 (function () {
 
     /* ---------------- 建筑 ---------------- */
+    /* 购买建筑 = 加入建造队列；真正「建成」由 QueueEngine.complete 结算 */
     function buyBuilding(state, name, amount) {
-        const b = state.buildings[name];
-        const cfg = BUILDINGS_CONFIG[name];
-        if (!b || !b.unlocked) return { ok: false, msg: '尚未解锁。' };
-        amount = amount || 1;
-        let built = 0;
-        if (amount === 'max') {
-            let guard = 0;
-            while (guard++ < 2000) {
-                const price = ProductionEngine.buildingPrice(state, name);
-                if (!ResourcesManager.canAfford(price)) break;
-                ResourcesManager.spend(price);
-                b.count++; b.active++;
-                built++;
-            }
-        } else {
-            for (let i = 0; i < amount; i++) {
-                const price = ProductionEngine.buildingPrice(state, name);
-                if (!ResourcesManager.canAfford(price)) break;
-                ResourcesManager.spend(price);
-                b.count++; b.active++;
-                built++;
-            }
-        }
-        if (!built) return { ok: false, msg: '资源不足。' };
-        state.stats.totalBuildingBuilt += built;
-        if (b.count === built) EventEngine.addLog(state, '建造了「' + name + '」×' + built + '。');
-        ProductionEngine.updatePrices(state);
-        ProductionEngine.computeProductionAndCaps(state);
-        return { ok: true, built: built, msg: '建造「' + name + '」×' + built };
+        const res = QueueEngine.enqueue(state, 'building', name, amount === undefined ? 1 : amount);
+        if (!res.ok) return { ok: false, msg: res.msg };
+        return { ok: true, built: 0, queued: res.item.count, msg: res.msg };
     }
 
     function setBuildingActive(state, name, active) {
@@ -57,33 +32,14 @@
 
     /* ---------------- 科技 ---------------- */
     function research(state, name) {
-        const t = state.techs[name];
-        const cfg = TECHS_CONFIG[name];
-        if (!t || !cfg || t.researched) return { ok: false };
-        if (!ProductionEngine.techAvailable(state, name)) return { ok: false, msg: '前置科技尚未完成。' };
-        if (!ResourcesManager.canAfford(cfg.cost)) return { ok: false, msg: '研究所需资源不足。' };
-        ResourcesManager.spend(cfg.cost);
-        t.researched = true;
-        EventEngine.addLog(state, '📖 完成研究「' + name + '」：' + cfg.desc);
-        ProductionEngine.updatePrices(state);
-        ProductionEngine.computeProductionAndCaps(state);
-        AchievementEngine.check(state);
-        return { ok: true, msg: '完成研究：' + name };
+        const res = QueueEngine.enqueue(state, 'tech', name, 1);
+        return res.ok ? { ok: true, msg: res.msg } : { ok: false, msg: res.msg };
     }
 
     /* ---------------- 升级 ---------------- */
     function buyUpgrade(state, name) {
-        const u = state.upgrades[name];
-        const cfg = UPGRADES_CONFIG[name];
-        if (!u || !cfg || !u.visible) return { ok: false };
-        if (u.level >= cfg.cap) return { ok: false, msg: '已达到等级上限。' };
-        const price = ProductionEngine.upgradePrice(state, name);
-        if (!ResourcesManager.canAfford(price)) return { ok: false, msg: '资源不足。' };
-        ResourcesManager.spend(price);
-        u.level++;
-        ProductionEngine.updatePrices(state);
-        ProductionEngine.computeProductionAndCaps(state);
-        return { ok: true, msg: name + ' → 等级 ' + u.level };
+        const res = QueueEngine.enqueue(state, 'upgrade', name, 1);
+        return res.ok ? { ok: true, msg: res.msg } : { ok: false, msg: res.msg };
     }
 
     /* ---------------- 国策 ---------------- */
@@ -211,6 +167,7 @@
         const settings = state.settings;
         const permanent = state.permanent;
         const challenges = state.challenges;
+        const heroes = state.heroes;              // 英雄收藏跨重置保留
         const expeditionHistory = state.expedition.history;
 
         /* 重新初始化，再恢复保留项 */
@@ -220,6 +177,7 @@
         state.settings = settings;
         state.permanent = permanent;
         state.challenges = challenges;
+        state.heroes = heroes;
         state.expedition.history = expeditionHistory;
         state.resources['奥术遗物'].amount = keepRelic + (opts.relic || 0);
         state.resources['星辉'].amount = keepStar + (opts.star || 0);
@@ -302,11 +260,13 @@
     function autoBuildStep(state) {
         if (!state.settings.autoBuild) return null;
         if (!EffectsManager.hasSpecial(state, 'autoBuild')) return null;
+        if (QueueEngine.isFull(state)) return null;                       // 队列满了就先等
         if (!EffectsManager.hasSpecial(state, 'perfectEfficiency') && state.localResources.population.used >= state.localResources.population.capacity) return null;
         let best = null, bestPrice = null;
         for (const name in state.buildings) {
             const b = state.buildings[name];
             if (!b.unlocked || b.visible === false) continue;
+            if (QueueEngine.queuedCount(state, 'building', name) > 0) continue;   // 已在队列中就不重复排
             const price = ProductionEngine.buildingPrice(state, name);
             if (!ResourcesManager.canAfford(price)) continue;
             let total = 0;

@@ -1,0 +1,245 @@
+/* =========================================================
+   英雄与传送阵（抽卡引擎）
+   英雄效果 = 分类基础效果 × 稀有度倍率 × 觉醒加成
+   卡池里除了英雄，还有资源奖励与「空」结果；并有 A / S / EX 三档保底。
+   ========================================================= */
+(function () {
+    function heroById(id) {
+        return HEROES_CONFIG.find(h => h.id === id) || null;
+    }
+
+    function scaleEffect(eff, mult) {
+        const out = {};
+        for (const k in eff) {
+            const v = eff[k];
+            if (typeof v === 'number') out[k] = v * mult;
+            else if (typeof v === 'object' && v !== null) {
+                const inner = {};
+                for (const k2 in v) inner[k2] = v[k2] * mult;
+                out[k] = inner;
+            }
+        }
+        return out;
+    }
+
+    /* 单个英雄的完整效果（含额外效果，额外效果不随稀有度缩放） */
+    function heroEffect(hero) {
+        const cat = HERO_CATEGORIES[hero.category];
+        const rarity = HERO_RARITIES[hero.rarity];
+        const eff = cat ? scaleEffect(cat.effect, rarity.mult) : {};
+        if (hero.extra) {
+            for (const k in hero.extra) {
+                if (typeof hero.extra[k] === 'number' && typeof eff[k] === 'number') eff[k] += hero.extra[k];
+                else eff[k] = hero.extra[k];
+            }
+        }
+        return eff;
+    }
+
+    function awakenMultiplier(awaken) {
+        return 1 + GACHA_CONFIG.awakeningStep * (awaken || 0);
+    }
+
+    /* 所有已获得英雄提供的效果（供 effects.js 汇总） */
+    function ownedEffects(state) {
+        const out = [];
+        if (!state.heroes || !state.heroes.owned) return out;
+        for (const id in state.heroes.owned) {
+            const hero = heroById(id);
+            if (!hero) continue;
+            out.push({
+                hero: hero,
+                awaken: state.heroes.owned[id] || 0,
+                mult: awakenMultiplier(state.heroes.owned[id] || 0),
+                effect: heroEffect(hero),
+            });
+        }
+        return out;
+    }
+
+    /* ---------------- 召唤消耗 ---------------- */
+    function pullCost(state, count) {
+        count = Math.max(1, count || 1);
+        const e = EffectsManager.get(state);
+        const discount = Utils.clamp(e.summonDiscount || 0, 0, GACHA_CONFIG.discountCap);
+        const batchMul = count >= GACHA_CONFIG.batchSize ? (1 - GACHA_CONFIG.batchDiscount) : 1;
+        const cost = {};
+        for (const k in GACHA_CONFIG.costs) {
+            cost[k] = Math.max(1, Math.round(GACHA_CONFIG.costs[k] * count * batchMul * (1 - discount)));
+        }
+        return cost;
+    }
+
+    function canSummon(state, count) {
+        const cost = pullCost(state, count);
+        if (!ResourcesManager.canAfford(cost)) return { ok: false, msg: '召唤材料不足。', cost: cost };
+        return { ok: true, cost: cost };
+    }
+
+    /* 幸运对 S / EX 权重的实际倍率（带上限，避免稀有度权重失衡） */
+    function luckMultiplier(state) {
+        return 1 + Math.min(EffectsManager.get(state).luck || 0, GACHA_CONFIG.luckCap);
+    }
+    /* 实际生效的召唤折扣（同样带上限） */
+    function effectiveDiscount(state) {
+        return Utils.clamp(EffectsManager.get(state).summonDiscount || 0, 0, GACHA_CONFIG.discountCap);
+    }
+
+    /* ---------------- 抽取 ---------------- */
+    function pickRarity(state) {
+        const pity = state.heroes.pity;
+        if (pity.EX >= GACHA_CONFIG.pity.EX) return 'EX';
+        if (pity.S >= GACHA_CONFIG.pity.S) return Math.random() < 0.12 ? 'EX' : 'S';
+        if (pity.A >= GACHA_CONFIG.pity.A) return Utils.weightedPick(['A', 'S', 'EX'], k => HERO_RARITIES[k].weight);
+
+        const luck = Math.min(EffectsManager.get(state).luck || 0, GACHA_CONFIG.luckCap);
+        const list = [];
+        for (const key in HERO_RARITIES) list.push(key);
+        const heroWeight = list.reduce((sum, k) => sum + HERO_RARITIES[k].weight * (GACHA_CONFIG.luckRarities.indexOf(k) >= 0 ? (1 + luck) : 1), 0);
+        const total = heroWeight + GACHA_CONFIG.rewardWeight + GACHA_CONFIG.emptyWeight;
+        let roll = Math.random() * total;
+        for (const k of list) {
+            const w = HERO_RARITIES[k].weight * (GACHA_CONFIG.luckRarities.indexOf(k) >= 0 ? (1 + luck) : 1);
+            roll -= w;
+            if (roll <= 0) return k;
+        }
+        roll -= GACHA_CONFIG.rewardWeight;
+        if (roll <= 0) return 'RESOURCE';
+        return 'EMPTY';
+    }
+
+    function pickHero(rarity) {
+        const pool = HEROES_CONFIG.filter(h => h.rarity === rarity);
+        if (!pool.length) return HEROES_CONFIG[0];
+        return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    function rollReward(state) {
+        const cfg = GACHA_CONFIG;
+        const pool = cfg.rewardRes.filter(r => state.resources[r] && state.resources[r].visible);
+        const list = pool.length ? pool : cfg.rewardRes;
+        const n = Utils.rndInt(cfg.rewardCount[0], cfg.rewardCount[1]);
+        const gained = {};
+        for (let i = 0; i < n; i++) {
+            const res = list[Math.floor(Math.random() * list.length)];
+            const r = state.resources[res];
+            if (!r) continue;
+            const amount = Math.max(1, Math.floor(r.cap * Utils.rnd(cfg.rewardMin, cfg.rewardMax)));
+            gained[res] = (gained[res] || 0) + amount;
+        }
+        return { type: 'reward', resources: gained };
+    }
+
+    function rollOnce(state) {
+        const rarity = pickRarity(state);
+        if (rarity === 'RESOURCE') return rollReward(state);
+        if (rarity === 'EMPTY') return { type: 'empty' };
+        const hero = pickHero(rarity);
+        return { type: 'hero', rarity: rarity, hero: hero };
+    }
+
+    function bumpPity(state, result) {
+        const p = state.heroes.pity;
+        const r = result.type === 'hero' ? result.rarity : null;
+        const order = { C: 0, B: 1, A: 2, S: 3, EX: 4 };
+        const rank = r ? order[r] : -1;
+        p.A = rank >= order.A ? 0 : p.A + 1;
+        p.S = rank >= order.S ? 0 : p.S + 1;
+        p.EX = rank >= order.EX ? 0 : p.EX + 1;
+    }
+
+    /* 应用一次抽取结果 */
+    function applyResult(state, result) {
+        if (result.type === 'hero') {
+            const id = result.hero.id;
+            const owned = state.heroes.owned;
+            if (owned[id] === undefined) {
+                owned[id] = 0;
+                result.isNew = true;
+            } else if (owned[id] < GACHA_CONFIG.awakeningMax) {
+                owned[id]++;
+                result.awaken = owned[id];
+            } else {
+                const relic = HERO_RARITIES[result.hero.rarity].dupRelic;
+                ResourcesManager.add({ 奥术遗物: relic });
+                result.dupRelic = relic;
+                state.heroes.dupRelics = (state.heroes.dupRelics || 0) + relic;
+            }
+            state.heroes.byRarity[result.hero.rarity] = (state.heroes.byRarity[result.hero.rarity] || 0) + 1;
+        } else if (result.type === 'reward') {
+            ResourcesManager.add(result.resources);
+        }
+        state.heroes.pulls = (state.heroes.pulls || 0) + 1;
+        bumpPity(state, result);
+        state.heroes.history.unshift({
+            type: result.type,
+            rarity: result.rarity || null,
+            name: result.hero ? result.hero.name : (result.type === 'reward' ? '资源馈赠' : '虚空回响'),
+            isNew: !!result.isNew,
+            awaken: result.awaken,
+            day: state.gameDays,
+        });
+        if (state.heroes.history.length > 30) state.heroes.history.pop();
+    }
+
+    /* 召唤 count 次 */
+    function summon(state, count) {
+        count = Math.floor(count || 0);
+        if (count < 1) return { ok: false, msg: '召唤次数无效。' };
+        const check = canSummon(state, count);
+        if (!check.ok) return check;
+        ResourcesManager.spend(check.cost);
+        const results = [];
+        for (let i = 0; i < count; i++) {
+            const result = rollOnce(state);
+            applyResult(state, result);
+            results.push(result);
+        }
+        ProductionEngine.updatePrices(state);
+        ProductionEngine.computeProductionAndCaps(state);
+        if (window.AchievementEngine) AchievementEngine.check(state);
+        const best = results.reduce((acc, r) => {
+            if (r.type !== 'hero') return acc;
+            const order = { C: 0, B: 1, A: 2, S: 3, EX: 4 };
+            return (order[r.rarity] > order[acc]) ? r.rarity : acc;
+        }, 'C');
+        const heroNames = results.filter(r => r.type === 'hero').map(r => r.hero.name).join('、');
+        EventEngine.addLog(state, '🔮 传送阵召唤 ×' + count + '，最高获得 ' + best + ' 级' +
+            (heroNames ? '（' + heroNames + '）' : '（无英雄回应）'));
+        return { ok: true, results: results, best: best, msg: '召唤完成：获得 ' + results.length + ' 项结果' };
+    }
+
+    /* 汇总统计 */
+    function stats(state) {
+        const h = state.heroes;
+        const owned = Object.keys(h.owned).length;
+        const total = HEROES_CONFIG.length;
+        return {
+            pulls: h.pulls || 0,
+            owned: owned,
+            total: total,
+            byRarity: h.byRarity,
+            dupRelics: h.dupRelics || 0,
+            pity: h.pity,
+            fullCollection: owned >= total,
+        };
+    }
+
+    function ownedCount(state, rarity) {
+        let n = 0;
+        for (const id in state.heroes.owned) {
+            const hero = heroById(id);
+            if (hero && hero.rarity === rarity) n++;
+        }
+        return n;
+    }
+    function totalCount(rarity) {
+        return HEROES_CONFIG.filter(h => h.rarity === rarity).length;
+    }
+
+    window.Heroes = {
+        heroById, heroEffect, awakenMultiplier, ownedEffects,
+        pullCost, canSummon, summon, stats, ownedCount, totalCount,
+        luckMultiplier, effectiveDiscount,
+    };
+})();

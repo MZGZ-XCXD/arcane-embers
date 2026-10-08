@@ -32,6 +32,9 @@
         state.gameDays += gdt;
         state.stats.playSeconds += dt;
 
+        /* 建造队列结算 */
+        if (window.QueueEngine) QueueEngine.tick(state);
+
         /* 远征结算 */
         if (state.expedition.active && state.gameDays >= state.expedition.active.endDay) {
             const result = ExpeditionEngine.finish(state);

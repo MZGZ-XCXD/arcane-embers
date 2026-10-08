@@ -83,6 +83,22 @@
         tree: 'relic', cost: 20, costG: 2.2, max: 5, eff: { offlineHours: 2 },
         desc: '离线收益时长上限 +2 小时（每级递增）。',
     });
+    P('工坊扩建', {
+        tree: 'relic', cost: 12, costG: 2.1, max: 4, eff: { queueSlots: 1 },
+        desc: '在塔基下再挖出几间工坊。建造队列 +1 个槽位（每级递增）。',
+    });
+    P('疾速施工', {
+        tree: 'relic', cost: 8, costG: 1.85, max: 6, eff: { queueSpeed: 0.12 },
+        desc: '把吊臂与滑轮组重新设计一遍。建造与研究的耗时每级 −10.7%（等价于速度 +12%）。',
+    });
+    P('召唤精通', {
+        tree: 'relic', cost: 15, costG: 1.9, max: 8, eff: { heroPower: 0.15 },
+        desc: '你更懂如何让英雄发挥全力。所有英雄的效果每级 +15%。',
+    });
+    P('命运微光', {
+        tree: 'relic', cost: 18, costG: 2.0, max: 6, eff: { luck: 0.2, summonDiscount: 0.05 },
+        desc: '在传送阵边缘点上一圈微光。召唤运气每级 +0.2，消耗每级 −5%。',
+    });
 
     /* ---------------- 星辉 ---------------- */
     P('星辉灌注', {
@@ -125,6 +141,22 @@
         tree: 'star', cost: 15, costG: 2.3, max: 5, eff: { speed: 0.1 },
         desc: '世界流速每级 +10%。',
     });
+    P('并行法阵', {
+        tree: 'star', cost: 4, costG: 2.4, max: 3, eff: { queueSlots: 2 },
+        desc: '让同一座城市的两个瞬间同时开工。建造队列 +2 个槽位（每级递增）。',
+    });
+    P('时间折叠', {
+        tree: 'star', cost: 4, costG: 2.2, max: 5, eff: { queueSpeed: 0.2 },
+        desc: '把工期折起来。建造与研究速度每级 +20%。',
+    });
+    P('星界召唤', {
+        tree: 'star', cost: 6, costG: 2.1, max: 6, eff: { heroPower: 0.4 },
+        desc: '让传送阵连到更远的星界。所有英雄的效果每级 +40%。',
+    });
+    P('命运编织', {
+        tree: 'star', cost: 7, costG: 2.2, max: 5, eff: { luck: 0.5, summonDiscount: 0.08 },
+        desc: '亲手编一段更好的运气。召唤运气每级 +0.5，召唤消耗每级 −8%。',
+    });
 
     /* ---------------- 原初之核 ---------------- */
     P('原初之力', {
@@ -150,6 +182,10 @@
     P('虚空自转', {
         tree: 'core', cost: 5, max: 1, special: 'offlinePerfect',
         desc: '你不在时，城市依然以全效率运转：离线收益不再打 50% 折扣。',
+    });
+    P('万界共鸣', {
+        tree: 'core', cost: 2, costG: 2.5, max: 3, eff: { heroPower: 1.0, queueSlots: 2 },
+        desc: '让所有时间线的英雄同时回应你：英雄效果每级 +100%，建造队列每级 +2 槽位。',
     });
 
     window.PERMANENT_CONFIG = REG;

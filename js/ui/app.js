@@ -9,6 +9,7 @@
         { id: 'upgrades', name: '升级', icon: '⚗️', render: () => TabResearch.renderUpgrades() },
         { id: 'policies', name: '国策', icon: '⚖️', render: () => TabAscend.renderPolicies() },
         { id: 'expedition', name: '远征', icon: '⚔️', render: () => TabWorld.renderExpedition() },
+        { id: 'summon', name: '召唤', icon: '🔮', gate: s => s.techs['召唤法阵'] && s.techs['召唤法阵'].researched, render: () => TabSummon.renderSummon() },
         { id: 'market', name: '贸易', icon: '🪙', render: () => TabWorld.renderMarket() },
         { id: 'ascend', name: '传承', icon: '✦', render: () => TabAscend.renderAscend() },
         { id: 'achievements', name: '成就', icon: '🏆', render: () => TabWorld.renderAchievements() },
@@ -18,6 +19,11 @@
     let tabBody = null;
     let pointerDown = false;        // 鼠标按下（点击 / 拖动滑杆）期间冻结重绘
     let renderQueued = false;
+
+    /* 有解锁条件的标签页（例如「召唤」需要研究召唤法阵） */
+    function visibleTabs() {
+        return TABS.filter(t => !t.gate || t.gate(GameState));
+    }
 
     /* ---------------- 标签徽标 ---------------- */
     function badges() {
@@ -41,13 +47,18 @@
         let regions = 0;
         for (const r of EXPEDITIONS_CONFIG) if (ExpeditionEngine.canStart(s, r).ok) regions++;
         out.expedition = regions;
+        if (s.techs['召唤法阵'] && s.techs['召唤法阵'].researched && s.heroes) {
+            const p = s.heroes.pity;
+            const ready = (p.A >= GACHA_CONFIG.pity.A || p.S >= GACHA_CONFIG.pity.S || p.EX >= GACHA_CONFIG.pity.EX);
+            out.summon = ready ? 1 : 0;
+        }
         return out;
     }
 
     function renderTabs() {
         const b = badges();
         let html = '';
-        for (const t of TABS) {
+        for (const t of visibleTabs()) {
             const n = b[t.id] || 0;
             html += '<div class="tab' + (activeTab === t.id ? ' active' : '') + '" data-act="tab|' + t.id + '">' +
                 '<span>' + t.icon + '</span><span>' + t.name + '</span>' +
@@ -70,6 +81,7 @@
         Panels.renderActions();
         Panels.renderEvent();
         Panels.renderExpeditionPanel();
+        Panels.renderQueue();
         Panels.renderLog();
         Panels.renderStats();
         renderTabs();
@@ -79,7 +91,9 @@
             content.innerHTML = '<div id="tab-body"></div>';
             tabBody = document.getElementById('tab-body');
         }
-        const tab = TABS.find(t => t.id === activeTab) || TABS[0];
+        const tabs = visibleTabs();
+        const tab = tabs.find(t => t.id === activeTab) || tabs[0];
+        if (tab.id !== activeTab) activeTab = tab.id;      // 当前标签被隐藏时自动切回第一个
         G.setHTML(tabBody, tab.render());
     }
 
@@ -151,6 +165,21 @@
             case 'exp': {
                 const r = Actions.startExpedition(s, arg1);
                 G.toast(r.msg, r.ok ? 'gold' : 'bad');
+                break;
+            }
+            case 'summon': {
+                const r = Heroes.summon(s, Number(arg1) || 1);
+                if (!r.ok) { G.toast(r.msg, 'bad'); break; }
+                const heroes = r.results.filter(x => x.type === 'hero');
+                const names = heroes.map(x => x.rarity + '·' + x.hero.name);
+                G.toast('🔮 召唤 ×' + r.results.length + (names.length
+                    ? '：' + names.slice(0, 4).join('、') + (names.length > 4 ? ' 等' : '')
+                    : '（没有英雄回应）'), r.best === 'EX' ? 'gold' : '');
+                break;
+            }
+            case 'queuecancel': {
+                const r = QueueEngine.cancel(s, arg1);
+                G.toast(r.msg || '', r.ok ? '' : 'bad');
                 break;
             }
             case 'equip': {
@@ -330,9 +359,10 @@
     /* ---------------- 快捷键 ---------------- */
     document.addEventListener('keydown', e => {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        const tabs = visibleTabs();
         const idx = Number(e.key);
-        if (idx >= 1 && idx <= TABS.length) {
-            activeTab = TABS[idx - 1].id;
+        if (idx >= 1 && idx <= tabs.length) {
+            activeTab = tabs[idx - 1].id;
             render();
         }
         if (e.key === ' ') {

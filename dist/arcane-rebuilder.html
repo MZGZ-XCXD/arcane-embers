@@ -431,6 +431,85 @@ h1, h2, h3, .serif { font-family: "Palatino Linotype", "Songti SC", Georgia, ser
 
 /* ---------------- 进度条 / 远征 ---------------- */
 .expedition-region { display: flex; flex-direction: column; gap: 6px; font-size: .78rem; }
+
+/* ---------------- 建造队列 ---------------- */
+.queue-list { display: flex; flex-direction: column; gap: 6px; max-height: 34vh; overflow-y: auto; }
+.queue-item {
+    background: var(--bg-card); border: 1px solid var(--border-card);
+    border-radius: 9px; padding: 6px 8px; cursor: help;
+}
+.q-head { display: flex; gap: 6px; align-items: baseline; font-size: .76rem; }
+.q-kind {
+    font-size: .62rem; padding: 1px 5px; border-radius: 5px;
+    background: var(--bg-sunken); color: var(--text-dim); border: 1px solid var(--border);
+}
+.q-name {
+    font-weight: 600; color: var(--text); flex: 1 1 auto;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.q-time { color: var(--accent-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.q-foot { margin-top: 5px; }
+.card-name .tag.queue { color: var(--accent); border-color: var(--accent); }
+
+/* ---------------- 传送阵（召唤） ---------------- */
+.summon-panel {
+    display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+    background: var(--bg-card); border: 1px solid var(--border-card);
+    border-radius: 12px; padding: 14px; margin-bottom: 10px;
+}
+.summon-circle {
+    position: relative; width: 112px; height: 112px; flex: 0 0 112px;
+    border-radius: 50%; border: 2px solid var(--accent);
+    box-shadow: var(--glow);
+    display: flex; align-items: center; justify-content: center;
+}
+.summon-circle span { font-size: 2rem; color: var(--accent-2); }
+.summon-circle i, .summon-circle b {
+    position: absolute; inset: 9px; border-radius: 50%;
+    border: 1px dashed var(--border-hover);
+    animation: summon-spin 14s linear infinite;
+}
+.summon-circle b { inset: 24px; border-style: dotted; animation-direction: reverse; animation-duration: 9s; }
+@keyframes summon-spin { to { transform: rotate(360deg); } }
+.summon-controls { flex: 1 1 260px; display: flex; flex-direction: column; gap: 6px; }
+.summon-cost { font-size: .76rem; color: var(--text-secondary); }
+.pity-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; margin-bottom: 6px; }
+.pity { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 9px; padding: 7px 9px; font-size: .76rem; }
+.summon-log { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.summon-item {
+    display: flex; flex-direction: column; gap: 1px;
+    padding: 6px 8px; border-radius: 8px;
+    background: var(--bg-card); border: 1px solid var(--border-card);
+    border-left: 3px solid var(--rar);
+}
+.summon-item .si-rar { font-size: .62rem; color: var(--rar); letter-spacing: 1px; }
+.summon-item .si-name { font-size: .78rem; font-weight: 600; color: var(--text); }
+.summon-item .si-sub { font-size: .68rem; color: var(--text-dim); }
+.hero-group { margin-bottom: 12px; }
+.hero-group-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 9px; border-radius: 9px; margin-bottom: 8px;
+    background: var(--bg-panel); border: 1px solid var(--border);
+    border-left: 3px solid var(--rar);
+}
+.hero-group-head .right { margin-left: auto; }
+.rar {
+    font-size: .66rem; padding: 1px 6px; border-radius: 6px;
+    color: var(--rar); border: 1px solid var(--rar); letter-spacing: 1px;
+}
+.hero-card {
+    background: var(--bg-card); border: 1px solid var(--border-card);
+    border-left: 3px solid var(--rar); border-radius: 10px; padding: 9px 10px;
+}
+.hero-card.locked { opacity: .55; }
+.hero-card.owned { background: linear-gradient(180deg, rgba(255,255,255,.035), transparent); }
+.hero-head { display: flex; align-items: center; gap: 6px; font-size: .68rem; color: var(--text-dim); }
+.hero-awaken { margin-left: auto; color: var(--accent-2); }
+.hero-name { font-size: .92rem; font-weight: 600; color: var(--text-heading); margin: 3px 0; }
+.hero-desc { font-size: .74rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 5px; }
+.hero-eff { font-size: .74rem; }
+.hero-eff .row { display: flex; justify-content: space-between; gap: 8px; }
+.hero-eff.dim { color: var(--text-dim); }
 .chip-row { display: flex; flex-wrap: wrap; gap: 5px; }
 .chip {
     font-size: .72rem; padding: 2px 7px; border-radius: 20px;
@@ -574,6 +653,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     </main>
 
     <aside class="log-panel">
+      <section class="panel" id="panel-queue"></section>
       <section class="panel" id="panel-event"></section>
       <section class="panel" id="panel-expedition"></section>
       <section class="panel" id="panel-log"></section>
@@ -1155,6 +1235,11 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         era: 3, cost: { 魔法知识: 200, 石料: 3000, 木材: 2000, 铁锭: 200 }, pre: ['冶炼术', '初级建筑'],
         desc: '拱券、扶壁与配重。解锁「石砌宅邸」与「石砌地窖」。',
     });
+    T('召唤法阵', {
+        era: 3, cost: { 魔法知识: 2500, 魔晶: 600, 符文: 300, 黄金: 1200 }, pre: ['咒法学', '天文学'],
+        eff: { luck: 0.1 },
+        desc: '把咒式直接刻进地面，让别处的「可能性」落进这座城市。解锁「传送阵」——你可以召唤其它时间线里活下来的英雄。',
+    });
     T('铸币学', {
         era: 3, cost: { 魔法知识: 300, 黄金: 150, 石料: 2000 }, pre: ['冶炼术'],
         desc: '统一的重量与成色，让交易不必再靠互相信任。解锁「金矿」。',
@@ -1644,6 +1729,22 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         tree: 'relic', cost: 20, costG: 2.2, max: 5, eff: { offlineHours: 2 },
         desc: '离线收益时长上限 +2 小时（每级递增）。',
     });
+    P('工坊扩建', {
+        tree: 'relic', cost: 12, costG: 2.1, max: 4, eff: { queueSlots: 1 },
+        desc: '在塔基下再挖出几间工坊。建造队列 +1 个槽位（每级递增）。',
+    });
+    P('疾速施工', {
+        tree: 'relic', cost: 8, costG: 1.85, max: 6, eff: { queueSpeed: 0.12 },
+        desc: '把吊臂与滑轮组重新设计一遍。建造与研究的耗时每级 −10.7%（等价于速度 +12%）。',
+    });
+    P('召唤精通', {
+        tree: 'relic', cost: 15, costG: 1.9, max: 8, eff: { heroPower: 0.15 },
+        desc: '你更懂如何让英雄发挥全力。所有英雄的效果每级 +15%。',
+    });
+    P('命运微光', {
+        tree: 'relic', cost: 18, costG: 2.0, max: 6, eff: { luck: 0.2, summonDiscount: 0.05 },
+        desc: '在传送阵边缘点上一圈微光。召唤运气每级 +0.2，消耗每级 −5%。',
+    });
 
     /* ---------------- 星辉 ---------------- */
     P('星辉灌注', {
@@ -1686,6 +1787,22 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         tree: 'star', cost: 15, costG: 2.3, max: 5, eff: { speed: 0.1 },
         desc: '世界流速每级 +10%。',
     });
+    P('并行法阵', {
+        tree: 'star', cost: 4, costG: 2.4, max: 3, eff: { queueSlots: 2 },
+        desc: '让同一座城市的两个瞬间同时开工。建造队列 +2 个槽位（每级递增）。',
+    });
+    P('时间折叠', {
+        tree: 'star', cost: 4, costG: 2.2, max: 5, eff: { queueSpeed: 0.2 },
+        desc: '把工期折起来。建造与研究速度每级 +20%。',
+    });
+    P('星界召唤', {
+        tree: 'star', cost: 6, costG: 2.1, max: 6, eff: { heroPower: 0.4 },
+        desc: '让传送阵连到更远的星界。所有英雄的效果每级 +40%。',
+    });
+    P('命运编织', {
+        tree: 'star', cost: 7, costG: 2.2, max: 5, eff: { luck: 0.5, summonDiscount: 0.08 },
+        desc: '亲手编一段更好的运气。召唤运气每级 +0.5，召唤消耗每级 −8%。',
+    });
 
     /* ---------------- 原初之核 ---------------- */
     P('原初之力', {
@@ -1711,6 +1828,10 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     P('虚空自转', {
         tree: 'core', cost: 5, max: 1, special: 'offlinePerfect',
         desc: '你不在时，城市依然以全效率运转：离线收益不再打 50% 折扣。',
+    });
+    P('万界共鸣', {
+        tree: 'core', cost: 2, costG: 2.5, max: 3, eff: { heroPower: 1.0, queueSlots: 2 },
+        desc: '让所有时间线的英雄同时回应你：英雄效果每级 +100%，建造队列每级 +2 槽位。',
     });
 
     window.PERMANENT_CONFIG = REG;
@@ -1777,6 +1898,18 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         s => s.techs['虚空撕裂'].researched, { globalProd: 0.3 }, '所有建筑产出 +30%');
     A('长夜之后', '累计游戏时长达到 24 小时。',
         s => s.stats.playSeconds >= 86400, { happiness: 50, knowledgeProd: 0.1 }, '民望 +50，魔法知识 +10%');
+    A('初次召唤', '在传送阵完成第一次召唤。',
+        s => s.heroes && s.heroes.pulls >= 1, { happiness: 10 }, '民望 +10');
+    A('幸运之子', '召唤到第一位 S 级英雄。',
+        s => s.heroes && (s.heroes.byRarity.S || 0) >= 1, { luck: 0.1 }, '召唤运气 +0.1');
+    A('神话降临', '召唤到第一位 EX 级英雄。',
+        s => s.heroes && (s.heroes.byRarity.EX || 0) >= 1, { heroPower: 0.15 }, '英雄效果 +15%');
+    A('英雄殿堂', '收集 15 位不同的英雄。',
+        s => s.heroes && Object.keys(s.heroes.owned).length >= 15, { heroPower: 0.1 }, '英雄效果 +10%');
+    A('工坊大师', '把建造队列扩展到 8 个槽位。',
+        s => window.QueueEngine && QueueEngine.slots(s) >= 8, { queueSpeed: 0.08 }, '建造与研究速度 +8%');
+    A('城建大师', '累计建成 300 座建筑。',
+        s => (s.stats.totalBuildingBuilt || 0) >= 300, { queueSpeed: 0.05 }, '建造与研究速度 +5%');
 
     window.ACHIEVEMENTS_CONFIG = LIST;
 })();
@@ -2241,6 +2374,114 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 })();
 
 </script>
+<script>
+/* ===== js/config/heroes.js ===== */
+/* =========================================================
+   英雄与传送阵（抽卡）
+   RARITIES  : C < B < A < S < EX 五档，mult 是效果倍率
+   CATEGORIES: 英雄的分类与基础效果（实际效果 = 基础效果 × 稀有度倍率 × 觉醒加成）
+   HEROES    : 卡池中的英雄；extra 用于少数英雄的额外效果
+   GACHA     : 召唤消耗、概率权重、保底次数
+   ========================================================= */
+(function () {
+    const RARITIES = {
+        C:  { key: 'C',  name: 'C 级',  title: '学徒', weight: 42,  mult: 1,   dupRelic: 1,  color: '#9aa4b2' },
+        B:  { key: 'B',  name: 'B 级',  title: '能手', weight: 26,  mult: 2.2, dupRelic: 3,  color: '#57d99a' },
+        A:  { key: 'A',  name: 'A 级',  title: '大师', weight: 12,  mult: 4.5, dupRelic: 8,  color: '#5aa9ff' },
+        S:  { key: 'S',  name: 'S 级',  title: '传奇', weight: 4.5, mult: 9,   dupRelic: 25, color: '#c98bff' },
+        EX: { key: 'EX', name: 'EX 级', title: '神话', weight: 0.8, mult: 20,  dupRelic: 100, color: '#ff6b6b' },
+    };
+
+    const CATEGORIES = {
+        战力: { key: '战力', icon: '⚔️', desc: '提升军力与远征战力',   effect: { powerMult: 0.15, expeditionPower: 0.1 } },
+        资源: { key: '资源', icon: '🌾', desc: '提升所有建筑的产出',   effect: { globalProd: 0.08 } },
+        仓储: { key: '仓储', icon: '📦', desc: '提升所有资源的存量上限', effect: { capAll: 0.15 } },
+        知识: { key: '知识', icon: '📖', desc: '提升魔法知识产出',     effect: { knowledgeProd: 0.2 } },
+        工程: { key: '工程', icon: '🔧', desc: '加快建造与研究速度',   effect: { queueSpeed: 0.15 } },
+        经济: { key: '经济', icon: '🪙', desc: '提升贸易规模与黄金产出', effect: { marketVolume: 0.3, resourceProd: { 黄金: 0.25 } } },
+        民生: { key: '民生', icon: '🏡', desc: '提升民望与人口上限',   effect: { happiness: 40, populationCap: 0.08 } },
+        远征: { key: '远征', icon: '🧭', desc: '提升远征收益',        effect: { expeditionReward: 0.3, expeditionPower: 0.12 } },
+        幸运: { key: '幸运', icon: '🍀', desc: '提升抽卡运气并降低召唤消耗', effect: { luck: 0.3, summonDiscount: 0.06 } },
+        命运: { key: '命运', icon: '🌌', desc: '提升重置时获得的奥术遗物', effect: { relicGain: 0.12 } },
+    };
+
+    const HEROES = [];
+    function H(name, rarity, category, desc, extra) {
+        HEROES.push({ id: name, name: name, rarity: rarity, category: category, desc: desc, extra: extra || null });
+    }
+
+    /* ---------------- C 级：学徒 ---------------- */
+    H('拾荒学徒', 'C', '资源', '背着破麻袋在废墟里翻找，总能带回点别人不要的东西。');
+    H('见习修士', 'C', '知识', '负责抄写和点灯，手指常年沾着墨水。');
+    H('半精灵斥候', 'C', '远征', '脚步很轻，能记住三天前走过的路。');
+    H('石匠帮工', 'C', '仓储', '力气大，搬石头时从不抱怨。');
+    H('集市伙计', 'C', '经济', '记得每个摊位的价格，也记得谁欠谁的钱。');
+    H('草药学徒', 'C', '民生', '分得清哪种叶子能止血、哪种只会让人发笑。');
+    H('塔楼守卫', 'C', '战力', '整夜不睡，只为了盯住北边那条路。');
+    H('铭文学徒', 'C', '工程', '刻坏过一百块石板，现在很少刻错了。');
+
+    /* ---------------- B 级：能手 ---------------- */
+    H('巡回讲法师', 'B', '知识', '带着一车书在各个聚落之间来回讲课。');
+    H('符文刻工', 'B', '工程', '手上有一层洗不掉的石粉，刻出来的符文从不出错。');
+    H('银月游侠', 'B', '远征', '只在新月之夜出没，箭袋里总多带三支。');
+    H('炼金术士', 'B', '资源', '能把没用的矿渣变成能用的粉末。');
+    H('商队护卫', 'B', '经济', '收钱办事，但从不护送明显送死的活。');
+    H('战地医师', 'B', '民生', '在血腥味里吃饭也不皱眉。');
+    H('铁砧锻造师', 'B', '仓储', '打的货架能压住三头牛。');
+    H('塔盾队长', 'B', '战力', '一面盾能挡住一整条巷子。');
+
+    /* ---------------- A 级：大师 ---------------- */
+    H('咒法学院首席', 'A', '知识', '把六十三项咒式背成了呼吸的节奏。');
+    H('秘银锻造大师', 'A', '仓储', '他造的箱子连空间都塞得进去。');
+    H('龙脉守望者', 'A', '战力', '守着一道早已断裂的龙脉，谁靠近谁死。');
+    H('星象术士', 'A', '工程', '按星位安排工期，说哪天动土就哪天动土。');
+    H('瘟疫医师', 'A', '民生', '戴着鸟嘴面具走街串巷，救活过一整座城。');
+    H('命运之骰', 'A', '幸运', '一名赌徒。据说他从来只输给自己。');
+
+    /* ---------------- S 级：传奇 ---------------- */
+    H('时之贤者', 'S', '工程', '她的工坊里同时进行着昨天和明天的活。', { queueSlots: 1 });
+    H('世界树祭司', 'S', '资源', '在世界树的根系之间走动，脚下的土地都变得更肥。');
+    H('虚空织法者', 'S', '知识', '把虚空当作织机，把知识当作线。');
+    H('圣殿大主教', 'S', '民生', '一开口，争吵的人都安静下来。');
+    H('星界舰长', 'S', '远征', '她的船不需要空气，也不需要方向。');
+    H('遗物守护者', 'S', '命运', '能听见时间线崩塌时碎片落下的声音。');
+
+    /* ---------------- EX 级：神话 ---------------- */
+    H('最后一位浮空城主', 'EX', '战力', '大崩坏那天他没有逃。他把整座城压成了一个人的脊梁。', { powerMult: 0.5 });
+    H('原初之龙·灰烬之翼', 'EX', '资源', '它睡在灰烬森林深处。呼吸之间，土地重新长出东西。', { globalProd: 0.25 });
+    H('世界意志·静默之声', 'EX', '幸运', '它不说话，只是让你想要的东西更容易来到你手里。',
+        { queueSlots: 2, queueSpeed: 0.5, luck: 0.5, summonDiscount: 0.15 });
+
+    const GACHA = {
+        /* 每次召唤的消耗（×10 时享受 batchDiscount 折扣） */
+        costs: { 魔力: 1200, 魔晶: 80, 符文: 40 },
+        batchSize: 10,
+        batchDiscount: 0.1,
+        /* 非英雄结果 */
+        rewardWeight: 12,
+        emptyWeight: 2.7,
+        /* 保底：连续多少次没有获得该档位以上，则下一次必定获得 */
+        pity: { A: 10, S: 60, EX: 250 },
+        /* 幸运（luck）只影响这两档的权重 */
+        luckRarities: ['S', 'EX'],
+        luckCap: 2,            // 幸运最多把 S / EX 权重提升到 3 倍
+        discountCap: 0.8,      // 召唤消耗最多减免 80%
+        awakeningMax: 5,
+        awakeningStep: 0.3,
+        /* 资源奖励按玩家当前上限的比例发放 */
+        rewardRes: ['木材', '石料', '铁矿', '木炭', '食物', '黄金', '铁锭', '魔晶', '符文'],
+        rewardMin: 0.12,
+        rewardMax: 0.35,
+        rewardCount: [1, 3],
+    };
+
+    window.HERO_RARITIES = RARITIES;
+    window.HERO_CATEGORIES = CATEGORIES;
+    window.HEROES_CONFIG = HEROES;
+    window.GACHA_CONFIG = GACHA;
+})();
+
+</script>
 
 <!-- ===== 引擎（与界面解耦） ===== -->
 <script>
@@ -2338,7 +2579,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 /* ===== js/engine/state.js ===== */
 /* 游戏状态与资源管理 */
 (function () {
-    const SAVE_VERSION = 3;
+    const SAVE_VERSION = 4;
 
     /* 全局唯一状态对象（引用始终不变，便于各模块共享） */
     const GameState = {
@@ -2358,6 +2599,8 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         achievements: {},
         challenges: {},
         artifacts: { inventory: [], equipped: [], slots: 3 },
+        queue: { items: [] },
+        heroes: null,
         market: { resources: {}, heat: {}, volume: 0, trades: 0 },
         expedition: { active: null, auto: false, history: [] },
         activeEffects: [],
@@ -2400,6 +2643,18 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         };
     }
 
+    /* 英雄与召唤的初始状态 */
+    function freshHeroes() {
+        return {
+            owned: {},                          // 英雄 id → 觉醒等级（0~5）
+            pity: { A: 0, S: 0, EX: 0 },        // 距离上次获得该档位以上的抽数
+            pulls: 0,
+            byRarity: { C: 0, B: 0, A: 0, S: 0, EX: 0 },
+            dupRelics: 0,
+            history: [],
+        };
+    }
+
     function initState() {
         const s = GameState;
         s.version = SAVE_VERSION;
@@ -2418,6 +2673,8 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         s.achievements = {};
         s.challenges = {};
         s.artifacts = { inventory: [], equipped: [], slots: 3 };
+        s.queue = { items: [] };
+        s.heroes = freshHeroes();
         s.market = { resources: {}, heat: {}, volume: 0, trades: 0 };
         s.expedition = { active: null, auto: false, history: [] };
         s.activeEffects = [];
@@ -2513,6 +2770,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 
     window.GameState = GameState;
     window.initState = initState;
+    window.freshHeroes = freshHeroes;
     window.SAVE_VERSION = SAVE_VERSION;
     window.ResourcesManager = ResourcesManager;
 })();
@@ -2531,6 +2789,8 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         'populationCap', 'relicGain', 'resetGain', 'expeditionPower',
         'expeditionReward', 'speed', 'marketVolume', 'artifactQuality',
         'capPerRelic', 'knowledgeCapPerRelic', 'offlineHours',
+        /* 建造队列与英雄召唤相关 */
+        'queueSlots', 'queueSpeed', 'powerMult', 'luck', 'summonDiscount', 'heroPower',
     ];
 
     function emptyEffects() {
@@ -2656,6 +2916,20 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
             for (const eff of art.effects) applyEffect(e, eff, 1, '秘宝·' + art.name);
         }
 
+        /* 英雄：分类效果 × 稀有度倍率 × 觉醒加成 × 传承「英雄共鸣」加成 */
+        if (state.heroes && state.heroes.owned && window.Heroes) {
+            const heroMult = 1 + (e.heroPower || 0);
+            for (const item of Heroes.ownedEffects(state)) {
+                const scaled = {}, plain = {};
+                for (const k in item.effect) {
+                    if (k === 'queueSlots') plain[k] = item.effect[k];   // 槽位是整数，不随觉醒缩放
+                    else scaled[k] = item.effect[k];
+                }
+                applyEffect(e, scaled, item.mult * heroMult, '英雄·' + item.hero.name);
+                applyEffect(e, plain, 1, '英雄·' + item.hero.name);
+            }
+        }
+
         /* 随机事件带来的临时效果 */
         for (const ae of state.activeEffects) {
             applyEffect(e, ae.effect, 1, '事件·' + ae.name);
@@ -2748,6 +3022,13 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         const cfg = BUILDINGS_CONFIG[name];
         const b = state.buildings[name];
         return stdCost(cfg.cost, cfg.growth, b.count, costMultiplier(state));
+    }
+
+    /* 指定「已建数量」时的价格（队列里批量建造需要预扣多座的成本） */
+    function buildingPriceCount(state, name, count) {
+        const cfg = BUILDINGS_CONFIG[name];
+        if (!cfg) return {};
+        return stdCost(cfg.cost, cfg.growth, count, costMultiplier(state));
     }
 
     function upgradePrice(state, name) {
@@ -2884,7 +3165,10 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
             }
             for (const lr in r.providesLocal) {
                 const v = r.providesLocal[lr] * effActive;
-                state.localResources[lr].capacity += (lr === 'population') ? v * (1 + (e.populationCap || 0)) : v;
+                let mult = 1;
+                if (lr === 'population') mult = 1 + (e.populationCap || 0);
+                else if (lr === 'power') mult = 1 + (e.powerMult || 0);
+                state.localResources[lr].capacity += v * mult;
             }
             for (const lr in r.requiresLocal) {
                 state.localResources[lr].used += r.requiresLocal[lr] * effActive;
@@ -3129,6 +3413,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         computeProductionAndCaps,
         updatePrices,
         buildingPrice,
+        buildingPriceCount,
         upgradePrice,
         getBuildingStats,
         getResourceContributions,
@@ -3462,6 +3747,479 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 
 </script>
 <script>
+/* ===== js/engine/queue.js ===== */
+/* =========================================================
+   建造队列
+   建造 / 研究 / 升级 都改为「先排队、再倒计时完成」。
+   队列槽位初始 5 个，可通过传承强化与英雄提升；槽位之间并行施工。
+   ========================================================= */
+(function () {
+    let seq = 1;
+
+    const KIND_LABEL = { building: '建造', tech: '研究', upgrade: '升级' };
+
+    /* 队列槽位数：基础 5 + 传承 / 英雄加成 */
+    function slots(state) {
+        const e = EffectsManager.get(state);
+        return Math.max(1, Math.floor(5 + (e.queueSlots || 0)));
+    }
+    /* 施工速度加成 */
+    function speed(state) {
+        const e = EffectsManager.get(state);
+        return Math.max(0.1, 1 + (e.queueSpeed || 0));
+    }
+    function items(state) { return state.queue.items; }
+    function used(state) { return state.queue.items.length; }
+    function isFull(state) { return used(state) >= slots(state); }
+
+    /* 资源折算价值：有市场价按市场价，传承资源按 20，其它（魔力/知识/政策点）按 4 */
+    function valueOf(map) {
+        let v = 0;
+        for (const k in map) {
+            const cfg = RESOURCES_CONFIG[k];
+            let unit = 4;
+            if (cfg) unit = cfg.value || (cfg.prestige ? 20 : 4);
+            v += (map[k] || 0) * unit;
+        }
+        return v;
+    }
+
+    function unitDays(kind, value) {
+        if (kind === 'building') return 3 + 2.5 * Math.log(1 + value) + Math.min(0.0002 * value, 300);
+        if (kind === 'tech') return 6 + 4 * Math.log(1 + value) + Math.min(0.0003 * value, 400);
+        return 4 + 2.2 * Math.log(1 + value) + Math.min(0.0001 * value, 120);
+    }
+
+    /* 工期 = 每单位工期 × 数量（按平均成本估算），再除以施工速度 */
+    function durationOf(state, kind, totalCost, count) {
+        const avg = valueOf(totalCost) / Math.max(1, count);
+        const days = unitDays(kind, avg) * Math.max(1, count);
+        return Utils.clamp(days / speed(state), 1, 1200);
+    }
+
+    /* 计算批量建造某些建筑的总价（价格随已建数量增长） */
+    function batchPrice(state, name, count) {
+        const total = {};
+        const b = state.buildings[name];
+        const cfg = BUILDINGS_CONFIG[name];
+        if (!b || !cfg) return total;
+        const costMult = ProductionEngine.costMultiplier(state);
+        for (let i = 0; i < count; i++) {
+            const price = ProductionEngine.buildingPriceCount(state, name, b.count + i);
+            for (const k in price) total[k] = (total[k] || 0) + price[k];
+        }
+        return total;
+    }
+
+    /* 入口：把一次建造 / 研究 / 升级放进队列 */
+    function enqueue(state, kind, name, count) {
+        if (count === 'max') count = 10;           // 「最大」最多一次排 10 座，避免排到天荒地老
+        count = Math.max(1, Math.min(25, Math.floor(count || 1)));
+        if (state.queue.items.some(it => it.kind === kind && it.name === name)) {
+            return { ok: false, msg: (kind === 'tech' ? '「' + name + '」已在研究队列中。' : '「' + name + '」已在队列中。') };
+        }
+        if (isFull(state)) return { ok: false, msg: '队列已满（' + used(state) + ' / ' + slots(state) + '），请等待或取消一项。' };
+
+        let cost = {};
+        if (kind === 'building') {
+            const b = state.buildings[name];
+            const cfg = BUILDINGS_CONFIG[name];
+            if (!b || !b.unlocked) return { ok: false, msg: '尚未解锁。' };
+            /* 逐座累加，直到买不起为止；只在实际扣除时结算 */
+            const paid = {};
+            let can = 0;
+            for (let i = 0; i < count; i++) {
+                const price = ProductionEngine.buildingPriceCount(state, name, b.count + i);
+                let affordable = true;
+                for (const k in price) {
+                    const have = (state.resources[k] ? state.resources[k].amount : 0) - (paid[k] || 0);
+                    if (have + 1e-9 < price[k]) { affordable = false; break; }
+                }
+                if (!affordable) break;
+                for (const k in price) paid[k] = (paid[k] || 0) + price[k];
+                can++;
+            }
+            if (!can) return { ok: false, msg: '资源不足。' };
+            ResourcesManager.spend(paid);
+            cost = paid;
+            count = can;
+        } else if (kind === 'tech') {
+            const t = state.techs[name];
+            const cfg = TECHS_CONFIG[name];
+            if (!t || !cfg || t.researched) return { ok: false, msg: '该科技已完成。' };
+            if (!ProductionEngine.techAvailable(state, name)) return { ok: false, msg: '前置科技尚未完成。' };
+            if (!ResourcesManager.canAfford(cfg.cost)) return { ok: false, msg: '研究所需资源不足。' };
+            ResourcesManager.spend(cfg.cost);
+            cost = cfg.cost;
+            count = 1;
+        } else if (kind === 'upgrade') {
+            const u = state.upgrades[name];
+            const cfg = UPGRADES_CONFIG[name];
+            if (!u || !cfg || !u.visible) return { ok: false, msg: '尚未解锁。' };
+            if (u.level >= cfg.cap) return { ok: false, msg: '已达到等级上限。' };
+            const price = ProductionEngine.upgradePrice(state, name);
+            if (!ResourcesManager.canAfford(price)) return { ok: false, msg: '资源不足。' };
+            ResourcesManager.spend(price);
+            cost = price;
+            count = 1;
+        } else {
+            return { ok: false, msg: '未知的队列类型。' };
+        }
+
+        const dur = durationOf(state, kind, cost, count);
+        const item = {
+            id: 'q' + (seq++),
+            kind: kind,
+            name: name,
+            count: count,
+            cost: cost,
+            start: state.gameDays,
+            end: state.gameDays + dur,
+            dur: dur,
+        };
+        state.queue.items.push(item);
+        EventEngine.addLog(state, '🛠️ ' + KIND_LABEL[kind] + '「' + name + '」×' + count +
+            ' 已加入队列，预计 ' + Utils.fmtDuration(dur) + '。');
+        ProductionEngine.updatePrices(state);
+        ProductionEngine.computeProductionAndCaps(state);
+        return { ok: true, item: item, msg: '已加入队列：' + name + '（' + Utils.fmtDuration(dur) + '）' };
+    }
+
+    /* 取消并全额退还 */
+    function cancel(state, id) {
+        const idx = state.queue.items.findIndex(it => it.id === id);
+        if (idx < 0) return { ok: false };
+        const item = state.queue.items[idx];
+        for (const k in item.cost) {
+            const r = state.resources[k];
+            if (!r) continue;
+            r.amount = Math.min(r.cap, r.amount + item.cost[k]);
+        }
+        state.queue.items.splice(idx, 1);
+        EventEngine.addLog(state, '↩️ 已取消' + KIND_LABEL[item.kind] + '「' + item.name + '」，材料已退回。');
+        ProductionEngine.updatePrices(state);
+        ProductionEngine.computeProductionAndCaps(state);
+        return { ok: true, msg: '已取消：' + item.name };
+    }
+
+    function clear(state) {
+        state.queue.items = [];
+    }
+
+    function progress(state, item) {
+        return Utils.clamp((state.gameDays - item.start) / Math.max(1e-6, item.end - item.start), 0, 1);
+    }
+    function remaining(state, item) {
+        return Math.max(0, item.end - state.gameDays);
+    }
+
+    /* 完成结算 */
+    function complete(state, item) {
+        if (item.kind === 'building') {
+            const b = state.buildings[item.name];
+            if (b) {
+                b.count += item.count;
+                b.active += item.count;
+                state.stats.totalBuildingBuilt += item.count;
+            }
+            EventEngine.addLog(state, '🏗️ 建成「' + item.name + '」×' + item.count + '。');
+        } else if (item.kind === 'tech') {
+            const t = state.techs[item.name];
+            const cfg = TECHS_CONFIG[item.name];
+            if (t) t.researched = true;
+            EventEngine.addLog(state, '📖 完成研究「' + item.name + '」：' + (cfg ? cfg.desc : ''));
+        } else if (item.kind === 'upgrade') {
+            const u = state.upgrades[item.name];
+            if (u) u.level++;
+            EventEngine.addLog(state, '⚗️ 升级完成「' + item.name + '」→ 等级 ' + (u ? u.level : 1) + '。');
+        }
+        if (window.UI && UI.toast) {
+            UI.toast((item.kind === 'tech' ? '📖 研究完成：' : (item.kind === 'upgrade' ? '⚗️ 升级完成：' : '🏗️ 建造完成：')) + item.name +
+                (item.count > 1 ? ' ×' + item.count : ''), 'gold');
+        }
+        ProductionEngine.updatePrices(state);
+        ProductionEngine.computeProductionAndCaps(state);
+        if (item.kind === 'tech' && window.AchievementEngine) AchievementEngine.check(state);
+    }
+
+    /* 每 tick 推进 */
+    function tick(state) {
+        if (!state.queue || !state.queue.items.length) return;
+        const done = [];
+        state.queue.items = state.queue.items.filter(it => {
+            if (state.gameDays + 1e-9 >= it.end) { done.push(it); return false; }
+            return true;
+        });
+        for (const it of done) complete(state, it);
+    }
+
+    /* 队列中某目标的总数量（用于卡片角标） */
+    function queuedCount(state, kind, name) {
+        let n = 0;
+        for (const it of state.queue.items) {
+            if (it.kind === kind && it.name === name) n += it.count;
+        }
+        return n;
+    }
+
+    window.QueueEngine = {
+        slots, speed, items, used, isFull, enqueue, cancel, clear,
+        progress, remaining, tick, queuedCount, durationOf, batchPrice, valueOf,
+        KIND_LABEL,
+    };
+})();
+
+</script>
+<script>
+/* ===== js/engine/heroes.js ===== */
+/* =========================================================
+   英雄与传送阵（抽卡引擎）
+   英雄效果 = 分类基础效果 × 稀有度倍率 × 觉醒加成
+   卡池里除了英雄，还有资源奖励与「空」结果；并有 A / S / EX 三档保底。
+   ========================================================= */
+(function () {
+    function heroById(id) {
+        return HEROES_CONFIG.find(h => h.id === id) || null;
+    }
+
+    function scaleEffect(eff, mult) {
+        const out = {};
+        for (const k in eff) {
+            const v = eff[k];
+            if (typeof v === 'number') out[k] = v * mult;
+            else if (typeof v === 'object' && v !== null) {
+                const inner = {};
+                for (const k2 in v) inner[k2] = v[k2] * mult;
+                out[k] = inner;
+            }
+        }
+        return out;
+    }
+
+    /* 单个英雄的完整效果（含额外效果，额外效果不随稀有度缩放） */
+    function heroEffect(hero) {
+        const cat = HERO_CATEGORIES[hero.category];
+        const rarity = HERO_RARITIES[hero.rarity];
+        const eff = cat ? scaleEffect(cat.effect, rarity.mult) : {};
+        if (hero.extra) {
+            for (const k in hero.extra) {
+                if (typeof hero.extra[k] === 'number' && typeof eff[k] === 'number') eff[k] += hero.extra[k];
+                else eff[k] = hero.extra[k];
+            }
+        }
+        return eff;
+    }
+
+    function awakenMultiplier(awaken) {
+        return 1 + GACHA_CONFIG.awakeningStep * (awaken || 0);
+    }
+
+    /* 所有已获得英雄提供的效果（供 effects.js 汇总） */
+    function ownedEffects(state) {
+        const out = [];
+        if (!state.heroes || !state.heroes.owned) return out;
+        for (const id in state.heroes.owned) {
+            const hero = heroById(id);
+            if (!hero) continue;
+            out.push({
+                hero: hero,
+                awaken: state.heroes.owned[id] || 0,
+                mult: awakenMultiplier(state.heroes.owned[id] || 0),
+                effect: heroEffect(hero),
+            });
+        }
+        return out;
+    }
+
+    /* ---------------- 召唤消耗 ---------------- */
+    function pullCost(state, count) {
+        count = Math.max(1, count || 1);
+        const e = EffectsManager.get(state);
+        const discount = Utils.clamp(e.summonDiscount || 0, 0, GACHA_CONFIG.discountCap);
+        const batchMul = count >= GACHA_CONFIG.batchSize ? (1 - GACHA_CONFIG.batchDiscount) : 1;
+        const cost = {};
+        for (const k in GACHA_CONFIG.costs) {
+            cost[k] = Math.max(1, Math.round(GACHA_CONFIG.costs[k] * count * batchMul * (1 - discount)));
+        }
+        return cost;
+    }
+
+    function canSummon(state, count) {
+        const cost = pullCost(state, count);
+        if (!ResourcesManager.canAfford(cost)) return { ok: false, msg: '召唤材料不足。', cost: cost };
+        return { ok: true, cost: cost };
+    }
+
+    /* 幸运对 S / EX 权重的实际倍率（带上限，避免稀有度权重失衡） */
+    function luckMultiplier(state) {
+        return 1 + Math.min(EffectsManager.get(state).luck || 0, GACHA_CONFIG.luckCap);
+    }
+    /* 实际生效的召唤折扣（同样带上限） */
+    function effectiveDiscount(state) {
+        return Utils.clamp(EffectsManager.get(state).summonDiscount || 0, 0, GACHA_CONFIG.discountCap);
+    }
+
+    /* ---------------- 抽取 ---------------- */
+    function pickRarity(state) {
+        const pity = state.heroes.pity;
+        if (pity.EX >= GACHA_CONFIG.pity.EX) return 'EX';
+        if (pity.S >= GACHA_CONFIG.pity.S) return Math.random() < 0.12 ? 'EX' : 'S';
+        if (pity.A >= GACHA_CONFIG.pity.A) return Utils.weightedPick(['A', 'S', 'EX'], k => HERO_RARITIES[k].weight);
+
+        const luck = Math.min(EffectsManager.get(state).luck || 0, GACHA_CONFIG.luckCap);
+        const list = [];
+        for (const key in HERO_RARITIES) list.push(key);
+        const heroWeight = list.reduce((sum, k) => sum + HERO_RARITIES[k].weight * (GACHA_CONFIG.luckRarities.indexOf(k) >= 0 ? (1 + luck) : 1), 0);
+        const total = heroWeight + GACHA_CONFIG.rewardWeight + GACHA_CONFIG.emptyWeight;
+        let roll = Math.random() * total;
+        for (const k of list) {
+            const w = HERO_RARITIES[k].weight * (GACHA_CONFIG.luckRarities.indexOf(k) >= 0 ? (1 + luck) : 1);
+            roll -= w;
+            if (roll <= 0) return k;
+        }
+        roll -= GACHA_CONFIG.rewardWeight;
+        if (roll <= 0) return 'RESOURCE';
+        return 'EMPTY';
+    }
+
+    function pickHero(rarity) {
+        const pool = HEROES_CONFIG.filter(h => h.rarity === rarity);
+        if (!pool.length) return HEROES_CONFIG[0];
+        return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    function rollReward(state) {
+        const cfg = GACHA_CONFIG;
+        const pool = cfg.rewardRes.filter(r => state.resources[r] && state.resources[r].visible);
+        const list = pool.length ? pool : cfg.rewardRes;
+        const n = Utils.rndInt(cfg.rewardCount[0], cfg.rewardCount[1]);
+        const gained = {};
+        for (let i = 0; i < n; i++) {
+            const res = list[Math.floor(Math.random() * list.length)];
+            const r = state.resources[res];
+            if (!r) continue;
+            const amount = Math.max(1, Math.floor(r.cap * Utils.rnd(cfg.rewardMin, cfg.rewardMax)));
+            gained[res] = (gained[res] || 0) + amount;
+        }
+        return { type: 'reward', resources: gained };
+    }
+
+    function rollOnce(state) {
+        const rarity = pickRarity(state);
+        if (rarity === 'RESOURCE') return rollReward(state);
+        if (rarity === 'EMPTY') return { type: 'empty' };
+        const hero = pickHero(rarity);
+        return { type: 'hero', rarity: rarity, hero: hero };
+    }
+
+    function bumpPity(state, result) {
+        const p = state.heroes.pity;
+        const r = result.type === 'hero' ? result.rarity : null;
+        const order = { C: 0, B: 1, A: 2, S: 3, EX: 4 };
+        const rank = r ? order[r] : -1;
+        p.A = rank >= order.A ? 0 : p.A + 1;
+        p.S = rank >= order.S ? 0 : p.S + 1;
+        p.EX = rank >= order.EX ? 0 : p.EX + 1;
+    }
+
+    /* 应用一次抽取结果 */
+    function applyResult(state, result) {
+        if (result.type === 'hero') {
+            const id = result.hero.id;
+            const owned = state.heroes.owned;
+            if (owned[id] === undefined) {
+                owned[id] = 0;
+                result.isNew = true;
+            } else if (owned[id] < GACHA_CONFIG.awakeningMax) {
+                owned[id]++;
+                result.awaken = owned[id];
+            } else {
+                const relic = HERO_RARITIES[result.hero.rarity].dupRelic;
+                ResourcesManager.add({ 奥术遗物: relic });
+                result.dupRelic = relic;
+                state.heroes.dupRelics = (state.heroes.dupRelics || 0) + relic;
+            }
+            state.heroes.byRarity[result.hero.rarity] = (state.heroes.byRarity[result.hero.rarity] || 0) + 1;
+        } else if (result.type === 'reward') {
+            ResourcesManager.add(result.resources);
+        }
+        state.heroes.pulls = (state.heroes.pulls || 0) + 1;
+        bumpPity(state, result);
+        state.heroes.history.unshift({
+            type: result.type,
+            rarity: result.rarity || null,
+            name: result.hero ? result.hero.name : (result.type === 'reward' ? '资源馈赠' : '虚空回响'),
+            isNew: !!result.isNew,
+            awaken: result.awaken,
+            day: state.gameDays,
+        });
+        if (state.heroes.history.length > 30) state.heroes.history.pop();
+    }
+
+    /* 召唤 count 次 */
+    function summon(state, count) {
+        count = Math.floor(count || 0);
+        if (count < 1) return { ok: false, msg: '召唤次数无效。' };
+        const check = canSummon(state, count);
+        if (!check.ok) return check;
+        ResourcesManager.spend(check.cost);
+        const results = [];
+        for (let i = 0; i < count; i++) {
+            const result = rollOnce(state);
+            applyResult(state, result);
+            results.push(result);
+        }
+        ProductionEngine.updatePrices(state);
+        ProductionEngine.computeProductionAndCaps(state);
+        if (window.AchievementEngine) AchievementEngine.check(state);
+        const best = results.reduce((acc, r) => {
+            if (r.type !== 'hero') return acc;
+            const order = { C: 0, B: 1, A: 2, S: 3, EX: 4 };
+            return (order[r.rarity] > order[acc]) ? r.rarity : acc;
+        }, 'C');
+        const heroNames = results.filter(r => r.type === 'hero').map(r => r.hero.name).join('、');
+        EventEngine.addLog(state, '🔮 传送阵召唤 ×' + count + '，最高获得 ' + best + ' 级' +
+            (heroNames ? '（' + heroNames + '）' : '（无英雄回应）'));
+        return { ok: true, results: results, best: best, msg: '召唤完成：获得 ' + results.length + ' 项结果' };
+    }
+
+    /* 汇总统计 */
+    function stats(state) {
+        const h = state.heroes;
+        const owned = Object.keys(h.owned).length;
+        const total = HEROES_CONFIG.length;
+        return {
+            pulls: h.pulls || 0,
+            owned: owned,
+            total: total,
+            byRarity: h.byRarity,
+            dupRelics: h.dupRelics || 0,
+            pity: h.pity,
+            fullCollection: owned >= total,
+        };
+    }
+
+    function ownedCount(state, rarity) {
+        let n = 0;
+        for (const id in state.heroes.owned) {
+            const hero = heroById(id);
+            if (hero && hero.rarity === rarity) n++;
+        }
+        return n;
+    }
+    function totalCount(rarity) {
+        return HEROES_CONFIG.filter(h => h.rarity === rarity).length;
+    }
+
+    window.Heroes = {
+        heroById, heroEffect, awakenMultiplier, ownedEffects,
+        pullCost, canSummon, summon, stats, ownedCount, totalCount,
+        luckMultiplier, effectiveDiscount,
+    };
+})();
+
+</script>
+<script>
 /* ===== js/engine/expedition.js ===== */
 /* =========================================================
    遗迹远征：派出队伍 → 等待若干游戏日 → 按军力判定成败
@@ -3721,36 +4479,11 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 (function () {
 
     /* ---------------- 建筑 ---------------- */
+    /* 购买建筑 = 加入建造队列；真正「建成」由 QueueEngine.complete 结算 */
     function buyBuilding(state, name, amount) {
-        const b = state.buildings[name];
-        const cfg = BUILDINGS_CONFIG[name];
-        if (!b || !b.unlocked) return { ok: false, msg: '尚未解锁。' };
-        amount = amount || 1;
-        let built = 0;
-        if (amount === 'max') {
-            let guard = 0;
-            while (guard++ < 2000) {
-                const price = ProductionEngine.buildingPrice(state, name);
-                if (!ResourcesManager.canAfford(price)) break;
-                ResourcesManager.spend(price);
-                b.count++; b.active++;
-                built++;
-            }
-        } else {
-            for (let i = 0; i < amount; i++) {
-                const price = ProductionEngine.buildingPrice(state, name);
-                if (!ResourcesManager.canAfford(price)) break;
-                ResourcesManager.spend(price);
-                b.count++; b.active++;
-                built++;
-            }
-        }
-        if (!built) return { ok: false, msg: '资源不足。' };
-        state.stats.totalBuildingBuilt += built;
-        if (b.count === built) EventEngine.addLog(state, '建造了「' + name + '」×' + built + '。');
-        ProductionEngine.updatePrices(state);
-        ProductionEngine.computeProductionAndCaps(state);
-        return { ok: true, built: built, msg: '建造「' + name + '」×' + built };
+        const res = QueueEngine.enqueue(state, 'building', name, amount === undefined ? 1 : amount);
+        if (!res.ok) return { ok: false, msg: res.msg };
+        return { ok: true, built: 0, queued: res.item.count, msg: res.msg };
     }
 
     function setBuildingActive(state, name, active) {
@@ -3774,33 +4507,14 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 
     /* ---------------- 科技 ---------------- */
     function research(state, name) {
-        const t = state.techs[name];
-        const cfg = TECHS_CONFIG[name];
-        if (!t || !cfg || t.researched) return { ok: false };
-        if (!ProductionEngine.techAvailable(state, name)) return { ok: false, msg: '前置科技尚未完成。' };
-        if (!ResourcesManager.canAfford(cfg.cost)) return { ok: false, msg: '研究所需资源不足。' };
-        ResourcesManager.spend(cfg.cost);
-        t.researched = true;
-        EventEngine.addLog(state, '📖 完成研究「' + name + '」：' + cfg.desc);
-        ProductionEngine.updatePrices(state);
-        ProductionEngine.computeProductionAndCaps(state);
-        AchievementEngine.check(state);
-        return { ok: true, msg: '完成研究：' + name };
+        const res = QueueEngine.enqueue(state, 'tech', name, 1);
+        return res.ok ? { ok: true, msg: res.msg } : { ok: false, msg: res.msg };
     }
 
     /* ---------------- 升级 ---------------- */
     function buyUpgrade(state, name) {
-        const u = state.upgrades[name];
-        const cfg = UPGRADES_CONFIG[name];
-        if (!u || !cfg || !u.visible) return { ok: false };
-        if (u.level >= cfg.cap) return { ok: false, msg: '已达到等级上限。' };
-        const price = ProductionEngine.upgradePrice(state, name);
-        if (!ResourcesManager.canAfford(price)) return { ok: false, msg: '资源不足。' };
-        ResourcesManager.spend(price);
-        u.level++;
-        ProductionEngine.updatePrices(state);
-        ProductionEngine.computeProductionAndCaps(state);
-        return { ok: true, msg: name + ' → 等级 ' + u.level };
+        const res = QueueEngine.enqueue(state, 'upgrade', name, 1);
+        return res.ok ? { ok: true, msg: res.msg } : { ok: false, msg: res.msg };
     }
 
     /* ---------------- 国策 ---------------- */
@@ -3928,6 +4642,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         const settings = state.settings;
         const permanent = state.permanent;
         const challenges = state.challenges;
+        const heroes = state.heroes;              // 英雄收藏跨重置保留
         const expeditionHistory = state.expedition.history;
 
         /* 重新初始化，再恢复保留项 */
@@ -3937,6 +4652,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         state.settings = settings;
         state.permanent = permanent;
         state.challenges = challenges;
+        state.heroes = heroes;
         state.expedition.history = expeditionHistory;
         state.resources['奥术遗物'].amount = keepRelic + (opts.relic || 0);
         state.resources['星辉'].amount = keepStar + (opts.star || 0);
@@ -4019,11 +4735,13 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     function autoBuildStep(state) {
         if (!state.settings.autoBuild) return null;
         if (!EffectsManager.hasSpecial(state, 'autoBuild')) return null;
+        if (QueueEngine.isFull(state)) return null;                       // 队列满了就先等
         if (!EffectsManager.hasSpecial(state, 'perfectEfficiency') && state.localResources.population.used >= state.localResources.population.capacity) return null;
         let best = null, bestPrice = null;
         for (const name in state.buildings) {
             const b = state.buildings[name];
             if (!b.unlocked || b.visible === false) continue;
+            if (QueueEngine.queuedCount(state, 'building', name) > 0) continue;   // 已在队列中就不重复排
             const price = ProductionEngine.buildingPrice(state, name);
             if (!ResourcesManager.canAfford(price)) continue;
             let total = 0;
@@ -4118,6 +4836,16 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         for (const c of CHALLENGES_CONFIG) if (!state.challenges[c.id]) state.challenges[c.id] = { active: false, completed: false };
         if (!state.artifacts) state.artifacts = { inventory: [], equipped: [], slots: 3 };
         if (!Array.isArray(state.artifacts.equipped)) state.artifacts.equipped = [];
+        if (!state.queue || !Array.isArray(state.queue.items)) state.queue = { items: [] };
+        if (!state.heroes) state.heroes = freshHeroes();
+        else {
+            if (!state.heroes.owned) state.heroes.owned = {};
+            if (!state.heroes.pity) state.heroes.pity = { A: 0, S: 0, EX: 0 };
+            if (state.heroes.pulls === undefined) state.heroes.pulls = 0;
+            if (!state.heroes.byRarity) state.heroes.byRarity = { C: 0, B: 0, A: 0, S: 0, EX: 0 };
+            if (state.heroes.dupRelics === undefined) state.heroes.dupRelics = 0;
+            if (!Array.isArray(state.heroes.history)) state.heroes.history = [];
+        }
         if (!state.expedition) state.expedition = { active: null, auto: false, history: [] };
         if (!state.stats) state.stats = { playSeconds: 0, resets: { relic: 0, star: 0, core: 0 }, expeditions: 0, expeditionsFailed: 0, artifactsFound: 0, maxChallengeStars: 0, events: 0, history: [] };
         if (!state.settings) state.settings = { theme: 'dark', autosave: true, autoBuild: true, autoExpedition: true, buyAmount: 1 };
@@ -4254,6 +4982,9 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 
         state.gameDays += gdt;
         state.stats.playSeconds += dt;
+
+        /* 建造队列结算 */
+        if (window.QueueEngine) QueueEngine.tick(state);
 
         /* 远征结算 */
         if (state.expedition.active && state.gameDays >= state.expedition.active.endDay) {
@@ -4574,6 +5305,12 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
             else if (key === 'knowledgeCapPerRelic') out.push('遗物提升魔法知识上限');
             else if (key === 'offlineHours') out.push('离线结算时长 +' + v + ' 小时');
             else if (key === 'artifactSlots') out.push('秘宝装备槽 +' + v);
+            else if (key === 'powerMult') out.push('军力 ' + U.fmtPct(v, 1));
+            else if (key === 'queueSlots') out.push('建造队列 +' + v + ' 槽位');
+            else if (key === 'queueSpeed') out.push('建造与研究速度 ' + U.fmtPct(v, 1));
+            else if (key === 'luck') out.push('召唤运气 +' + v.toFixed(2));
+            else if (key === 'summonDiscount') out.push('召唤消耗 ' + U.fmtPct(-v, 1));
+            else if (key === 'heroPower') out.push('英雄效果 ' + U.fmtPct(v, 1));
             else if (key === 'special') {
                 const names = {
                     autoBuild: '解锁自动建造', autoExpedition: '解锁自动远征',
@@ -4826,6 +5563,47 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
             return html;
         }
 
+        if (type === 'queue') {
+            if (!window.QueueEngine) return null;
+            const it = GameState.queue.items.find(x => x.id === arg);
+            if (!it) return null;
+            let html = '<h4>' + G.esc(it.name) + (it.count > 1 ? ' ×' + it.count : '') +
+                ' · ' + G.esc(QueueEngine.KIND_LABEL[it.kind]) + '</h4>';
+            html += '<div class="kv"><span>进度</span><span>' + U.fmtPct(QueueEngine.progress(GameState, it), 0) + '</span></div>';
+            html += '<div class="kv"><span>剩余</span><span>' + U.fmtDuration(QueueEngine.remaining(GameState, it)) + '</span></div>';
+            html += '<div class="kv"><span>总工期</span><span>' + U.fmtDuration(it.dur) + '</span></div>';
+            if (it.cost && Object.keys(it.cost).length) {
+                html += '<hr><div>已预扣材料：</div><div>' + G.priceHtml(it.cost) + '</div>';
+            }
+            html += '<hr><div class="dim">取消该项会全额退回材料。</div>';
+            return html;
+        }
+
+        if (type === 'hero') {
+            if (!window.Heroes) return null;
+            const hero = Heroes.heroById(arg);
+            if (!hero) return null;
+            const owned = s.heroes.owned[arg];
+            const r = HERO_RARITIES[hero.rarity];
+            const cat = HERO_CATEGORIES[hero.category];
+            let html = '<h4>' + G.esc(hero.name) + ' · ' + r.name + '</h4>';
+            html += '<div class="dim">' + cat.icon + ' ' + G.esc(cat.key) + '：' + G.esc(cat.desc) + '</div>';
+            html += '<div class="dim">' + G.esc(hero.desc) + '</div><hr>';
+            if (owned === undefined) {
+                html += '<div class="neg">尚未召唤到这位英雄。</div>';
+                html += '<hr><div class="dim">基础效果（' + r.name + ' × ' + r.mult + '）：' +
+                    G.esc(G.effectLines(Heroes.heroEffect(hero)).join('；')) + '</div>';
+            } else {
+                html += '<div class="kv"><span>觉醒等级</span><span class="gold">' + owned + ' / ' + GACHA_CONFIG.awakeningMax + '</span></div>';
+                for (const line of (window.TabSummon ? TabSummon.effectLines(hero, owned) : [])) {
+                    html += '<div class="kv"><span>' + G.esc(line) + '</span><span></span></div>';
+                }
+                html += '<hr><div class="dim">重复召唤会提升觉醒等级（每级 +' +
+                    Math.round(GACHA_CONFIG.awakeningStep * 100) + '%），满觉后再抽到会转化为奥术遗物。</div>';
+            }
+            return html;
+        }
+
         if (type === 'text') return G.esc(parts.slice(1).join('|'));
         return null;
     }
@@ -4972,6 +5750,55 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     }
 
     /* ---------------- 事件面板 ---------------- */
+    const queueRefs = {};
+    function renderQueue() {
+        const s = GameState;
+        const box = document.getElementById('panel-queue');
+        if (!box) return;
+        if (!window.QueueEngine) return;
+        const items = QueueEngine.items(s);
+        const slots = QueueEngine.slots(s);
+        const sig = items.map(it => it.id).join(',') + '|' + slots;
+
+        if (box.__sig !== sig) {
+            box.__sig = sig;
+            let html = '<div class="panel-title">建造队列<span class="right">' + items.length + ' / ' + slots + ' 槽</span></div>';
+            if (!items.length) {
+                html += '<div class="hint">队列空闲。在「建筑」「科技」「升级」里点击卡片即可排队；' +
+                    '槽位可以并行施工，扩容靠传承强化与工程类英雄。</div>';
+                G.setHTML(box, html);
+                return;
+            }
+            html += '<div class="queue-list">';
+            for (const it of items) {
+                html += '<div class="queue-item" data-tip="queue|' + G.esc(it.id) + '">';
+                html += '<div class="q-head"><span class="q-kind">' + G.esc(QueueEngine.KIND_LABEL[it.kind]) + '</span>' +
+                    '<span class="q-name">' + G.esc(it.name) + (it.count > 1 ? ' ×' + it.count : '') + '</span>' +
+                    '<span class="q-time" data-q-time="' + G.esc(it.id) + '"></span></div>';
+                html += G.bar(0).replace('class="bar "', 'class="bar" data-q-bar="' + G.esc(it.id) + '"');
+                html += '<div class="q-foot"><button class="btn tiny danger" data-act="queuecancel|' + G.esc(it.id) + '">取消并退回材料</button></div>';
+                html += '</div>';
+            }
+            html += '</div>';
+            html += '<div class="hint mt6">施工速度 ×' + QueueEngine.speed(s).toFixed(2) + '；点击条目可查看花费与进度。</div>';
+            G.setHTML(box, html);
+            for (const it of items) {
+                queueRefs[it.id] = {
+                    time: box.querySelector('[data-q-time="' + it.id + '"]'),
+                    bar: box.querySelector('[data-q-bar="' + it.id + '"]'),
+                };
+            }
+        }
+
+        for (const it of items) {
+            const ref = queueRefs[it.id];
+            if (!ref) continue;
+            const p = QueueEngine.progress(s, it);
+            G.setText(ref.time, U.fmtDuration(QueueEngine.remaining(s, it)) + '（' + U.fmtPct(p, 0) + '）');
+            if (ref.bar && ref.bar.firstElementChild) ref.bar.firstElementChild.style.width = (p * 100).toFixed(1) + '%';
+        }
+    }
+
     function renderEvent() {
         const s = GameState;
         const ev = EventEngine.current(s);
@@ -5119,7 +5946,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 
     window.Panels = {
         tipHtml, renderHeader, renderPopulation, renderResources, renderActions,
-        renderEvent, renderExpeditionPanel, renderLog, renderStats,
+        renderEvent, renderExpeditionPanel, renderLog, renderStats, renderQueue,
         settingsModal, exportModal, importModal, offlineModal,
     };
 })();
@@ -5142,6 +5969,9 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         const st = ProductionEngine.getBuildingStats(s, name);
         const affordable = ResourcesManager.canAfford(b.price);
         const unlocked = b.unlocked;
+        const queued = window.QueueEngine ? QueueEngine.queuedCount(s, 'building', name) : 0;
+        const queueFull = window.QueueEngine ? QueueEngine.isFull(s) : false;
+        const blocked = queued > 0 || queueFull;
 
         let cls = 'card compact';
         if (!unlocked) cls += ' locked';
@@ -5154,6 +5984,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         let html = '<div class="' + cls + ' clickable" data-act="' + G.esc(primaryAct) + '" data-tip="build|' + G.esc(name) + '">';
         html += '<div class="card-head"><div class="card-name">' + G.esc(name) +
             (st.modeName ? '<span class="tag">' + G.esc(st.modeName) + '</span>' : '') +
+            (queued > 0 ? '<span class="tag queue">建造中 ×' + queued + '</span>' : '') +
             (b.active > 0 && st.efficiency < 0.995 ? '<span class="tag warn">受限 ' + U.fmtPct(st.efficiency, 0) + '</span>' : '') +
             '</div>';
         html += '<div class="card-count">' + Math.round(b.active) + '<small> / ' + b.count + '</small></div></div>';
@@ -5176,10 +6007,11 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 
         /* 只保留操作按钮，其余信息交给悬浮提示 */
         html += '<div class="card-actions">';
-        html += '<button class="btn primary wide-action" data-act="buy|' + G.esc(name) + '|1">建造 ×1</button>';
-        html += '<button class="btn tiny" data-act="buy|' + G.esc(name) + '|5"' + (affordable ? '' : ' disabled') + '>+5</button>';
-        html += '<button class="btn tiny" data-act="buy|' + G.esc(name) + '|10"' + (affordable ? '' : ' disabled') + '>+10</button>';
-        html += '<button class="btn tiny" data-act="buy|' + G.esc(name) + '|max"' + (affordable ? '' : ' disabled') + '>最大</button>';
+        html += '<button class="btn primary wide-action" data-act="buy|' + G.esc(name) + '|1"' + (queued > 0 ? ' disabled' : '') + '>' +
+            (queued > 0 ? '队列中 ×' + queued : (queueFull ? '队列已满' : '建造 ×1')) + '</button>';
+        html += '<button class="btn tiny" data-act="buy|' + G.esc(name) + '|5"' + (affordable && !blocked ? '' : ' disabled') + '>+5</button>';
+        html += '<button class="btn tiny" data-act="buy|' + G.esc(name) + '|10"' + (affordable && !blocked ? '' : ' disabled') + '>+10</button>';
+        html += '<button class="btn tiny" data-act="buy|' + G.esc(name) + '|max"' + (affordable && !blocked ? '' : ' disabled') + '>最大</button>';
         html += '<button class="btn tiny" data-act="toggle|' + G.esc(name) + '">' + (b.active > 0 ? '停用' : '启用') + '</button>';
         html += '</div>';
         html += '</div>';
@@ -5253,6 +6085,8 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         const available = ProductionEngine.techAvailable(s, name);
         const affordable = ResourcesManager.canAfford(cfg.cost);
         const capBlocked = Object.keys(cfg.cost).some(k => !RESOURCES_CONFIG[k].prestige && cfg.cost[k] > s.resources[k].cap);
+        const queued = window.QueueEngine ? QueueEngine.queuedCount(s, 'tech', name) > 0 : false;
+        const queueFull = window.QueueEngine ? QueueEngine.isFull(s) : false;
 
         let cls = 'card';
         if (t.researched) cls += ' researched';
@@ -5260,12 +6094,13 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         else if (affordable) cls += ' affordable';
 
         /* 整张科技卡就是「研究」按钮；在「已完成」块里展开时，整卡变成「收起」 */
-        const clickable = opts.inDone ? true : (available && !t.researched);
+        const clickable = opts.inDone ? true : (available && !t.researched && !queued);
         const act = opts.inDone ? ('expandTech|' + G.esc(name)) : (clickable ? ('research|' + G.esc(name)) : '');
         let html = '<div class="' + cls + (clickable ? ' clickable' : '') + '"' +
             (act ? ' data-act="' + act + '"' : '') + ' data-tip="tech|' + G.esc(name) + '">';
         html += '<div class="card-head"><div class="card-name">' + (t.researched ? '✅ ' : '') + G.esc(name) +
-            '<span class="tag">第' + cfg.era + '时代</span></div>';
+            '<span class="tag">第' + cfg.era + '时代</span>' +
+            (queued ? '<span class="tag queue">研究中</span>' : '') + '</div>';
         if (!t.researched) html += '<div class="card-count" style="font-size:.8rem">' + (available ? (affordable ? '可研究' : '资源不足') : '前置未完成') + '</div>';
         html += '</div>';
 
@@ -5288,8 +6123,9 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
             html += '<div class="price">' + G.costHtml(cfg.cost) + '</div>';
             if (capBlocked) html += '<div class="hint neg">所需资源超过当前上限，需要建造仓库类建筑提升上限。</div>';
             html += '<div class="card-actions"><button class="btn primary wide-action" data-act="research|' + G.esc(name) + '"' +
-                (available ? '' : ' disabled') + '>研究</button></div>';
-            html += '<div class="card-tip"><span>' + (available ? '点击卡片任意处即可研究' : '前置科技尚未完成') + '</span><span></span></div>';
+                (available && !queued ? '' : ' disabled') + '>' + (queued ? '研究中…' : (queueFull ? '队列已满' : '研究')) + '</button></div>';
+            html += '<div class="card-tip"><span>' + (queued ? '已在研究队列中，可在右侧队列面板取消'
+                : (available ? '点击卡片任意处即可研究' : '前置科技尚未完成')) + '</span><span></span></div>';
         } else {
             html += '<div class="card-tip"><span>' + (opts.inDone ? '点击卡片任意处可收起详情' : '已完成研究') + '</span><span>✅</span></div>';
         }
@@ -5388,12 +6224,15 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         const price = ProductionEngine.upgradePrice(s, name);
         const affordable = ResourcesManager.canAfford(price);
         const maxed = u.level >= cfg.cap;
+        const queued = window.QueueEngine ? QueueEngine.queuedCount(s, 'upgrade', name) > 0 : false;
+        const queueFull = window.QueueEngine ? QueueEngine.isFull(s) : false;
         let cls = 'card' + (affordable && !maxed ? ' affordable' : '') + (u.level > 0 ? ' researched' : '');
-        const clickable = !maxed;
+        const clickable = !maxed && !queued;
         let html = '<div class="' + cls + (clickable ? ' clickable' : '') + '"' +
             (clickable ? ' data-act="upgrade|' + G.esc(name) + '"' : '') + ' data-tip="upgrade|' + G.esc(name) + '">';
         html += '<div class="card-head"><div class="card-name">' + G.esc(name) + '</div>' +
             '<div class="card-count">Lv.' + u.level + '<small> / ' + cfg.cap + '</small></div></div>';
+        if (queued) html += '<div class="hint pos">已在升级队列中（可在右侧队列面板取消）。</div>';
         const effs = G.effectLines(cfg.effect);
         html += '<div class="card-stats">' + effs.map(e =>
             '<div class="row"><span class="k">每级</span><span class="v pos">' + G.esc(e) + '</span></div>' +
@@ -5402,8 +6241,9 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         html += '<div class="card-desc">' + G.esc(cfg.desc) + '</div>';
         if (!maxed) {
             html += '<div class="price">' + G.priceHtml(price) + '</div>';
-            html += '<div class="card-actions"><button class="btn primary wide-action" data-act="upgrade|' + G.esc(name) + '">升级</button></div>';
-            html += '<div class="card-tip"><span>点击卡片任意处即可升级</span><span></span></div>';
+            html += '<div class="card-actions"><button class="btn primary wide-action" data-act="upgrade|' + G.esc(name) + '"' +
+                (queued ? ' disabled' : '') + '>' + (queued ? '升级中…' : (queueFull ? '队列已满' : '升级')) + '</button></div>';
+            html += '<div class="card-tip"><span>' + (queued ? '已在队列中' : '点击卡片任意处即可升级') + '</span><span></span></div>';
         } else {
             html += '<div class="hint pos">已达到等级上限。</div>';
         }
@@ -5760,6 +6600,141 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 
 </script>
 <script>
+/* ===== js/ui/tab-summon.js ===== */
+/* 传送阵（英雄召唤）标签页 */
+(function () {
+    const U = window.Utils;
+    const G = window.UI;
+
+    const RARITY_ORDER = ['EX', 'S', 'A', 'B', 'C'];
+
+    function rarityTag(rarity) {
+        const r = HERO_RARITIES[rarity];
+        return '<span class="rar" style="--rar:' + r.color + '">' + r.name + '</span>';
+    }
+
+    function effectLines(hero, awaken) {
+        const mult = Heroes.awakenMultiplier(awaken || 0);
+        const lines = G.effectLines(Heroes.heroEffect(hero));
+        return lines.map(t => t + (mult > 1 ? '（×' + mult.toFixed(1) + '）' : ''));
+    }
+
+    function historyCard(entry) {
+        const color = entry.rarity ? HERO_RARITIES[entry.rarity].color : '#6e7681';
+        const label = entry.type === 'hero' ? entry.rarity : (entry.type === 'reward' ? '奖励' : '空');
+        let sub = '';
+        if (entry.type === 'hero') {
+            if (entry.isNew) sub = '初次获得';
+            else if (entry.awaken) sub = '觉醒 +1 → Lv.' + entry.awaken;
+            else sub = '重复（转为遗物）';
+        } else if (entry.type === 'reward') sub = '资源';
+        else sub = '什么也没有';
+        return '<div class="summon-item" style="--rar:' + color + '" data-tip="summon|' + G.esc(entry.name) + '">' +
+            '<span class="si-rar">' + G.esc(label) + '</span>' +
+            '<span class="si-name">' + G.esc(entry.name) + '</span>' +
+            '<span class="si-sub">' + G.esc(sub) + '</span></div>';
+    }
+
+    function heroCard(hero) {
+        const owned = GameState.heroes.owned[hero.id];
+        const has = owned !== undefined;
+        const r = HERO_RARITIES[hero.rarity];
+        const cat = HERO_CATEGORIES[hero.category];
+        let html = '<div class="hero-card ' + (has ? 'owned' : 'locked') + '" data-tip="hero|' + G.esc(hero.id) + '" style="--rar:' + r.color + '">';
+        html += '<div class="hero-head"><span class="hero-rar">' + r.name + '</span>' +
+            '<span class="hero-cat">' + cat.icon + ' ' + G.esc(cat.key) + '</span>' +
+            (has ? '<span class="hero-awaken">觉醒 ' + owned + '</span>' : '') + '</div>';
+        html += '<div class="hero-name">' + G.esc(hero.name) + '</div>';
+        html += '<div class="hero-desc">' + (has ? G.esc(hero.desc) : '尚未召唤到这位英雄。') + '</div>';
+        if (has) {
+            html += '<div class="hero-eff">' + effectLines(hero, owned).map(t =>
+                '<div class="row"><span class="k">效果</span><span class="v pos">' + G.esc(t) + '</span></div>').join('') + '</div>';
+        } else {
+            html += '<div class="hero-eff dim"><div class="row"><span class="k">基础效果</span><span class="v">' +
+                G.esc(G.effectLines(Heroes.heroEffect(hero)).join('；')) + '</span></div></div>';
+        }
+        html += '</div>';
+        return html;
+    }
+
+    function renderSummon() {
+        const s = GameState;
+        if (!s.techs['召唤法阵'] || !s.techs['召唤法阵'].researched) {
+            return '<div class="tab-intro">传送阵尚未激活。研究科技「<b>召唤法阵</b>」（学院时代）后，这里会开启通往其它时间线的门。</div>';
+        }
+        const st = Heroes.stats(s);
+        const cost1 = Heroes.pullCost(s, 1);
+        const cost10 = Heroes.pullCost(s, 10);
+        const can1 = ResourcesManager.canAfford(cost1);
+        const can10 = ResourcesManager.canAfford(cost10);
+        const luckMult = Heroes.luckMultiplier(s);
+        const discount = Heroes.effectiveDiscount(s);
+
+        let html = '<div class="tab-intro">传送阵把别处的「可能性」拉到这里：你召唤到的是其它时间线里活下来的英雄。' +
+            '英雄分为 <b>C / B / A / S / EX</b> 五档，档位越高效果越强、也越难遇到；' +
+            '重复召唤到同一位英雄会提升<b>觉醒等级</b>（每级效果 +' + Math.round(GACHA_CONFIG.awakeningStep * 100) + '%，最高 ' +
+            GACHA_CONFIG.awakeningMax + ' 级），满觉后再抽到会转化为奥术遗物。<br>' +
+            '卡池里除了英雄，还有资源馈赠与<b>空</b>（什么都没抽到）。</div>';
+
+        /* 传送阵本体 */
+        html += '<div class="summon-panel">';
+        html += '<div class="summon-circle"><span>✦</span><i></i><b></b></div>';
+        html += '<div class="summon-controls">';
+        html += '<div class="summon-cost">单次消耗：' + G.costHtml(cost1) + '</div>';
+        html += '<div class="btn-row">';
+        html += '<button class="btn primary wide-action" data-act="summon|1">召唤 ×1</button>';
+        html += '<button class="btn gold wide-action" data-act="summon|10">召唤 ×10（9 折）</button>';
+        html += '</div>';
+        html += '<div class="summon-cost">十连消耗：' + G.costHtml(cost10) + '</div>';
+        html += '<div class="hint">召唤运气：S / EX 权重 ×' + luckMult.toFixed(2) + '（上限 ×' +
+            (1 + GACHA_CONFIG.luckCap).toFixed(1) + '）　召唤折扣 −' + U.fmtPct(discount, 0) +
+            '（上限 −' + U.fmtPct(GACHA_CONFIG.discountCap, 0) + '）　累计召唤 ' + U.fmtInt(st.pulls) + ' 次</div>';
+        html += '</div></div>';
+
+        /* 保底进度 */
+        html += '<div class="section-title">保底进度</div><div class="pity-grid">';
+        for (const key of ['A', 'S', 'EX']) {
+            const need = GACHA_CONFIG.pity[key];
+            const cur = Math.min(s.heroes.pity[key], need);
+            html += '<div class="pity"><div class="row-between"><span>' + key + ' 级及以上保底</span>' +
+                '<span class="hint">' + cur + ' / ' + need + '</span></div>' +
+                G.bar(cur / need, key === 'EX' ? 'bad' : '') + '</div>';
+        }
+        html += '</div><div class="hint">达到保底后，下一次召唤必定获得对应档位以上。</div>';
+
+        /* 最近结果 */
+        html += '<div class="section-title">最近的结果</div>';
+        if (!s.heroes.history.length) html += '<div class="hint">还没有召唤记录，试着拉开这道门。</div>';
+        else html += '<div class="summon-log">' + s.heroes.history.slice(0, 12).map(historyCard).join('') + '</div>';
+
+        /* 英雄殿堂 */
+        html += '<div class="section-title">英雄殿堂　' + st.owned + ' / ' + st.total + '</div>';
+        for (const rarity of RARITY_ORDER) {
+            const list = HEROES_CONFIG.filter(h => h.rarity === rarity);
+            if (!list.length) continue;
+            const got = Heroes.ownedCount(s, rarity);
+            html += '<div class="hero-group"><div class="hero-group-head" style="--rar:' + HERO_RARITIES[rarity].color + '">' +
+                rarityTag(rarity) + '<span class="hint">' + got + ' / ' + list.length + '</span>' +
+                '<span class="right hint">' + HERO_RARITIES[rarity].title + '</span></div>' +
+                '<div class="card-grid">' + list.map(heroCard).join('') + '</div></div>';
+        }
+
+        /* 统计 */
+        html += '<div class="section-title">召唤统计</div><div class="card-stats">';
+        for (const rarity of RARITY_ORDER) {
+            html += '<div class="row"><span class="k">' + HERO_RARITIES[rarity].name + ' 累计获得</span><span class="v">' +
+                U.fmtInt(s.heroes.byRarity[rarity] || 0) + ' 次</span></div>';
+        }
+        html += '<div class="row"><span class="k">满觉重复转化遗物</span><span class="v gold">' + U.fmtInt(st.dupRelics) + '</span></div>';
+        html += '</div>';
+        return html;
+    }
+
+    window.TabSummon = { renderSummon, heroCard, rarityTag, effectLines };
+})();
+
+</script>
+<script>
 /* ===== js/ui/app.js ===== */
 /* 界面装配：标签页调度、事件委托、渲染循环 */
 (function () {
@@ -5772,6 +6747,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         { id: 'upgrades', name: '升级', icon: '⚗️', render: () => TabResearch.renderUpgrades() },
         { id: 'policies', name: '国策', icon: '⚖️', render: () => TabAscend.renderPolicies() },
         { id: 'expedition', name: '远征', icon: '⚔️', render: () => TabWorld.renderExpedition() },
+        { id: 'summon', name: '召唤', icon: '🔮', gate: s => s.techs['召唤法阵'] && s.techs['召唤法阵'].researched, render: () => TabSummon.renderSummon() },
         { id: 'market', name: '贸易', icon: '🪙', render: () => TabWorld.renderMarket() },
         { id: 'ascend', name: '传承', icon: '✦', render: () => TabAscend.renderAscend() },
         { id: 'achievements', name: '成就', icon: '🏆', render: () => TabWorld.renderAchievements() },
@@ -5781,6 +6757,11 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     let tabBody = null;
     let pointerDown = false;        // 鼠标按下（点击 / 拖动滑杆）期间冻结重绘
     let renderQueued = false;
+
+    /* 有解锁条件的标签页（例如「召唤」需要研究召唤法阵） */
+    function visibleTabs() {
+        return TABS.filter(t => !t.gate || t.gate(GameState));
+    }
 
     /* ---------------- 标签徽标 ---------------- */
     function badges() {
@@ -5804,13 +6785,18 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         let regions = 0;
         for (const r of EXPEDITIONS_CONFIG) if (ExpeditionEngine.canStart(s, r).ok) regions++;
         out.expedition = regions;
+        if (s.techs['召唤法阵'] && s.techs['召唤法阵'].researched && s.heroes) {
+            const p = s.heroes.pity;
+            const ready = (p.A >= GACHA_CONFIG.pity.A || p.S >= GACHA_CONFIG.pity.S || p.EX >= GACHA_CONFIG.pity.EX);
+            out.summon = ready ? 1 : 0;
+        }
         return out;
     }
 
     function renderTabs() {
         const b = badges();
         let html = '';
-        for (const t of TABS) {
+        for (const t of visibleTabs()) {
             const n = b[t.id] || 0;
             html += '<div class="tab' + (activeTab === t.id ? ' active' : '') + '" data-act="tab|' + t.id + '">' +
                 '<span>' + t.icon + '</span><span>' + t.name + '</span>' +
@@ -5833,6 +6819,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         Panels.renderActions();
         Panels.renderEvent();
         Panels.renderExpeditionPanel();
+        Panels.renderQueue();
         Panels.renderLog();
         Panels.renderStats();
         renderTabs();
@@ -5842,7 +6829,9 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
             content.innerHTML = '<div id="tab-body"></div>';
             tabBody = document.getElementById('tab-body');
         }
-        const tab = TABS.find(t => t.id === activeTab) || TABS[0];
+        const tabs = visibleTabs();
+        const tab = tabs.find(t => t.id === activeTab) || tabs[0];
+        if (tab.id !== activeTab) activeTab = tab.id;      // 当前标签被隐藏时自动切回第一个
         G.setHTML(tabBody, tab.render());
     }
 
@@ -5914,6 +6903,21 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
             case 'exp': {
                 const r = Actions.startExpedition(s, arg1);
                 G.toast(r.msg, r.ok ? 'gold' : 'bad');
+                break;
+            }
+            case 'summon': {
+                const r = Heroes.summon(s, Number(arg1) || 1);
+                if (!r.ok) { G.toast(r.msg, 'bad'); break; }
+                const heroes = r.results.filter(x => x.type === 'hero');
+                const names = heroes.map(x => x.rarity + '·' + x.hero.name);
+                G.toast('🔮 召唤 ×' + r.results.length + (names.length
+                    ? '：' + names.slice(0, 4).join('、') + (names.length > 4 ? ' 等' : '')
+                    : '（没有英雄回应）'), r.best === 'EX' ? 'gold' : '');
+                break;
+            }
+            case 'queuecancel': {
+                const r = QueueEngine.cancel(s, arg1);
+                G.toast(r.msg || '', r.ok ? '' : 'bad');
                 break;
             }
             case 'equip': {
@@ -6093,9 +7097,10 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     /* ---------------- 快捷键 ---------------- */
     document.addEventListener('keydown', e => {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        const tabs = visibleTabs();
         const idx = Number(e.key);
-        if (idx >= 1 && idx <= TABS.length) {
-            activeTab = TABS[idx - 1].id;
+        if (idx >= 1 && idx <= tabs.length) {
+            activeTab = tabs[idx - 1].id;
             render();
         }
         if (e.key === ' ') {

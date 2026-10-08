@@ -55,6 +55,18 @@
         s => s.techs['虚空撕裂'].researched, { globalProd: 0.3 }, '所有建筑产出 +30%');
     A('长夜之后', '累计游戏时长达到 24 小时。',
         s => s.stats.playSeconds >= 86400, { happiness: 50, knowledgeProd: 0.1 }, '民望 +50，魔法知识 +10%');
+    A('初次召唤', '在传送阵完成第一次召唤。',
+        s => s.heroes && s.heroes.pulls >= 1, { happiness: 10 }, '民望 +10');
+    A('幸运之子', '召唤到第一位 S 级英雄。',
+        s => s.heroes && (s.heroes.byRarity.S || 0) >= 1, { luck: 0.1 }, '召唤运气 +0.1');
+    A('神话降临', '召唤到第一位 EX 级英雄。',
+        s => s.heroes && (s.heroes.byRarity.EX || 0) >= 1, { heroPower: 0.15 }, '英雄效果 +15%');
+    A('英雄殿堂', '收集 15 位不同的英雄。',
+        s => s.heroes && Object.keys(s.heroes.owned).length >= 15, { heroPower: 0.1 }, '英雄效果 +10%');
+    A('工坊大师', '把建造队列扩展到 8 个槽位。',
+        s => window.QueueEngine && QueueEngine.slots(s) >= 8, { queueSpeed: 0.08 }, '建造与研究速度 +8%');
+    A('城建大师', '累计建成 300 座建筑。',
+        s => (s.stats.totalBuildingBuilt || 0) >= 300, { queueSpeed: 0.05 }, '建造与研究速度 +5%');
 
     window.ACHIEVEMENTS_CONFIG = LIST;
 })();
