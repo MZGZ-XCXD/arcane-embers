@@ -14,7 +14,6 @@
         const affordable = ResourcesManager.canAfford(b.price);
         const unlocked = b.unlocked;
         const queued = window.QueueEngine ? QueueEngine.queuedCount(s, 'building', name) : 0;
-        const queuedState = window.QueueEngine ? QueueEngine.queuedState(s, 'building', name) : null;
         const queueFull = window.QueueEngine ? QueueEngine.isFull(s) : false;
         /* 资源足够就直接建成，不占用队列；只有「买不起 + 队列满」时不能下单 */
         const blocked = !affordable && queueFull;
@@ -30,7 +29,7 @@
         let html = '<div class="' + cls + ' clickable" data-act="' + G.esc(primaryAct) + '" data-tip="build|' + G.esc(name) + '">';
         html += '<div class="card-head"><div class="card-name">' + G.esc(name) +
             (st.modeName ? '<span class="tag">' + G.esc(st.modeName) + '</span>' : '') +
-            (queued > 0 ? '<span class="tag queue">' + (queuedState === 'building' ? '施工中' : '排队中') + ' ×' + queued + '</span>' : '') +
+            (queued > 0 ? '<span class="tag queue">排队中 ×' + queued + '</span>' : '') +
             (b.active > 0 && st.efficiency < 0.995 ? '<span class="tag warn">受限 ' + U.fmtPct(st.efficiency, 0) + '</span>' : '') +
             '</div>';
         html += '<div class="card-count">' + Math.round(b.active) + '<small> / ' + b.count + '</small></div></div>';
@@ -54,7 +53,7 @@
         /* 只保留操作按钮，其余信息交给悬浮提示 */
         html += '<div class="card-actions">';
         html += '<button class="btn primary wide-action" data-act="buy|' + G.esc(name) + '|1"' + (blocked ? ' disabled' : '') + '>' +
-            (blocked ? '队列已满' : (affordable ? '建造 ×1' : '排队等待 ×1')) + '</button>';
+            (blocked ? '队列已满' : (affordable ? '建造 ×1' : '排队等材料 ×1')) + '</button>';
         html += '<button class="btn tiny" data-act="buy|' + G.esc(name) + '|5"' + (blocked ? ' disabled' : '') + '>+5</button>';
         html += '<button class="btn tiny" data-act="buy|' + G.esc(name) + '|10"' + (blocked ? ' disabled' : '') + '>+10</button>';
         html += '<button class="btn tiny" data-act="buy|' + G.esc(name) + '|max"' + (affordable && !queueFull ? '' : ' disabled') + '>最大</button>';
@@ -78,6 +77,7 @@
             '并会因为 <b>原料短缺</b> 或 <b>人手不足</b> 而降低效率——效率会同时影响产量与消耗。<br>' +
             '<b>点击卡片任意处即可建造 ×1</b>；「+5 / +10 / 最大」用于批量建造，' +
             '「停用」可暂时关掉一座建筑（停用后不再消耗原料与人口）。<br>' +
+            '材料足够时点击会<b>立即建成</b>；材料不足时会排进右侧队列，显示「还要多久凑齐材料」，凑齐的瞬间就自动建成。<br>' +
             '<b>把鼠标移到卡片上</b>即可查看该建筑的产出、消耗、上限、人口需求、效率、造价与说明；' +
             '名称旁的 <span class="tag warn">受限</span> 标记表示它当前没有满效率运转。</div>';
 

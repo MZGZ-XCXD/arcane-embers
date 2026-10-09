@@ -1674,6 +1674,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
             costG: o.costG || 1.7,
             max: o.max || 1,
             req: o.req || null,
+            techReq: o.techReq || null,       // 需要先研究完这项科技，传承项才会出现
             effect: o.eff || {},
             special: o.special || null,
             desc: o.desc || '',
@@ -1684,7 +1685,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     /* ---------------- 奥术遗物 ---------------- */
     P('文明火种', {
         tree: 'relic', cost: 2, max: 1, eff: { startResources: 1 },
-        desc: '重置后立即获得 300 木材、200 石料、100 食物与 80 魔力，让第一小时不再枯燥。',
+        desc: '重置后立即获得 300 木材、200 石料、100 食物与 80 魔力，并把它们的基础上限一并抬高（否则会被仓库上限截断），让第一小时不再枯燥。',
     });
     P('智慧符文', {
         tree: 'relic', cost: 3, costG: 1.55, max: 10, eff: { knowledgeProd: 0.08 },
@@ -1711,19 +1712,20 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         desc: '一道让人心情变好的祝福。民望每级 +25。',
     });
     P('远征装备', {
-        tree: 'relic', cost: 10, costG: 1.6, max: 10, eff: { expeditionPower: 0.08, expeditionReward: 0.05 },
+        tree: 'relic', cost: 10, costG: 1.6, max: 10, techReq: '城防',
+        eff: { expeditionPower: 0.08, expeditionReward: 0.05 },
         desc: '更好的护符与补给。远征军力每级 +8%，远征收益 +5%。',
     });
     P('秘宝槽位', {
-        tree: 'relic', cost: 25, costG: 3.2, max: 2, eff: { artifactSlots: 1 },
+        tree: 'relic', cost: 25, costG: 3.2, max: 2, techReq: '城防', eff: { artifactSlots: 1 },
         desc: '为秘宝增设一个悬浮基座。永久 +1 个装备槽。',
     });
     P('秘宝工艺', {
-        tree: 'relic', cost: 40, costG: 1.9, max: 10, eff: { artifactQuality: 0.08 },
+        tree: 'relic', cost: 40, costG: 1.9, max: 10, techReq: '城防', eff: { artifactQuality: 0.08 },
         desc: '更精细的鉴定与镶嵌。秘宝词条数值每级 +8%，更容易出现正面词条。',
     });
     P('记忆水晶', {
-        tree: 'relic', cost: 60, req: '秘宝槽位', max: 1, special: 'keepArtifacts',
+        tree: 'relic', cost: 60, req: '秘宝槽位', max: 1, techReq: '城防', special: 'keepArtifacts',
         desc: '重置时保留全部秘宝与装备槽，专家级的传承投资。',
     });
     P('自动符文', {
@@ -1731,7 +1733,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         desc: '让符文代替你按建造按钮：自动购买当前最便宜且买得起的建筑（可在设置中关闭）。',
     });
     P('自动远征', {
-        tree: 'relic', cost: 90, req: '自动符文', max: 1, special: 'autoExpedition',
+        tree: 'relic', cost: 90, req: '自动符文', max: 1, techReq: '城防', special: 'autoExpedition',
         desc: '远征队学会自己出发。上一支队伍归来后会立刻前往同区域。',
     });
     P('时之匙', {
@@ -1747,15 +1749,16 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         desc: '在塔基下再挖出几间工坊。建造队列 +1 个槽位（每级递增）。',
     });
     P('疾速施工', {
-        tree: 'relic', cost: 8, costG: 1.85, max: 6, eff: { queueSpeed: 0.12 },
-        desc: '把吊臂与滑轮组重新设计一遍。建造与研究的耗时每级 −10.7%（等价于速度 +12%）。',
+        tree: 'relic', cost: 8, costG: 1.85, max: 6, eff: { queueDiscount: 0.05 },
+        desc: '把吊臂与滑轮组重新设计一遍：队列订单需要凑齐的材料每级 −5%，排队时更快凑够。',
     });
     P('召唤精通', {
-        tree: 'relic', cost: 15, costG: 1.9, max: 8, eff: { heroPower: 0.15 },
+        tree: 'relic', cost: 15, costG: 1.9, max: 8, techReq: '召唤法阵', eff: { heroPower: 0.15 },
         desc: '你更懂如何让英雄发挥全力。所有英雄的效果每级 +15%。',
     });
     P('命运微光', {
-        tree: 'relic', cost: 18, costG: 2.0, max: 6, eff: { luck: 0.2, summonDiscount: 0.05 },
+        tree: 'relic', cost: 18, costG: 2.0, max: 6, techReq: '召唤法阵',
+        eff: { luck: 0.2, summonDiscount: 0.05 },
         desc: '在传送阵边缘点上一圈微光。召唤运气每级 +0.2，消耗每级 −5%。',
     });
 
@@ -1793,7 +1796,8 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         desc: '重置获得的奥术遗物每级 +25%。',
     });
     P('双倍远征', {
-        tree: 'star', cost: 9, costG: 1.8, max: 10, eff: { expeditionReward: 0.3, expeditionPower: 0.1 },
+        tree: 'star', cost: 9, costG: 1.8, max: 10, techReq: '城防',
+        eff: { expeditionReward: 0.3, expeditionPower: 0.1 },
         desc: '远征收益每级 +30%，军力 +10%。冒险终于成了生意。',
     });
     P('永恒律动', {
@@ -1805,15 +1809,16 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         desc: '让同一座城市的两个瞬间同时开工。建造队列 +2 个槽位（每级递增）。',
     });
     P('时间折叠', {
-        tree: 'star', cost: 4, costG: 2.2, max: 5, eff: { queueSpeed: 0.2 },
-        desc: '把工期折起来。建造与研究速度每级 +20%。',
+        tree: 'star', cost: 4, costG: 2.2, max: 5, eff: { queueDiscount: 0.06 },
+        desc: '把等待折起来：队列订单需要凑齐的材料每级 −6%。',
     });
     P('星界召唤', {
-        tree: 'star', cost: 6, costG: 2.1, max: 6, eff: { heroPower: 0.4 },
+        tree: 'star', cost: 6, costG: 2.1, max: 6, techReq: '召唤法阵', eff: { heroPower: 0.4 },
         desc: '让传送阵连到更远的星界。所有英雄的效果每级 +40%。',
     });
     P('命运编织', {
-        tree: 'star', cost: 7, costG: 2.2, max: 5, eff: { luck: 0.5, summonDiscount: 0.08 },
+        tree: 'star', cost: 7, costG: 2.2, max: 5, techReq: '召唤法阵',
+        eff: { luck: 0.5, summonDiscount: 0.08 },
         desc: '亲手编一段更好的运气。召唤运气每级 +0.5，召唤消耗每级 −8%。',
     });
 
@@ -1843,7 +1848,8 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         desc: '你不在时，城市依然以全效率运转：离线收益不再打 50% 折扣。',
     });
     P('万界共鸣', {
-        tree: 'core', cost: 2, costG: 2.5, max: 3, eff: { heroPower: 1.0, queueSlots: 2 },
+        tree: 'core', cost: 2, costG: 2.5, max: 3, techReq: '召唤法阵',
+        eff: { heroPower: 1.0, queueSlots: 2 },
         desc: '让所有时间线的英雄同时回应你：英雄效果每级 +100%，建造队列每级 +2 槽位。',
     });
 
@@ -1920,9 +1926,9 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     A('英雄殿堂', '收集 15 位不同的英雄。',
         s => s.heroes && Object.keys(s.heroes.owned).length >= 15, { heroPower: 0.1 }, '英雄效果 +10%');
     A('工坊大师', '把建造队列扩展到 8 个槽位。',
-        s => window.QueueEngine && QueueEngine.slots(s) >= 8, { queueSpeed: 0.08 }, '建造与研究速度 +8%');
+        s => window.QueueEngine && QueueEngine.slots(s) >= 8, { queueDiscount: 0.03 }, '队列订单材料 −3%');
     A('城建大师', '累计建成 300 座建筑。',
-        s => (s.stats.totalBuildingBuilt || 0) >= 300, { queueSpeed: 0.05 }, '建造与研究速度 +5%');
+        s => (s.stats.totalBuildingBuilt || 0) >= 300, { queueDiscount: 0.02 }, '队列订单材料 −2%');
 
     window.ACHIEVEMENTS_CONFIG = LIST;
 })();
@@ -2429,7 +2435,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         资源: { key: '资源', icon: '🌾', desc: '提升所有建筑的产出',   effect: { globalProd: 0.08 } },
         仓储: { key: '仓储', icon: '📦', desc: '提升所有资源的存量上限', effect: { capAll: 0.15 } },
         知识: { key: '知识', icon: '📖', desc: '提升魔法知识产出',     effect: { knowledgeProd: 0.2 } },
-        工程: { key: '工程', icon: '🔧', desc: '加快建造与研究速度',   effect: { queueSpeed: 0.15 } },
+        工程: { key: '工程', icon: '🔧', desc: '降低队列订单的材料需求', effect: { queueDiscount: 0.15 } },
         经济: { key: '经济', icon: '🪙', desc: '提升贸易规模与黄金产出', effect: { marketVolume: 0.3, resourceProd: { 黄金: 0.25 } } },
         民生: { key: '民生', icon: '🏡', desc: '提升民望与人口上限',   effect: { happiness: 40, populationCap: 0.08 } },
         远征: { key: '远征', icon: '🧭', desc: '提升远征收益',        effect: { expeditionReward: 0.3, expeditionPower: 0.12 } },
@@ -2482,7 +2488,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     H('最后一位浮空城主', 'EX', '战力', '大崩坏那天他没有逃。他把整座城压成了一个人的脊梁。', { powerMult: 0.5 });
     H('原初之龙·灰烬之翼', 'EX', '资源', '它睡在灰烬森林深处。呼吸之间，土地重新长出东西。', { globalProd: 0.25 });
     H('世界意志·静默之声', 'EX', '幸运', '它不说话，只是让你想要的东西更容易来到你手里。',
-        { queueSlots: 2, queueSpeed: 0.5, luck: 0.5, summonDiscount: 0.15 });
+        { queueSlots: 2, queueDiscount: 0.15, luck: 0.5, summonDiscount: 0.15 });
 
     const GACHA = {
         /* 每次召唤的消耗（×10 时享受 batchDiscount 折扣） */
@@ -2611,7 +2617,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 /* ===== js/engine/state.js ===== */
 /* 游戏状态与资源管理 */
 (function () {
-    const SAVE_VERSION = 4;
+    const SAVE_VERSION = 5;
 
     /* 全局唯一状态对象（引用始终不变，便于各模块共享） */
     const GameState = {
@@ -2822,7 +2828,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         'expeditionReward', 'speed', 'marketVolume', 'artifactQuality',
         'capPerRelic', 'knowledgeCapPerRelic', 'offlineHours',
         /* 建造队列与英雄召唤相关 */
-        'queueSlots', 'queueSpeed', 'powerMult', 'luck', 'summonDiscount', 'heroPower',
+        'queueSlots', 'queueDiscount', 'powerMult', 'luck', 'summonDiscount', 'heroPower',
     ];
 
     function emptyEffects() {
@@ -3789,56 +3795,41 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 <script>
 /* ===== js/engine/queue.js ===== */
 /* =========================================================
-   建造队列
-   规则（v1.2.0 起）：
-     · 资源足够时，点击建造 / 研究 / 升级会「立即完成」，不进入队列；
-     · 资源不足时，则作为「订单」进入队列等待资源，资源凑够后自动开工并倒计时；
+   建造队列（v1.3.0 起：队列 = 「等材料的订单列表」）
+   规则：
+     · 资源足够时，点击建造 / 研究 / 升级会「立即完成」，完全不进队列；
+     · 资源不足时，才作为「订单」进入队列；面板上的倒计时显示的是
+       「按当前净产量，还要多久才凑齐这些材料」，材料一凑齐的瞬间就立即建成并出队
+       （没有第二段施工等待）；
      · 同一个目标可以反复排队（例如伐木场点两下 = 队列里两条订单）；
-     · 队列槽位初始 5 个，可通过传承强化与工程类英雄提升；槽位之间并行施工。
+     · 队列槽位初始 5 个，可通过传承强化与工程类英雄提升；槽位之间互不影响。
+   传承 / 英雄的「队列材料折扣」会直接降低订单要凑的材料量（最多减免 60%）。
    ========================================================= */
 (function () {
     let seq = 1;
 
     const KIND_LABEL = { building: '建造', tech: '研究', upgrade: '升级' };
+    const DISCOUNT_CAP = 0.6;      // 订单材料最多减免 60 %
 
     /* 队列槽位数：基础 5 + 传承 / 英雄加成 */
     function slots(state) {
         const e = EffectsManager.get(state);
         return Math.max(1, Math.floor(5 + (e.queueSlots || 0)));
     }
-    /* 施工速度加成 */
-    function speed(state) {
+    /* 订单材料折扣 0 ~ DISCOUNT_CAP */
+    function discount(state) {
         const e = EffectsManager.get(state);
-        return Math.max(0.1, 1 + (e.queueSpeed || 0));
+        return Utils.clamp(e.queueDiscount || 0, 0, DISCOUNT_CAP);
+    }
+    function applyDiscount(cost, d) {
+        if (!cost || d <= 1e-9) return cost;
+        const out = {};
+        for (const k in cost) out[k] = Math.max(1, Math.ceil(cost[k] * (1 - d)));
+        return out;
     }
     function items(state) { return state.queue.items; }
     function used(state) { return state.queue.items.length; }
     function isFull(state) { return used(state) >= slots(state); }
-
-    /* 资源折算价值：有市场价按市场价，传承资源按 20，其它（魔力/知识/政策点）按 4 */
-    function valueOf(map) {
-        let v = 0;
-        for (const k in map) {
-            const cfg = RESOURCES_CONFIG[k];
-            let unit = 4;
-            if (cfg) unit = cfg.value || (cfg.prestige ? 20 : 4);
-            v += (map[k] || 0) * unit;
-        }
-        return v;
-    }
-
-    function unitDays(kind, value) {
-        if (kind === 'building') return 3 + 2.5 * Math.log(1 + value) + Math.min(0.0002 * value, 300);
-        if (kind === 'tech') return 6 + 4 * Math.log(1 + value) + Math.min(0.0003 * value, 400);
-        return 4 + 2.2 * Math.log(1 + value) + Math.min(0.0001 * value, 120);
-    }
-
-    /* 工期 = 每单位工期 × 数量（按平均成本估算），再除以施工速度 */
-    function durationOf(state, kind, totalCost, count) {
-        const avg = valueOf(totalCost) / Math.max(1, count);
-        const days = unitDays(kind, avg) * Math.max(1, count);
-        return Utils.clamp(days / speed(state), 1, 1200);
-    }
 
     /* 目标当前是否还能下单 / 开工 */
     function validate(state, kind, name) {
@@ -3864,8 +3855,8 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         return '未知的队列类型。';
     }
 
-    /* 现在下单这批目标需要多少资源（建筑按当前已建数量计算） */
-    function currentCost(state, item) {
+    /* 这批目标「原价」需要多少资源（建筑按当前已建数量逐座累加） */
+    function baseCost(state, item) {
         if (item.kind === 'building') {
             const b = state.buildings[item.name];
             if (!b) return null;
@@ -3889,6 +3880,11 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
             for (const k in p) price[k] = (price[k] || 0) + p[k];
         }
         return price;
+    }
+
+    /* 订单实际需要凑齐的材料（已应用「队列材料折扣」） */
+    function currentCost(state, item) {
+        return applyDiscount(baseCost(state, item), discount(state));
     }
 
     /* 一次能立即买得起的数量（用于「最大」与批量按钮） */
@@ -4006,37 +4002,28 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         }
         if (isFull(state)) return { ok: false, msg: '队列已满（' + used(state) + ' / ' + slots(state) + '），请等待或取消一项。' };
 
-        const est = currentCost(state, { kind: kind, name: name, count: count }) || {};
         const item = {
             id: 'q' + (seq++),
             kind: kind, name: name, count: count,
-            state: 'waiting',       // waiting = 等待资源；building = 施工中
-            cost: null, est: est,
-            start: 0, end: 0, dur: 0,
+            cost: null,                 // 成交（扣款）时的实际材料，用于撤销时退还
+            est: {},                    // 当前需要凑齐的材料（含折扣，每帧重算）
         };
+        item.est = currentCost(state, item) || {};
         state.queue.items.push(item);
         EventEngine.addLog(state, '📝 ' + KIND_LABEL[kind] + '「' + name + '」×' + count +
-            ' 已加入队列（等待资源：' + Object.keys(est).map(k => k + ' ' + Utils.fmtNum(est[k])).join('、') + '）。');
+            ' 已加入队列（等待材料：' + Object.keys(item.est).map(k => k + ' ' + Utils.fmtNum(item.est[k])).join('、') + '）。');
         ProductionEngine.updatePrices(state);
         ProductionEngine.computeProductionAndCaps(state);
-        return { ok: true, queued: count, item: item, msg: '资源不足，已排队：' + name + ' ×' + count + '（资源够了会自动开工）' };
+        return { ok: true, queued: count, item: item, msg: '材料不足，已排队：' + name + ' ×' + count + '（材料凑齐会自动建成）' };
     }
 
-    /* 取消：等待中的直接移除；施工中的全额退还已付材料 */
+    /* 取消订单：还没扣过款，直接移除即可 */
     function cancel(state, id) {
         const idx = state.queue.items.findIndex(it => it.id === id);
         if (idx < 0) return { ok: false };
         const item = state.queue.items[idx];
-        if (item.state === 'building' && item.cost) {
-            for (const k in item.cost) {
-                const r = state.resources[k];
-                if (!r) continue;
-                r.amount = Math.min(r.cap, r.amount + item.cost[k]);
-            }
-        }
         state.queue.items.splice(idx, 1);
-        EventEngine.addLog(state, '↩️ 已取消' + KIND_LABEL[item.kind] + '「' + item.name + '」' +
-            (item.state === 'building' && item.cost ? '，材料已退回。' : '（尚未投入材料）。'));
+        EventEngine.addLog(state, '↩️ 已取消' + KIND_LABEL[item.kind] + '「' + item.name + '」（尚未投入材料）。');
         ProductionEngine.updatePrices(state);
         ProductionEngine.computeProductionAndCaps(state);
         return { ok: true, msg: '已取消：' + item.name };
@@ -4044,47 +4031,73 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 
     function clear(state) { state.queue.items = []; }
 
+    /* 材料就绪度 0~1（面板进度条用） */
     function progress(state, item) {
-        if (!item || item.state !== 'building') return 0;
-        return Utils.clamp((state.gameDays - item.start) / Math.max(1e-6, item.end - item.start), 0, 1);
-    }
-    function remaining(state, item) {
-        if (!item || item.state !== 'building') return 0;
-        return Math.max(0, item.end - state.gameDays);
+        const cost = currentCost(state, item);
+        if (!cost) return 0;
+        let min = 1;
+        for (const k in cost) {
+            const r = state.resources[k];
+            if (!r || cost[k] <= 0) continue;
+            min = Math.min(min, Utils.clamp(r.amount / cost[k], 0, 1));
+        }
+        return min;
     }
 
-    /* 每 tick：等待中的订单按队列顺序开工，施工中的订单到点完成 */
+    /* 某订单被「存量上限」卡住的资源名（没有则返回 null） */
+    function capBlocked(state, item) {
+        const cost = currentCost(state, item);
+        if (!cost) return null;
+        for (const k in cost) {
+            const r = state.resources[k];
+            if (!r || RESOURCES_CONFIG[k].prestige) continue;
+            if (cost[k] > r.cap + 1e-6) return k;
+        }
+        return null;
+    }
+
+    /* 按当前净产量估算「还要多久才凑齐材料」（游戏日）；无法估算返回 null */
+    function eta(state, item) {
+        const cost = currentCost(state, item);
+        if (!cost) return null;
+        let worst = 0;
+        for (const k in cost) {
+            const r = state.resources[k];
+            if (!r) return null;
+            if (!RESOURCES_CONFIG[k].prestige && cost[k] > r.cap + 1e-6) return null;   // 上限不够，永远凑不齐
+            const lack = cost[k] - r.amount;
+            if (lack <= 1e-9) continue;
+            const rate = r.production || 0;
+            if (rate <= 1e-9) return null;                                              // 没有净产出，无法估算
+            worst = Math.max(worst, lack / rate);
+        }
+        return worst;
+    }
+    /* 兼容旧调用：剩余等待时间 */
+    function remaining(state, item) { return eta(state, item); }
+
+    /* 每 tick：按队列顺序检查，材料凑齐的订单立即建成并出队 */
     function tick(state) {
         if (!state.queue || !state.queue.items.length) return;
         const done = [];
         for (const it of state.queue.items) {
-            if (it.state === 'waiting') {
-                const invalid = validate(state, it.kind, it.name);
-                if (invalid) {                       // 目标已失效（例如科技被研究完）→ 直接撤单
-                    done.push(it);
-                    EventEngine.addLog(state, '⚠️ 订单「' + it.name + '」已失效（' + invalid + '），自动撤单。');
-                    continue;
-                }
-                const cost = currentCost(state, it);
-                if (cost && ResourcesManager.canAfford(cost)) {
-                    ResourcesManager.spend(cost);
-                    it.cost = cost;
-                    it.state = 'building';
-                    it.dur = durationOf(state, it.kind, cost, it.count);
-                    it.start = state.gameDays;
-                    it.end = state.gameDays + it.dur;
-                    EventEngine.addLog(state, '🔨 资源到位，「' + it.name + '」×' + it.count +
-                        ' 开始施工（' + Utils.fmtDuration(it.dur) + '）。');
-                }
-            } else if (state.gameDays + 1e-9 >= it.end) {
+            const invalid = validate(state, it.kind, it.name);
+            if (invalid) {                       // 目标已失效（例如科技已被研究完）→ 直接撤单
                 done.push(it);
+                EventEngine.addLog(state, '⚠️ 订单「' + it.name + '」已失效（' + invalid + '），自动撤单。');
+                continue;
+            }
+            const cost = currentCost(state, it);
+            if (!cost) { done.push(it); continue; }
+            it.est = cost;
+            if (ResourcesManager.canAfford(cost)) {
+                ResourcesManager.spend(cost);
+                it.cost = cost;
+                done.push(it);
+                applyComplete(state, it);        // 材料一到手就立刻建成，不再等待第二段工期
             }
         }
-        if (done.length) {
-            const finished = done.filter(it => it.state === 'building');
-            state.queue.items = state.queue.items.filter(it => done.indexOf(it) < 0);
-            for (const it of finished) applyComplete(state, it);
-        }
+        if (done.length) state.queue.items = state.queue.items.filter(it => done.indexOf(it) < 0);
     }
 
     /* 队列中某目标的总数量（用于卡片角标） */
@@ -4095,18 +4108,18 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         }
         return n;
     }
-    /* 队列中某目标的订单状态：'building' | 'waiting' | null */
+    /* 队列中某目标的订单状态：'waiting' | null */
     function queuedState(state, kind, name) {
         const list = state.queue.items.filter(it => it.kind === kind && it.name === name);
         if (!list.length) return null;
-        if (list.some(it => it.state === 'building')) return 'building';
         return 'waiting';
     }
 
     window.QueueEngine = {
-        slots, speed, items, used, isFull, enqueue, cancel, clear,
-        progress, remaining, tick, queuedCount, queuedState, durationOf, currentCost, maxAffordable, valueOf,
-        KIND_LABEL,
+        slots, discount, items, used, isFull, enqueue, cancel, clear,
+        progress, eta, remaining, capBlocked, tick, queuedCount, queuedState,
+        currentCost, baseCost, maxAffordable,
+        KIND_LABEL, DISCOUNT_CAP,
     };
 })();
 
@@ -4724,6 +4737,9 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         const cfg = PERMANENT_CONFIG[name];
         const p = state.permanent[name];
         if (!cfg || !p) return { ok: false };
+        if (!permVisible(state, name)) {
+            return { ok: false, msg: '这项强化要在研究「' + cfg.techReq + '」之后才会出现。' };
+        }
         if (p.level >= cfg.max) return { ok: false, msg: '已达最高等级。' };
         if (cfg.req && state.permanent[cfg.req] && !state.permanent[cfg.req].level) {
             return { ok: false, msg: '需要先解锁「' + cfg.req + '」。' };
@@ -4736,6 +4752,17 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         EventEngine.addLog(state, '✦ 传承强化「' + name + '」提升至 ' + p.level + ' 级，消耗 ' + c.amount + ' ' + c.res + '。');
         ProductionEngine.computeProductionAndCaps(state);
         return { ok: true, msg: name + ' → ' + p.level + ' 级' };
+    }
+
+    /* 传承项是否可以出现：它依赖的系统（科技）没解锁之前就先不显示 */
+    function permVisible(state, name) {
+        const cfg = PERMANENT_CONFIG[name];
+        if (!cfg) return false;
+        if (cfg.techReq) {
+            const t = state.techs[cfg.techReq];
+            if (!t || !t.researched) return false;
+        }
+        return true;
     }
 
     /* ---------------- 试炼 ---------------- */
@@ -4871,13 +4898,22 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         return true;
     }
 
-    /* 重置后的启动资源（含「文明火种」传承加成） */
+    /* 重置后的启动资源（含「文明火种」传承加成）
+       注意：启动物资必须同时抬高对应资源的基础上限，否则会被仓库上限直接截断，
+       玩家看到的就只是「上限满了」，像是传承没生效。 */
     function grantStartResources(state) {
+        const e = EffectsManager.refreshAllEffects(state);
+        const gift = e.startResources > 0 ? { 木材: 300, 石料: 200, 食物: 100, 魔力: 80 } : null;
         state.resources['木材'].amount += 25;
         state.resources['石料'].amount += 15;
-        const e = EffectsManager.refreshAllEffects(state);
-        if (e.startResources > 0) {
-            ResourcesManager.add({ 木材: 300, 石料: 200, 食物: 100, 魔力: 80 });
+        if (gift) {
+            for (const k in gift) {
+                const r = state.resources[k];
+                if (!r) continue;
+                r.baseCap = (r.baseCap || r.cap) + gift[k];
+                r.cap = Math.max(r.cap, r.baseCap);
+            }
+            ResourcesManager.add(gift);
         }
     }
 
@@ -4952,7 +4988,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 
     window.Actions = {
         buyBuilding, setBuildingActive, setBuildingMode,
-        research, buyUpgrade, setPolicy, buyPermanent, permanentCost,
+        research, buyUpgrade, setPolicy, buyPermanent, permanentCost, permVisible,
         toggleChallenge, activeStars, relicGain, starGain, coreGain, resetAvailability,
         prestige, performReset, autoBuildStep, autoExpeditionStep, startExpedition,
     };
@@ -5029,13 +5065,22 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         if (!state.artifacts) state.artifacts = { inventory: [], equipped: [], slots: 3 };
         if (!Array.isArray(state.artifacts.equipped)) state.artifacts.equipped = [];
         if (!state.queue || !Array.isArray(state.queue.items)) state.queue = { items: [] };
-        /* v1.1 的旧队列条目没有 state 字段（那时是「先付款、后施工」），统一转成施工中 */
+        /* 旧队列条目兼容：
+           v1.1「先付款、后施工」与 v1.2「等资源 → 施工」两代存档里的订单，
+           统一转成 v1.3 的「等材料的订单」；已经付过款的把材料退回，避免重复扣费。 */
         for (const it of state.queue.items) {
-            if (!it.state) {
-                it.state = 'building';
-                if (!it.dur || !it.end) { it.dur = 30; it.start = state.gameDays; it.end = state.gameDays + 30; }
+            if (it.state === 'building' && it.cost) {
+                for (const k in it.cost) {
+                    const r = state.resources[k];
+                    if (r) r.amount = Math.min(r.cap, r.amount + it.cost[k]);
+                }
             }
-            if (!it.est) it.est = it.cost || {};
+            delete it.state;
+            delete it.dur;
+            delete it.start;
+            delete it.end;
+            it.cost = null;
+            if (!it.est) it.est = {};
         }
         if (!state.heroes) state.heroes = freshHeroes();
         else {
@@ -5167,6 +5212,20 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     let renderAcc = 0;
     let running = false;
     let autoBuildAcc = 0;
+    const seenErrors = {};
+
+    /* 单帧出错不应该让整个 requestAnimationFrame 链断掉（否则玩家看到的就是「卡死，要刷新」） */
+    function safeCall(tag, fn) {
+        try { fn(); }
+        catch (err) {
+            const key = tag + ':' + (err && err.message ? err.message : String(err));
+            if (!seenErrors[key]) {
+                seenErrors[key] = 1;
+                console.error('[主循环] ' + tag + ' 出错：', err);
+                if (window.UI && UI.toast) UI.toast('内部错误，已跳过这一帧（详情见控制台）。', 'bad');
+            }
+        }
+    }
 
     function advance(dt) {
         if (dt <= 0) return;
@@ -5225,7 +5284,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
             let guard = 0;
             while (acc > 0.0001 && guard++ < 40) {
                 const step = Math.min(0.1, acc);
-                advance(step);
+                safeCall('advance', () => advance(step));
                 acc -= step;
             }
             secondAcc += dtReal;
@@ -5253,7 +5312,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         renderAcc += dtReal;
         if (renderAcc >= 0.1) {
             renderAcc = 0;
-            if (window.UI && UI.render) UI.render();
+            if (window.UI && UI.render) safeCall('render', () => UI.render());
         }
         requestAnimationFrame(tick);
     }
@@ -5515,7 +5574,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
             else if (key === 'artifactSlots') out.push('秘宝装备槽 +' + v);
             else if (key === 'powerMult') out.push('军力 ' + U.fmtPct(v, 1));
             else if (key === 'queueSlots') out.push('建造队列 +' + v + ' 槽位');
-            else if (key === 'queueSpeed') out.push('建造与研究速度 ' + U.fmtPct(v, 1));
+            else if (key === 'queueDiscount') out.push('队列订单材料 ' + U.fmtPct(-v, 1));
             else if (key === 'luck') out.push('召唤运气 +' + v.toFixed(2));
             else if (key === 'summonDiscount') out.push('召唤消耗 ' + U.fmtPct(-v, 1));
             else if (key === 'heroPower') out.push('英雄效果 ' + U.fmtPct(v, 1));
@@ -5775,15 +5834,18 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
             if (!window.QueueEngine) return null;
             const it = GameState.queue.items.find(x => x.id === arg);
             if (!it) return null;
+            const cost = QueueEngine.currentCost(GameState, it) || {};
+            const eta = QueueEngine.eta(GameState, it);
+            const blocked = QueueEngine.capBlocked(GameState, it);
             let html = '<h4>' + G.esc(it.name) + (it.count > 1 ? ' ×' + it.count : '') +
                 ' · ' + G.esc(QueueEngine.KIND_LABEL[it.kind]) + '</h4>';
-            html += '<div class="kv"><span>进度</span><span>' + U.fmtPct(QueueEngine.progress(GameState, it), 0) + '</span></div>';
-            html += '<div class="kv"><span>剩余</span><span>' + U.fmtDuration(QueueEngine.remaining(GameState, it)) + '</span></div>';
-            html += '<div class="kv"><span>总工期</span><span>' + U.fmtDuration(it.dur) + '</span></div>';
-            if (it.cost && Object.keys(it.cost).length) {
-                html += '<hr><div>已预扣材料：</div><div>' + G.priceHtml(it.cost) + '</div>';
-            }
-            html += '<hr><div class="dim">取消该项会全额退回材料。</div>';
+            html += '<div class="kv"><span>材料已备</span><span>' + U.fmtPct(QueueEngine.progress(GameState, it), 0) + '</span></div>';
+            html += '<div class="kv"><span>预计建成</span><span>' +
+                (blocked ? '<span class="lack">上限不足</span>' : (eta === null ? '无法估算' : (eta <= 1e-9 ? '材料已就绪' : U.fmtDuration(eta) + ' 后'))) +
+                '</span></div>';
+            html += '<hr><div>还需要凑齐：</div><div>' + G.priceHtml(cost) + '</div>';
+            if (blocked) html += '<div class="neg">「' + G.esc(blocked) + '」的仓储上限低于这笔订单所需，订单永远凑不齐；先去提升上限或取消订单。</div>';
+            html += '<hr><div class="dim">订单只是「排队等材料」，材料一凑齐就会立即建成；取消订单不会损失任何材料。</div>';
             return html;
         }
 
@@ -5957,7 +6019,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         G.setHTML(document.getElementById('panel-actions'), html);
     }
 
-    /* ---------------- 事件面板 ---------------- */
+    /* ---------------- 建造队列面板 ---------------- */
     const queueRefs = {};
     function renderQueue() {
         const s = GameState;
@@ -5966,41 +6028,40 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         if (!window.QueueEngine) return;
         const items = QueueEngine.items(s);
         const slots = QueueEngine.slots(s);
-        const sig = items.map(it => it.id + ':' + it.state).join(',') + '|' + slots;
+        const sig = items.map(it => it.id).join(',') + '|' + slots + '|' + QueueEngine.discount(s).toFixed(3);
 
         if (box.__sig !== sig) {
             box.__sig = sig;
-            const buildingCount = items.filter(it => it.state === 'building').length;
-            const waitingCount = items.length - buildingCount;
-            let html = '<div class="panel-title">建造队列<span class="right">' + items.length + ' / ' + slots + ' 槽' +
-                (items.length ? '（施工 ' + buildingCount + ' · 等待 ' + waitingCount + '）' : '') + '</span></div>';
+            let html = '<div class="panel-title">建造队列<span class="right">' + items.length + ' / ' + slots + ' 槽</span></div>';
             if (!items.length) {
-                html += '<div class="hint">队列空闲。资源足够时点击卡片会<b>立即建成</b>；资源不足时会作为订单进入这里等待，' +
-                    '资源凑齐后自动开工。槽位可以并行施工，扩容靠传承强化与工程类英雄。</div>';
+                html += '<div class="hint">队列空闲。材料足够时点击卡片会<b>立即建成</b>，根本不会排队；' +
+                    '材料不够时才会作为订单排在这里等待，面板显示「还要多久凑齐材料」，材料一到手就立刻建成。' +
+                    '扩容靠传承强化与工程类英雄。</div>';
                 G.setHTML(box, html);
+                for (const k in queueRefs) delete queueRefs[k];
                 return;
             }
             html += '<div class="queue-list">';
             for (const it of items) {
-                const building = it.state === 'building';
-                html += '<div class="queue-item' + (building ? '' : ' waiting') + '" data-tip="queue|' + G.esc(it.id) + '">';
+                html += '<div class="queue-item waiting" data-tip="queue|' + G.esc(it.id) + '">';
                 html += '<div class="q-head"><span class="q-kind">' + G.esc(QueueEngine.KIND_LABEL[it.kind]) + '</span>' +
                     '<span class="q-name">' + G.esc(it.name) + (it.count > 1 ? ' ×' + it.count : '') + '</span>' +
                     '<span class="q-time" data-q-time="' + G.esc(it.id) + '"></span></div>';
-                if (building) html += G.bar(0).replace('class="bar "', 'class="bar" data-q-bar="' + G.esc(it.id) + '"');
-                else html += '<div class="q-est">需要：' + G.priceHtml(it.est) + '</div>';
-                html += '<div class="q-foot"><button class="btn tiny danger" data-act="queuecancel|' + G.esc(it.id) + '">' +
-                    (building ? '取消并退回材料' : '取消订单') + '</button></div>';
+                html += G.bar(0).replace('class="bar "', 'class="bar" data-q-bar="' + G.esc(it.id) + '"');
+                html += '<div class="q-est" data-q-est="' + G.esc(it.id) + '"></div>';
+                html += '<div class="q-foot"><button class="btn tiny danger" data-act="queuecancel|' + G.esc(it.id) + '">取消订单</button></div>';
                 html += '</div>';
             }
             html += '</div>';
-            html += '<div class="hint mt6">施工速度 ×' + QueueEngine.speed(s).toFixed(2) +
-                '；「等待」中的订单会在资源凑齐后自动开工。</div>';
+            html += '<div class="hint mt6">订单材料折扣 −' + U.fmtPct(QueueEngine.discount(s), 0) +
+                '（上限 −' + U.fmtPct(QueueEngine.DISCOUNT_CAP, 0) + '）：折扣越低，订单要凑的材料越少。</div>';
             G.setHTML(box, html);
+            for (const k in queueRefs) delete queueRefs[k];
             for (const it of items) {
                 queueRefs[it.id] = {
                     time: box.querySelector('[data-q-time="' + it.id + '"]'),
                     bar: box.querySelector('[data-q-bar="' + it.id + '"]'),
+                    est: box.querySelector('[data-q-est="' + it.id + '"]'),
                 };
             }
         }
@@ -6008,13 +6069,19 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         for (const it of items) {
             const ref = queueRefs[it.id];
             if (!ref) continue;
-            if (it.state === 'building') {
-                const p = QueueEngine.progress(s, it);
-                G.setText(ref.time, U.fmtDuration(QueueEngine.remaining(s, it)) + '（' + U.fmtPct(p, 0) + '）');
-                if (ref.bar && ref.bar.firstElementChild) ref.bar.firstElementChild.style.width = (p * 100).toFixed(1) + '%';
-            } else {
-                G.setText(ref.time, '等待资源');
+            const p = QueueEngine.progress(s, it);
+            const blocked = QueueEngine.capBlocked(s, it);
+            const eta = QueueEngine.eta(s, it);
+            if (ref.bar && ref.bar.firstElementChild) {
+                ref.bar.firstElementChild.style.width = (p * 100).toFixed(1) + '%';
+                ref.bar.className = 'bar ' + (blocked ? 'bad' : '');
             }
+            if (blocked) G.setText(ref.time, '上限不足');
+            else if (eta === null) G.setText(ref.time, '无法估算');
+            else if (eta <= 1e-9) G.setText(ref.time, '材料已就绪');
+            else G.setText(ref.time, U.fmtDuration(eta) + ' 后建成');
+            const cost = QueueEngine.currentCost(s, it) || {};
+            G.setHTML(ref.est, '需要：' + G.priceHtml(cost));
         }
     }
 
@@ -6059,19 +6126,19 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     function renderExpeditionPanel() {
         const s = GameState;
         const box = document.getElementById('panel-expedition');
+        if (!box) return;
         const a = s.expedition.active;
-        const power = s.localResources.power.amount * (1 + EffectsManager.additive(s, 'expeditionPower'));
-        if (!a) {
-            G.setHTML(box, '<div class="panel-title">远征队</div><div class="hint">远征队待命中。当前军力 ' + U.fmtNum(power) +
-                '，前往「远征」标签页选择目标。</div>');
-            return;
-        }
-        const region = ExpeditionEngine.findRegion(a.region);
-        const p = ExpeditionEngine.progress(s);
-        const chance = ExpeditionEngine.successChance(s, region);
-        /* 结构按区域缓存，进度条原地更新 */
-        if (box.__sig !== a.region) {
-            box.__sig = a.region;
+        /* 签名带上 startDay：同一区域的两次远征也会各自重建，避免复用已被顶替的节点 */
+        const sig = a ? ('active|' + a.region + '|' + Math.round(a.startDay * 1000)) : 'idle';
+        if (box.__sig !== sig) {
+            box.__sig = sig;
+            if (!a) {
+                expRefs.bar = expRefs.progress = expRefs.chance = expRefs.remain = null;
+                const power = s.localResources.power.amount * (1 + EffectsManager.additive(s, 'expeditionPower'));
+                G.setHTML(box, '<div class="panel-title">远征队</div><div class="hint">远征队待命中。当前军力 ' + U.fmtNum(power) +
+                    '，前往「远征」标签页选择目标。</div>');
+                return;
+            }
             let html = '<div class="panel-title">远征中<span class="right">' + G.esc(a.region) + '</span></div>';
             html += G.bar(0, '').replace('class="bar "', 'class="bar" id="exp-bar"');
             html += '<div class="mini"><span id="exp-progress"></span><span id="exp-chance"></span></div>';
@@ -6082,7 +6149,13 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
             expRefs.chance = box.querySelector('#exp-chance');
             expRefs.remain = box.querySelector('#exp-remain');
         }
-        expRefs.bar.firstElementChild.style.width = (U.clamp(p, 0, 1) * 100).toFixed(1) + '%';
+        if (!a) return;
+        const region = ExpeditionEngine.findRegion(a.region);
+        const p = ExpeditionEngine.progress(s);
+        const chance = ExpeditionEngine.successChance(s, region);
+        if (expRefs.bar && expRefs.bar.firstElementChild) {
+            expRefs.bar.firstElementChild.style.width = (U.clamp(p, 0, 1) * 100).toFixed(1) + '%';
+        }
         G.setText(expRefs.progress, '进度 ' + U.fmtPct(p));
         G.setText(expRefs.chance, '预计成功率 ' + U.fmtPct(chance));
         G.setText(expRefs.remain, '剩余 ' + U.fmtDuration(ExpeditionEngine.remaining(s)) + '。' +
@@ -6202,7 +6275,6 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         const affordable = ResourcesManager.canAfford(b.price);
         const unlocked = b.unlocked;
         const queued = window.QueueEngine ? QueueEngine.queuedCount(s, 'building', name) : 0;
-        const queuedState = window.QueueEngine ? QueueEngine.queuedState(s, 'building', name) : null;
         const queueFull = window.QueueEngine ? QueueEngine.isFull(s) : false;
         /* 资源足够就直接建成，不占用队列；只有「买不起 + 队列满」时不能下单 */
         const blocked = !affordable && queueFull;
@@ -6218,7 +6290,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         let html = '<div class="' + cls + ' clickable" data-act="' + G.esc(primaryAct) + '" data-tip="build|' + G.esc(name) + '">';
         html += '<div class="card-head"><div class="card-name">' + G.esc(name) +
             (st.modeName ? '<span class="tag">' + G.esc(st.modeName) + '</span>' : '') +
-            (queued > 0 ? '<span class="tag queue">' + (queuedState === 'building' ? '施工中' : '排队中') + ' ×' + queued + '</span>' : '') +
+            (queued > 0 ? '<span class="tag queue">排队中 ×' + queued + '</span>' : '') +
             (b.active > 0 && st.efficiency < 0.995 ? '<span class="tag warn">受限 ' + U.fmtPct(st.efficiency, 0) + '</span>' : '') +
             '</div>';
         html += '<div class="card-count">' + Math.round(b.active) + '<small> / ' + b.count + '</small></div></div>';
@@ -6242,7 +6314,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         /* 只保留操作按钮，其余信息交给悬浮提示 */
         html += '<div class="card-actions">';
         html += '<button class="btn primary wide-action" data-act="buy|' + G.esc(name) + '|1"' + (blocked ? ' disabled' : '') + '>' +
-            (blocked ? '队列已满' : (affordable ? '建造 ×1' : '排队等待 ×1')) + '</button>';
+            (blocked ? '队列已满' : (affordable ? '建造 ×1' : '排队等材料 ×1')) + '</button>';
         html += '<button class="btn tiny" data-act="buy|' + G.esc(name) + '|5"' + (blocked ? ' disabled' : '') + '>+5</button>';
         html += '<button class="btn tiny" data-act="buy|' + G.esc(name) + '|10"' + (blocked ? ' disabled' : '') + '>+10</button>';
         html += '<button class="btn tiny" data-act="buy|' + G.esc(name) + '|max"' + (affordable && !queueFull ? '' : ' disabled') + '>最大</button>';
@@ -6266,6 +6338,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
             '并会因为 <b>原料短缺</b> 或 <b>人手不足</b> 而降低效率——效率会同时影响产量与消耗。<br>' +
             '<b>点击卡片任意处即可建造 ×1</b>；「+5 / +10 / 最大」用于批量建造，' +
             '「停用」可暂时关掉一座建筑（停用后不再消耗原料与人口）。<br>' +
+            '材料足够时点击会<b>立即建成</b>；材料不足时会排进右侧队列，显示「还要多久凑齐材料」，凑齐的瞬间就自动建成。<br>' +
             '<b>把鼠标移到卡片上</b>即可查看该建筑的产出、消耗、上限、人口需求、效率、造价与说明；' +
             '名称旁的 <span class="tag warn">受限</span> 标记表示它当前没有满效率运转。</div>';
 
@@ -6320,7 +6393,6 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         const affordable = ResourcesManager.canAfford(cfg.cost);
         const capBlocked = Object.keys(cfg.cost).some(k => !RESOURCES_CONFIG[k].prestige && cfg.cost[k] > s.resources[k].cap);
         const queued = window.QueueEngine ? QueueEngine.queuedCount(s, 'tech', name) > 0 : false;
-        const queuedState = window.QueueEngine ? QueueEngine.queuedState(s, 'tech', name) : null;
         const queueFull = window.QueueEngine ? QueueEngine.isFull(s) : false;
 
         let cls = 'card';
@@ -6335,7 +6407,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
             (act ? ' data-act="' + act + '"' : '') + ' data-tip="tech|' + G.esc(name) + '">';
         html += '<div class="card-head"><div class="card-name">' + (t.researched ? '✅ ' : '') + G.esc(name) +
             '<span class="tag">第' + cfg.era + '时代</span>' +
-            (queued ? '<span class="tag queue">' + (queuedState === 'building' ? '研究中' : '排队中') + '</span>' : '') + '</div>';
+            (queued ? '<span class="tag queue">排队中</span>' : '') + '</div>';
         if (!t.researched) html += '<div class="card-count" style="font-size:.8rem">' + (available ? (affordable ? '可研究' : '资源不足') : '前置未完成') + '</div>';
         html += '</div>';
 
@@ -6358,13 +6430,13 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
             html += '<div class="price">' + G.costHtml(cfg.cost) + '</div>';
             if (capBlocked) html += '<div class="hint neg">所需资源超过当前上限，需要建造仓库类建筑提升上限。</div>';
             const techBlocked = !available || queued || (!affordable && queueFull);
-            const techLabel = queued ? (queuedState === 'building' ? '研究中…' : '排队中…')
+            const techLabel = queued ? '排队中…'
                 : (!available ? '前置未完成' : (affordable ? '研究' : (queueFull ? '队列已满' : '排队研究')));
             html += '<div class="card-actions"><button class="btn primary wide-action" data-act="research|' + G.esc(name) + '"' +
                 (techBlocked ? ' disabled' : '') + '>' + techLabel + '</button></div>';
-            html += '<div class="card-tip"><span>' + (queued ? '已在研究队列中，可在右侧队列面板取消'
+            html += '<div class="card-tip"><span>' + (queued ? '已在队列中等待材料，可在右侧队列面板取消'
                 : (!available ? '前置科技尚未完成'
-                    : (affordable ? '点击卡片任意处即可研究' : '资源不足：点击会排队，资源够了自动开工'))) + '</span><span></span></div>';
+                    : (affordable ? '点击卡片任意处即可研究' : '材料不足：点击会排队，材料凑齐就自动完成'))) + '</span><span></span></div>';
         } else {
             html += '<div class="card-tip"><span>' + (opts.inDone ? '点击卡片任意处可收起详情' : '已完成研究') + '</span><span>✅</span></div>';
         }
@@ -6464,7 +6536,6 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         const affordable = ResourcesManager.canAfford(price);
         const maxed = u.level >= cfg.cap;
         const queued = window.QueueEngine ? QueueEngine.queuedCount(s, 'upgrade', name) > 0 : false;
-        const queuedState = window.QueueEngine ? QueueEngine.queuedState(s, 'upgrade', name) : null;
         const queueFull = window.QueueEngine ? QueueEngine.isFull(s) : false;
         let cls = 'card' + (affordable && !maxed ? ' affordable' : '') + (u.level > 0 ? ' researched' : '');
         const blocked = !maxed && !affordable && queueFull;
@@ -6473,8 +6544,8 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
             (clickable ? ' data-act="upgrade|' + G.esc(name) + '"' : '') + ' data-tip="upgrade|' + G.esc(name) + '">';
         html += '<div class="card-head"><div class="card-name">' + G.esc(name) + '</div>' +
             '<div class="card-count">Lv.' + u.level + '<small> / ' + cfg.cap + '</small></div></div>';
-        if (queued) html += '<div class="hint pos">队列中有 ' + QueueEngine.queuedCount(s, 'upgrade', name) + ' 级' +
-            (queuedState === 'building' ? '正在升级' : '排队等待资源') + '（可在右侧队列面板取消）。</div>';
+        if (queued) html += '<div class="hint pos">队列中有 ' + QueueEngine.queuedCount(s, 'upgrade', name) + ' 级排队等待材料' +
+            '（可在右侧队列面板取消）。</div>';
         const effs = G.effectLines(cfg.effect);
         html += '<div class="card-stats">' + effs.map(e =>
             '<div class="row"><span class="k">每级</span><span class="v pos">' + G.esc(e) + '</span></div>' +
@@ -6484,8 +6555,8 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         if (!maxed) {
             html += '<div class="price">' + G.priceHtml(price) + '</div>';
             html += '<div class="card-actions"><button class="btn primary wide-action" data-act="upgrade|' + G.esc(name) + '"' +
-                (blocked ? ' disabled' : '') + '>' + (blocked ? '队列已满' : (affordable ? '升级' : '排队升级')) + '</button></div>';
-            html += '<div class="card-tip"><span>' + (affordable ? '点击卡片任意处即可升级' : '资源不足：点击会排队，资源够了自动开工') + '</span><span></span></div>';
+                (blocked ? ' disabled' : '') + '>' + (blocked ? '队列已满' : (affordable ? '升级' : '排队等材料')) + '</button></div>';
+            html += '<div class="card-tip"><span>' + (affordable ? '点击卡片任意处即可升级' : '材料不足：点击会排队，材料凑齐就自动完成') + '</span><span></span></div>';
         } else {
             html += '<div class="hint pos">已达到等级上限。</div>';
         }
@@ -6516,6 +6587,9 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     const U = window.Utils;
     const G = window.UI;
     const permTree = { current: 'relic' };
+
+    /* 该项传承是否已经可以出现（依赖的系统必须先解锁） */
+    function isPermVisible(name) { return Actions.permVisible(GameState, name); }
 
     /* ---------------- 国策 ---------------- */
     function policyCard(name) {
@@ -6654,8 +6728,15 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
                 label + '（' + U.fmtNum(ResourcesManager.amount(res)) + '）</button>';
         }
         html += '</div>';
-        const names = PERMANENT_ORDER.filter(n => PERMANENT_CONFIG[n].tree === permTree.current);
+        /* 依赖的系统还没解锁时，对应的传承项不显示（例如没研究「召唤法阵」就不出现英雄类强化） */
+        const locked = PERMANENT_ORDER.filter(n => PERMANENT_CONFIG[n].tree === permTree.current).length -
+            PERMANENT_ORDER.filter(n => PERMANENT_CONFIG[n].tree === permTree.current && isPermVisible(n)).length;
+        const names = PERMANENT_ORDER.filter(n => PERMANENT_CONFIG[n].tree === permTree.current && isPermVisible(n));
         html += '<div class="card-grid">' + names.map(permCard).join('') + '</div>';
+        if (locked > 0) {
+            html += '<div class="hint mt6">还有 <b>' + locked + '</b> 项强化会在解锁对应系统后出现：' +
+                '英雄类需要先研究「召唤法阵」，远征与秘宝类需要先研究「城防」。</div>';
+        }
 
         html += '<div class="section-title">试炼</div>';
         html += '<div class="hint" style="margin-bottom:8px">激活试炼会立刻施加严苛的限制，' +
@@ -6665,7 +6746,10 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         return html;
     }
 
-    window.TabAscend = { renderPolicies, renderAscend, permTree };
+    window.TabAscend = {
+        renderPolicies, renderAscend, permTree,
+        isPermVisible,
+    };
 })();
 
 </script>

@@ -16,7 +16,6 @@
         const affordable = ResourcesManager.canAfford(cfg.cost);
         const capBlocked = Object.keys(cfg.cost).some(k => !RESOURCES_CONFIG[k].prestige && cfg.cost[k] > s.resources[k].cap);
         const queued = window.QueueEngine ? QueueEngine.queuedCount(s, 'tech', name) > 0 : false;
-        const queuedState = window.QueueEngine ? QueueEngine.queuedState(s, 'tech', name) : null;
         const queueFull = window.QueueEngine ? QueueEngine.isFull(s) : false;
 
         let cls = 'card';
@@ -31,7 +30,7 @@
             (act ? ' data-act="' + act + '"' : '') + ' data-tip="tech|' + G.esc(name) + '">';
         html += '<div class="card-head"><div class="card-name">' + (t.researched ? '✅ ' : '') + G.esc(name) +
             '<span class="tag">第' + cfg.era + '时代</span>' +
-            (queued ? '<span class="tag queue">' + (queuedState === 'building' ? '研究中' : '排队中') + '</span>' : '') + '</div>';
+            (queued ? '<span class="tag queue">排队中</span>' : '') + '</div>';
         if (!t.researched) html += '<div class="card-count" style="font-size:.8rem">' + (available ? (affordable ? '可研究' : '资源不足') : '前置未完成') + '</div>';
         html += '</div>';
 
@@ -54,13 +53,13 @@
             html += '<div class="price">' + G.costHtml(cfg.cost) + '</div>';
             if (capBlocked) html += '<div class="hint neg">所需资源超过当前上限，需要建造仓库类建筑提升上限。</div>';
             const techBlocked = !available || queued || (!affordable && queueFull);
-            const techLabel = queued ? (queuedState === 'building' ? '研究中…' : '排队中…')
+            const techLabel = queued ? '排队中…'
                 : (!available ? '前置未完成' : (affordable ? '研究' : (queueFull ? '队列已满' : '排队研究')));
             html += '<div class="card-actions"><button class="btn primary wide-action" data-act="research|' + G.esc(name) + '"' +
                 (techBlocked ? ' disabled' : '') + '>' + techLabel + '</button></div>';
-            html += '<div class="card-tip"><span>' + (queued ? '已在研究队列中，可在右侧队列面板取消'
+            html += '<div class="card-tip"><span>' + (queued ? '已在队列中等待材料，可在右侧队列面板取消'
                 : (!available ? '前置科技尚未完成'
-                    : (affordable ? '点击卡片任意处即可研究' : '资源不足：点击会排队，资源够了自动开工'))) + '</span><span></span></div>';
+                    : (affordable ? '点击卡片任意处即可研究' : '材料不足：点击会排队，材料凑齐就自动完成'))) + '</span><span></span></div>';
         } else {
             html += '<div class="card-tip"><span>' + (opts.inDone ? '点击卡片任意处可收起详情' : '已完成研究') + '</span><span>✅</span></div>';
         }
@@ -160,7 +159,6 @@
         const affordable = ResourcesManager.canAfford(price);
         const maxed = u.level >= cfg.cap;
         const queued = window.QueueEngine ? QueueEngine.queuedCount(s, 'upgrade', name) > 0 : false;
-        const queuedState = window.QueueEngine ? QueueEngine.queuedState(s, 'upgrade', name) : null;
         const queueFull = window.QueueEngine ? QueueEngine.isFull(s) : false;
         let cls = 'card' + (affordable && !maxed ? ' affordable' : '') + (u.level > 0 ? ' researched' : '');
         const blocked = !maxed && !affordable && queueFull;
@@ -169,8 +167,8 @@
             (clickable ? ' data-act="upgrade|' + G.esc(name) + '"' : '') + ' data-tip="upgrade|' + G.esc(name) + '">';
         html += '<div class="card-head"><div class="card-name">' + G.esc(name) + '</div>' +
             '<div class="card-count">Lv.' + u.level + '<small> / ' + cfg.cap + '</small></div></div>';
-        if (queued) html += '<div class="hint pos">队列中有 ' + QueueEngine.queuedCount(s, 'upgrade', name) + ' 级' +
-            (queuedState === 'building' ? '正在升级' : '排队等待资源') + '（可在右侧队列面板取消）。</div>';
+        if (queued) html += '<div class="hint pos">队列中有 ' + QueueEngine.queuedCount(s, 'upgrade', name) + ' 级排队等待材料' +
+            '（可在右侧队列面板取消）。</div>';
         const effs = G.effectLines(cfg.effect);
         html += '<div class="card-stats">' + effs.map(e =>
             '<div class="row"><span class="k">每级</span><span class="v pos">' + G.esc(e) + '</span></div>' +
@@ -180,8 +178,8 @@
         if (!maxed) {
             html += '<div class="price">' + G.priceHtml(price) + '</div>';
             html += '<div class="card-actions"><button class="btn primary wide-action" data-act="upgrade|' + G.esc(name) + '"' +
-                (blocked ? ' disabled' : '') + '>' + (blocked ? '队列已满' : (affordable ? '升级' : '排队升级')) + '</button></div>';
-            html += '<div class="card-tip"><span>' + (affordable ? '点击卡片任意处即可升级' : '资源不足：点击会排队，资源够了自动开工') + '</span><span></span></div>';
+                (blocked ? ' disabled' : '') + '>' + (blocked ? '队列已满' : (affordable ? '升级' : '排队等材料')) + '</button></div>';
+            html += '<div class="card-tip"><span>' + (affordable ? '点击卡片任意处即可升级' : '材料不足：点击会排队，材料凑齐就自动完成') + '</span><span></span></div>';
         } else {
             html += '<div class="hint pos">已达到等级上限。</div>';
         }

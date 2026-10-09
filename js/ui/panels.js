@@ -229,15 +229,18 @@
             if (!window.QueueEngine) return null;
             const it = GameState.queue.items.find(x => x.id === arg);
             if (!it) return null;
+            const cost = QueueEngine.currentCost(GameState, it) || {};
+            const eta = QueueEngine.eta(GameState, it);
+            const blocked = QueueEngine.capBlocked(GameState, it);
             let html = '<h4>' + G.esc(it.name) + (it.count > 1 ? ' ×' + it.count : '') +
                 ' · ' + G.esc(QueueEngine.KIND_LABEL[it.kind]) + '</h4>';
-            html += '<div class="kv"><span>进度</span><span>' + U.fmtPct(QueueEngine.progress(GameState, it), 0) + '</span></div>';
-            html += '<div class="kv"><span>剩余</span><span>' + U.fmtDuration(QueueEngine.remaining(GameState, it)) + '</span></div>';
-            html += '<div class="kv"><span>总工期</span><span>' + U.fmtDuration(it.dur) + '</span></div>';
-            if (it.cost && Object.keys(it.cost).length) {
-                html += '<hr><div>已预扣材料：</div><div>' + G.priceHtml(it.cost) + '</div>';
-            }
-            html += '<hr><div class="dim">取消该项会全额退回材料。</div>';
+            html += '<div class="kv"><span>材料已备</span><span>' + U.fmtPct(QueueEngine.progress(GameState, it), 0) + '</span></div>';
+            html += '<div class="kv"><span>预计建成</span><span>' +
+                (blocked ? '<span class="lack">上限不足</span>' : (eta === null ? '无法估算' : (eta <= 1e-9 ? '材料已就绪' : U.fmtDuration(eta) + ' 后'))) +
+                '</span></div>';
+            html += '<hr><div>还需要凑齐：</div><div>' + G.priceHtml(cost) + '</div>';
+            if (blocked) html += '<div class="neg">「' + G.esc(blocked) + '」的仓储上限低于这笔订单所需，订单永远凑不齐；先去提升上限或取消订单。</div>';
+            html += '<hr><div class="dim">订单只是「排队等材料」，材料一凑齐就会立即建成；取消订单不会损失任何材料。</div>';
             return html;
         }
 
@@ -411,7 +414,7 @@
         G.setHTML(document.getElementById('panel-actions'), html);
     }
 
-    /* ---------------- 事件面板 ---------------- */
+    /* ---------------- 建造队列面板 ---------------- */
     const queueRefs = {};
     function renderQueue() {
         const s = GameState;
@@ -420,41 +423,40 @@
         if (!window.QueueEngine) return;
         const items = QueueEngine.items(s);
         const slots = QueueEngine.slots(s);
-        const sig = items.map(it => it.id + ':' + it.state).join(',') + '|' + slots;
+        const sig = items.map(it => it.id).join(',') + '|' + slots + '|' + QueueEngine.discount(s).toFixed(3);
 
         if (box.__sig !== sig) {
             box.__sig = sig;
-            const buildingCount = items.filter(it => it.state === 'building').length;
-            const waitingCount = items.length - buildingCount;
-            let html = '<div class="panel-title">建造队列<span class="right">' + items.length + ' / ' + slots + ' 槽' +
-                (items.length ? '（施工 ' + buildingCount + ' · 等待 ' + waitingCount + '）' : '') + '</span></div>';
+            let html = '<div class="panel-title">建造队列<span class="right">' + items.length + ' / ' + slots + ' 槽</span></div>';
             if (!items.length) {
-                html += '<div class="hint">队列空闲。资源足够时点击卡片会<b>立即建成</b>；资源不足时会作为订单进入这里等待，' +
-                    '资源凑齐后自动开工。槽位可以并行施工，扩容靠传承强化与工程类英雄。</div>';
+                html += '<div class="hint">队列空闲。材料足够时点击卡片会<b>立即建成</b>，根本不会排队；' +
+                    '材料不够时才会作为订单排在这里等待，面板显示「还要多久凑齐材料」，材料一到手就立刻建成。' +
+                    '扩容靠传承强化与工程类英雄。</div>';
                 G.setHTML(box, html);
+                for (const k in queueRefs) delete queueRefs[k];
                 return;
             }
             html += '<div class="queue-list">';
             for (const it of items) {
-                const building = it.state === 'building';
-                html += '<div class="queue-item' + (building ? '' : ' waiting') + '" data-tip="queue|' + G.esc(it.id) + '">';
+                html += '<div class="queue-item waiting" data-tip="queue|' + G.esc(it.id) + '">';
                 html += '<div class="q-head"><span class="q-kind">' + G.esc(QueueEngine.KIND_LABEL[it.kind]) + '</span>' +
                     '<span class="q-name">' + G.esc(it.name) + (it.count > 1 ? ' ×' + it.count : '') + '</span>' +
                     '<span class="q-time" data-q-time="' + G.esc(it.id) + '"></span></div>';
-                if (building) html += G.bar(0).replace('class="bar "', 'class="bar" data-q-bar="' + G.esc(it.id) + '"');
-                else html += '<div class="q-est">需要：' + G.priceHtml(it.est) + '</div>';
-                html += '<div class="q-foot"><button class="btn tiny danger" data-act="queuecancel|' + G.esc(it.id) + '">' +
-                    (building ? '取消并退回材料' : '取消订单') + '</button></div>';
+                html += G.bar(0).replace('class="bar "', 'class="bar" data-q-bar="' + G.esc(it.id) + '"');
+                html += '<div class="q-est" data-q-est="' + G.esc(it.id) + '"></div>';
+                html += '<div class="q-foot"><button class="btn tiny danger" data-act="queuecancel|' + G.esc(it.id) + '">取消订单</button></div>';
                 html += '</div>';
             }
             html += '</div>';
-            html += '<div class="hint mt6">施工速度 ×' + QueueEngine.speed(s).toFixed(2) +
-                '；「等待」中的订单会在资源凑齐后自动开工。</div>';
+            html += '<div class="hint mt6">订单材料折扣 −' + U.fmtPct(QueueEngine.discount(s), 0) +
+                '（上限 −' + U.fmtPct(QueueEngine.DISCOUNT_CAP, 0) + '）：折扣越低，订单要凑的材料越少。</div>';
             G.setHTML(box, html);
+            for (const k in queueRefs) delete queueRefs[k];
             for (const it of items) {
                 queueRefs[it.id] = {
                     time: box.querySelector('[data-q-time="' + it.id + '"]'),
                     bar: box.querySelector('[data-q-bar="' + it.id + '"]'),
+                    est: box.querySelector('[data-q-est="' + it.id + '"]'),
                 };
             }
         }
@@ -462,13 +464,19 @@
         for (const it of items) {
             const ref = queueRefs[it.id];
             if (!ref) continue;
-            if (it.state === 'building') {
-                const p = QueueEngine.progress(s, it);
-                G.setText(ref.time, U.fmtDuration(QueueEngine.remaining(s, it)) + '（' + U.fmtPct(p, 0) + '）');
-                if (ref.bar && ref.bar.firstElementChild) ref.bar.firstElementChild.style.width = (p * 100).toFixed(1) + '%';
-            } else {
-                G.setText(ref.time, '等待资源');
+            const p = QueueEngine.progress(s, it);
+            const blocked = QueueEngine.capBlocked(s, it);
+            const eta = QueueEngine.eta(s, it);
+            if (ref.bar && ref.bar.firstElementChild) {
+                ref.bar.firstElementChild.style.width = (p * 100).toFixed(1) + '%';
+                ref.bar.className = 'bar ' + (blocked ? 'bad' : '');
             }
+            if (blocked) G.setText(ref.time, '上限不足');
+            else if (eta === null) G.setText(ref.time, '无法估算');
+            else if (eta <= 1e-9) G.setText(ref.time, '材料已就绪');
+            else G.setText(ref.time, U.fmtDuration(eta) + ' 后建成');
+            const cost = QueueEngine.currentCost(s, it) || {};
+            G.setHTML(ref.est, '需要：' + G.priceHtml(cost));
         }
     }
 
@@ -513,19 +521,19 @@
     function renderExpeditionPanel() {
         const s = GameState;
         const box = document.getElementById('panel-expedition');
+        if (!box) return;
         const a = s.expedition.active;
-        const power = s.localResources.power.amount * (1 + EffectsManager.additive(s, 'expeditionPower'));
-        if (!a) {
-            G.setHTML(box, '<div class="panel-title">远征队</div><div class="hint">远征队待命中。当前军力 ' + U.fmtNum(power) +
-                '，前往「远征」标签页选择目标。</div>');
-            return;
-        }
-        const region = ExpeditionEngine.findRegion(a.region);
-        const p = ExpeditionEngine.progress(s);
-        const chance = ExpeditionEngine.successChance(s, region);
-        /* 结构按区域缓存，进度条原地更新 */
-        if (box.__sig !== a.region) {
-            box.__sig = a.region;
+        /* 签名带上 startDay：同一区域的两次远征也会各自重建，避免复用已被顶替的节点 */
+        const sig = a ? ('active|' + a.region + '|' + Math.round(a.startDay * 1000)) : 'idle';
+        if (box.__sig !== sig) {
+            box.__sig = sig;
+            if (!a) {
+                expRefs.bar = expRefs.progress = expRefs.chance = expRefs.remain = null;
+                const power = s.localResources.power.amount * (1 + EffectsManager.additive(s, 'expeditionPower'));
+                G.setHTML(box, '<div class="panel-title">远征队</div><div class="hint">远征队待命中。当前军力 ' + U.fmtNum(power) +
+                    '，前往「远征」标签页选择目标。</div>');
+                return;
+            }
             let html = '<div class="panel-title">远征中<span class="right">' + G.esc(a.region) + '</span></div>';
             html += G.bar(0, '').replace('class="bar "', 'class="bar" id="exp-bar"');
             html += '<div class="mini"><span id="exp-progress"></span><span id="exp-chance"></span></div>';
@@ -536,7 +544,13 @@
             expRefs.chance = box.querySelector('#exp-chance');
             expRefs.remain = box.querySelector('#exp-remain');
         }
-        expRefs.bar.firstElementChild.style.width = (U.clamp(p, 0, 1) * 100).toFixed(1) + '%';
+        if (!a) return;
+        const region = ExpeditionEngine.findRegion(a.region);
+        const p = ExpeditionEngine.progress(s);
+        const chance = ExpeditionEngine.successChance(s, region);
+        if (expRefs.bar && expRefs.bar.firstElementChild) {
+            expRefs.bar.firstElementChild.style.width = (U.clamp(p, 0, 1) * 100).toFixed(1) + '%';
+        }
         G.setText(expRefs.progress, '进度 ' + U.fmtPct(p));
         G.setText(expRefs.chance, '预计成功率 ' + U.fmtPct(chance));
         G.setText(expRefs.remain, '剩余 ' + U.fmtDuration(ExpeditionEngine.remaining(s)) + '。' +

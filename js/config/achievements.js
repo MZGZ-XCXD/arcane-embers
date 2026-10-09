@@ -64,9 +64,9 @@
     A('英雄殿堂', '收集 15 位不同的英雄。',
         s => s.heroes && Object.keys(s.heroes.owned).length >= 15, { heroPower: 0.1 }, '英雄效果 +10%');
     A('工坊大师', '把建造队列扩展到 8 个槽位。',
-        s => window.QueueEngine && QueueEngine.slots(s) >= 8, { queueSpeed: 0.08 }, '建造与研究速度 +8%');
+        s => window.QueueEngine && QueueEngine.slots(s) >= 8, { queueDiscount: 0.03 }, '队列订单材料 −3%');
     A('城建大师', '累计建成 300 座建筑。',
-        s => (s.stats.totalBuildingBuilt || 0) >= 300, { queueSpeed: 0.05 }, '建造与研究速度 +5%');
+        s => (s.stats.totalBuildingBuilt || 0) >= 300, { queueDiscount: 0.02 }, '队列订单材料 −2%');
 
     window.ACHIEVEMENTS_CONFIG = LIST;
 })();

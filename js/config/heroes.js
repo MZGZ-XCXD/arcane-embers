@@ -19,7 +19,7 @@
         资源: { key: '资源', icon: '🌾', desc: '提升所有建筑的产出',   effect: { globalProd: 0.08 } },
         仓储: { key: '仓储', icon: '📦', desc: '提升所有资源的存量上限', effect: { capAll: 0.15 } },
         知识: { key: '知识', icon: '📖', desc: '提升魔法知识产出',     effect: { knowledgeProd: 0.2 } },
-        工程: { key: '工程', icon: '🔧', desc: '加快建造与研究速度',   effect: { queueSpeed: 0.15 } },
+        工程: { key: '工程', icon: '🔧', desc: '降低队列订单的材料需求', effect: { queueDiscount: 0.15 } },
         经济: { key: '经济', icon: '🪙', desc: '提升贸易规模与黄金产出', effect: { marketVolume: 0.3, resourceProd: { 黄金: 0.25 } } },
         民生: { key: '民生', icon: '🏡', desc: '提升民望与人口上限',   effect: { happiness: 40, populationCap: 0.08 } },
         远征: { key: '远征', icon: '🧭', desc: '提升远征收益',        effect: { expeditionReward: 0.3, expeditionPower: 0.12 } },
@@ -72,7 +72,7 @@
     H('最后一位浮空城主', 'EX', '战力', '大崩坏那天他没有逃。他把整座城压成了一个人的脊梁。', { powerMult: 0.5 });
     H('原初之龙·灰烬之翼', 'EX', '资源', '它睡在灰烬森林深处。呼吸之间，土地重新长出东西。', { globalProd: 0.25 });
     H('世界意志·静默之声', 'EX', '幸运', '它不说话，只是让你想要的东西更容易来到你手里。',
-        { queueSlots: 2, queueSpeed: 0.5, luck: 0.5, summonDiscount: 0.15 });
+        { queueSlots: 2, queueDiscount: 0.15, luck: 0.5, summonDiscount: 0.15 });
 
     const GACHA = {
         /* 每次召唤的消耗（×10 时享受 batchDiscount 折扣） */

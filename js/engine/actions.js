@@ -73,6 +73,9 @@
         const cfg = PERMANENT_CONFIG[name];
         const p = state.permanent[name];
         if (!cfg || !p) return { ok: false };
+        if (!permVisible(state, name)) {
+            return { ok: false, msg: '这项强化要在研究「' + cfg.techReq + '」之后才会出现。' };
+        }
         if (p.level >= cfg.max) return { ok: false, msg: '已达最高等级。' };
         if (cfg.req && state.permanent[cfg.req] && !state.permanent[cfg.req].level) {
             return { ok: false, msg: '需要先解锁「' + cfg.req + '」。' };
@@ -85,6 +88,17 @@
         EventEngine.addLog(state, '✦ 传承强化「' + name + '」提升至 ' + p.level + ' 级，消耗 ' + c.amount + ' ' + c.res + '。');
         ProductionEngine.computeProductionAndCaps(state);
         return { ok: true, msg: name + ' → ' + p.level + ' 级' };
+    }
+
+    /* 传承项是否可以出现：它依赖的系统（科技）没解锁之前就先不显示 */
+    function permVisible(state, name) {
+        const cfg = PERMANENT_CONFIG[name];
+        if (!cfg) return false;
+        if (cfg.techReq) {
+            const t = state.techs[cfg.techReq];
+            if (!t || !t.researched) return false;
+        }
+        return true;
     }
 
     /* ---------------- 试炼 ---------------- */
@@ -220,13 +234,22 @@
         return true;
     }
 
-    /* 重置后的启动资源（含「文明火种」传承加成） */
+    /* 重置后的启动资源（含「文明火种」传承加成）
+       注意：启动物资必须同时抬高对应资源的基础上限，否则会被仓库上限直接截断，
+       玩家看到的就只是「上限满了」，像是传承没生效。 */
     function grantStartResources(state) {
+        const e = EffectsManager.refreshAllEffects(state);
+        const gift = e.startResources > 0 ? { 木材: 300, 石料: 200, 食物: 100, 魔力: 80 } : null;
         state.resources['木材'].amount += 25;
         state.resources['石料'].amount += 15;
-        const e = EffectsManager.refreshAllEffects(state);
-        if (e.startResources > 0) {
-            ResourcesManager.add({ 木材: 300, 石料: 200, 食物: 100, 魔力: 80 });
+        if (gift) {
+            for (const k in gift) {
+                const r = state.resources[k];
+                if (!r) continue;
+                r.baseCap = (r.baseCap || r.cap) + gift[k];
+                r.cap = Math.max(r.cap, r.baseCap);
+            }
+            ResourcesManager.add(gift);
         }
     }
 
@@ -301,7 +324,7 @@
 
     window.Actions = {
         buyBuilding, setBuildingActive, setBuildingMode,
-        research, buyUpgrade, setPolicy, buyPermanent, permanentCost,
+        research, buyUpgrade, setPolicy, buyPermanent, permanentCost, permVisible,
         toggleChallenge, activeStars, relicGain, starGain, coreGain, resetAvailability,
         prestige, performReset, autoBuildStep, autoExpeditionStep, startExpedition,
     };

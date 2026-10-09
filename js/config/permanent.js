@@ -15,6 +15,7 @@
             costG: o.costG || 1.7,
             max: o.max || 1,
             req: o.req || null,
+            techReq: o.techReq || null,       // 需要先研究完这项科技，传承项才会出现
             effect: o.eff || {},
             special: o.special || null,
             desc: o.desc || '',
@@ -25,7 +26,7 @@
     /* ---------------- 奥术遗物 ---------------- */
     P('文明火种', {
         tree: 'relic', cost: 2, max: 1, eff: { startResources: 1 },
-        desc: '重置后立即获得 300 木材、200 石料、100 食物与 80 魔力，让第一小时不再枯燥。',
+        desc: '重置后立即获得 300 木材、200 石料、100 食物与 80 魔力，并把它们的基础上限一并抬高（否则会被仓库上限截断），让第一小时不再枯燥。',
     });
     P('智慧符文', {
         tree: 'relic', cost: 3, costG: 1.55, max: 10, eff: { knowledgeProd: 0.08 },
@@ -52,19 +53,20 @@
         desc: '一道让人心情变好的祝福。民望每级 +25。',
     });
     P('远征装备', {
-        tree: 'relic', cost: 10, costG: 1.6, max: 10, eff: { expeditionPower: 0.08, expeditionReward: 0.05 },
+        tree: 'relic', cost: 10, costG: 1.6, max: 10, techReq: '城防',
+        eff: { expeditionPower: 0.08, expeditionReward: 0.05 },
         desc: '更好的护符与补给。远征军力每级 +8%，远征收益 +5%。',
     });
     P('秘宝槽位', {
-        tree: 'relic', cost: 25, costG: 3.2, max: 2, eff: { artifactSlots: 1 },
+        tree: 'relic', cost: 25, costG: 3.2, max: 2, techReq: '城防', eff: { artifactSlots: 1 },
         desc: '为秘宝增设一个悬浮基座。永久 +1 个装备槽。',
     });
     P('秘宝工艺', {
-        tree: 'relic', cost: 40, costG: 1.9, max: 10, eff: { artifactQuality: 0.08 },
+        tree: 'relic', cost: 40, costG: 1.9, max: 10, techReq: '城防', eff: { artifactQuality: 0.08 },
         desc: '更精细的鉴定与镶嵌。秘宝词条数值每级 +8%，更容易出现正面词条。',
     });
     P('记忆水晶', {
-        tree: 'relic', cost: 60, req: '秘宝槽位', max: 1, special: 'keepArtifacts',
+        tree: 'relic', cost: 60, req: '秘宝槽位', max: 1, techReq: '城防', special: 'keepArtifacts',
         desc: '重置时保留全部秘宝与装备槽，专家级的传承投资。',
     });
     P('自动符文', {
@@ -72,7 +74,7 @@
         desc: '让符文代替你按建造按钮：自动购买当前最便宜且买得起的建筑（可在设置中关闭）。',
     });
     P('自动远征', {
-        tree: 'relic', cost: 90, req: '自动符文', max: 1, special: 'autoExpedition',
+        tree: 'relic', cost: 90, req: '自动符文', max: 1, techReq: '城防', special: 'autoExpedition',
         desc: '远征队学会自己出发。上一支队伍归来后会立刻前往同区域。',
     });
     P('时之匙', {
@@ -88,15 +90,16 @@
         desc: '在塔基下再挖出几间工坊。建造队列 +1 个槽位（每级递增）。',
     });
     P('疾速施工', {
-        tree: 'relic', cost: 8, costG: 1.85, max: 6, eff: { queueSpeed: 0.12 },
-        desc: '把吊臂与滑轮组重新设计一遍。建造与研究的耗时每级 −10.7%（等价于速度 +12%）。',
+        tree: 'relic', cost: 8, costG: 1.85, max: 6, eff: { queueDiscount: 0.05 },
+        desc: '把吊臂与滑轮组重新设计一遍：队列订单需要凑齐的材料每级 −5%，排队时更快凑够。',
     });
     P('召唤精通', {
-        tree: 'relic', cost: 15, costG: 1.9, max: 8, eff: { heroPower: 0.15 },
+        tree: 'relic', cost: 15, costG: 1.9, max: 8, techReq: '召唤法阵', eff: { heroPower: 0.15 },
         desc: '你更懂如何让英雄发挥全力。所有英雄的效果每级 +15%。',
     });
     P('命运微光', {
-        tree: 'relic', cost: 18, costG: 2.0, max: 6, eff: { luck: 0.2, summonDiscount: 0.05 },
+        tree: 'relic', cost: 18, costG: 2.0, max: 6, techReq: '召唤法阵',
+        eff: { luck: 0.2, summonDiscount: 0.05 },
         desc: '在传送阵边缘点上一圈微光。召唤运气每级 +0.2，消耗每级 −5%。',
     });
 
@@ -134,7 +137,8 @@
         desc: '重置获得的奥术遗物每级 +25%。',
     });
     P('双倍远征', {
-        tree: 'star', cost: 9, costG: 1.8, max: 10, eff: { expeditionReward: 0.3, expeditionPower: 0.1 },
+        tree: 'star', cost: 9, costG: 1.8, max: 10, techReq: '城防',
+        eff: { expeditionReward: 0.3, expeditionPower: 0.1 },
         desc: '远征收益每级 +30%，军力 +10%。冒险终于成了生意。',
     });
     P('永恒律动', {
@@ -146,15 +150,16 @@
         desc: '让同一座城市的两个瞬间同时开工。建造队列 +2 个槽位（每级递增）。',
     });
     P('时间折叠', {
-        tree: 'star', cost: 4, costG: 2.2, max: 5, eff: { queueSpeed: 0.2 },
-        desc: '把工期折起来。建造与研究速度每级 +20%。',
+        tree: 'star', cost: 4, costG: 2.2, max: 5, eff: { queueDiscount: 0.06 },
+        desc: '把等待折起来：队列订单需要凑齐的材料每级 −6%。',
     });
     P('星界召唤', {
-        tree: 'star', cost: 6, costG: 2.1, max: 6, eff: { heroPower: 0.4 },
+        tree: 'star', cost: 6, costG: 2.1, max: 6, techReq: '召唤法阵', eff: { heroPower: 0.4 },
         desc: '让传送阵连到更远的星界。所有英雄的效果每级 +40%。',
     });
     P('命运编织', {
-        tree: 'star', cost: 7, costG: 2.2, max: 5, eff: { luck: 0.5, summonDiscount: 0.08 },
+        tree: 'star', cost: 7, costG: 2.2, max: 5, techReq: '召唤法阵',
+        eff: { luck: 0.5, summonDiscount: 0.08 },
         desc: '亲手编一段更好的运气。召唤运气每级 +0.5，召唤消耗每级 −8%。',
     });
 
@@ -184,7 +189,8 @@
         desc: '你不在时，城市依然以全效率运转：离线收益不再打 50% 折扣。',
     });
     P('万界共鸣', {
-        tree: 'core', cost: 2, costG: 2.5, max: 3, eff: { heroPower: 1.0, queueSlots: 2 },
+        tree: 'core', cost: 2, costG: 2.5, max: 3, techReq: '召唤法阵',
+        eff: { heroPower: 1.0, queueSlots: 2 },
         desc: '让所有时间线的英雄同时回应你：英雄效果每级 +100%，建造队列每级 +2 槽位。',
     });
 

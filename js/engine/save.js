@@ -66,13 +66,22 @@
         if (!state.artifacts) state.artifacts = { inventory: [], equipped: [], slots: 3 };
         if (!Array.isArray(state.artifacts.equipped)) state.artifacts.equipped = [];
         if (!state.queue || !Array.isArray(state.queue.items)) state.queue = { items: [] };
-        /* v1.1 的旧队列条目没有 state 字段（那时是「先付款、后施工」），统一转成施工中 */
+        /* 旧队列条目兼容：
+           v1.1「先付款、后施工」与 v1.2「等资源 → 施工」两代存档里的订单，
+           统一转成 v1.3 的「等材料的订单」；已经付过款的把材料退回，避免重复扣费。 */
         for (const it of state.queue.items) {
-            if (!it.state) {
-                it.state = 'building';
-                if (!it.dur || !it.end) { it.dur = 30; it.start = state.gameDays; it.end = state.gameDays + 30; }
+            if (it.state === 'building' && it.cost) {
+                for (const k in it.cost) {
+                    const r = state.resources[k];
+                    if (r) r.amount = Math.min(r.cap, r.amount + it.cost[k]);
+                }
             }
-            if (!it.est) it.est = it.cost || {};
+            delete it.state;
+            delete it.dur;
+            delete it.start;
+            delete it.end;
+            it.cost = null;
+            if (!it.est) it.est = {};
         }
         if (!state.heroes) state.heroes = freshHeroes();
         else {

@@ -240,7 +240,7 @@
             else if (key === 'artifactSlots') out.push('秘宝装备槽 +' + v);
             else if (key === 'powerMult') out.push('军力 ' + U.fmtPct(v, 1));
             else if (key === 'queueSlots') out.push('建造队列 +' + v + ' 槽位');
-            else if (key === 'queueSpeed') out.push('建造与研究速度 ' + U.fmtPct(v, 1));
+            else if (key === 'queueDiscount') out.push('队列订单材料 ' + U.fmtPct(-v, 1));
             else if (key === 'luck') out.push('召唤运气 +' + v.toFixed(2));
             else if (key === 'summonDiscount') out.push('召唤消耗 ' + U.fmtPct(-v, 1));
             else if (key === 'heroPower') out.push('英雄效果 ' + U.fmtPct(v, 1));

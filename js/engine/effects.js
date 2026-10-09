@@ -10,7 +10,7 @@
         'expeditionReward', 'speed', 'marketVolume', 'artifactQuality',
         'capPerRelic', 'knowledgeCapPerRelic', 'offlineHours',
         /* 建造队列与英雄召唤相关 */
-        'queueSlots', 'queueSpeed', 'powerMult', 'luck', 'summonDiscount', 'heroPower',
+        'queueSlots', 'queueDiscount', 'powerMult', 'luck', 'summonDiscount', 'heroPower',
     ];
 
     function emptyEffects() {

@@ -4,6 +4,9 @@
     const G = window.UI;
     const permTree = { current: 'relic' };
 
+    /* 该项传承是否已经可以出现（依赖的系统必须先解锁） */
+    function isPermVisible(name) { return Actions.permVisible(GameState, name); }
+
     /* ---------------- 国策 ---------------- */
     function policyCard(name) {
         const s = GameState;
@@ -141,8 +144,15 @@
                 label + '（' + U.fmtNum(ResourcesManager.amount(res)) + '）</button>';
         }
         html += '</div>';
-        const names = PERMANENT_ORDER.filter(n => PERMANENT_CONFIG[n].tree === permTree.current);
+        /* 依赖的系统还没解锁时，对应的传承项不显示（例如没研究「召唤法阵」就不出现英雄类强化） */
+        const locked = PERMANENT_ORDER.filter(n => PERMANENT_CONFIG[n].tree === permTree.current).length -
+            PERMANENT_ORDER.filter(n => PERMANENT_CONFIG[n].tree === permTree.current && isPermVisible(n)).length;
+        const names = PERMANENT_ORDER.filter(n => PERMANENT_CONFIG[n].tree === permTree.current && isPermVisible(n));
         html += '<div class="card-grid">' + names.map(permCard).join('') + '</div>';
+        if (locked > 0) {
+            html += '<div class="hint mt6">还有 <b>' + locked + '</b> 项强化会在解锁对应系统后出现：' +
+                '英雄类需要先研究「召唤法阵」，远征与秘宝类需要先研究「城防」。</div>';
+        }
 
         html += '<div class="section-title">试炼</div>';
         html += '<div class="hint" style="margin-bottom:8px">激活试炼会立刻施加严苛的限制，' +
@@ -152,5 +162,8 @@
         return html;
     }
 
-    window.TabAscend = { renderPolicies, renderAscend, permTree };
+    window.TabAscend = {
+        renderPolicies, renderAscend, permTree,
+        isPermVisible,
+    };
 })();

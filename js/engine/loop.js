@@ -8,6 +8,20 @@
     let renderAcc = 0;
     let running = false;
     let autoBuildAcc = 0;
+    const seenErrors = {};
+
+    /* 单帧出错不应该让整个 requestAnimationFrame 链断掉（否则玩家看到的就是「卡死，要刷新」） */
+    function safeCall(tag, fn) {
+        try { fn(); }
+        catch (err) {
+            const key = tag + ':' + (err && err.message ? err.message : String(err));
+            if (!seenErrors[key]) {
+                seenErrors[key] = 1;
+                console.error('[主循环] ' + tag + ' 出错：', err);
+                if (window.UI && UI.toast) UI.toast('内部错误，已跳过这一帧（详情见控制台）。', 'bad');
+            }
+        }
+    }
 
     function advance(dt) {
         if (dt <= 0) return;
@@ -66,7 +80,7 @@
             let guard = 0;
             while (acc > 0.0001 && guard++ < 40) {
                 const step = Math.min(0.1, acc);
-                advance(step);
+                safeCall('advance', () => advance(step));
                 acc -= step;
             }
             secondAcc += dtReal;
@@ -94,7 +108,7 @@
         renderAcc += dtReal;
         if (renderAcc >= 0.1) {
             renderAcc = 0;
-            if (window.UI && UI.render) UI.render();
+            if (window.UI && UI.render) safeCall('render', () => UI.render());
         }
         requestAnimationFrame(tick);
     }

@@ -1,6 +1,6 @@
 /* 游戏状态与资源管理 */
 (function () {
-    const SAVE_VERSION = 4;
+    const SAVE_VERSION = 5;
 
     /* 全局唯一状态对象（引用始终不变，便于各模块共享） */
     const GameState = {
