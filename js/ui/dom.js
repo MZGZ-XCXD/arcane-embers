@@ -191,7 +191,8 @@
             const lack = have + 1e-6 < price[k];
             parts.push('<span class="' + (lack ? 'lack' : '') + '">' + esc(k) + ' ' + num(price[k]) + '</span>');
         }
-        return parts.join('') || '<span>免费</span>';
+        /* 用空格分隔：多个资源挤在一起会看不清（flex 容器里的空白节点不会被渲染，所以不会重复留白） */
+        return parts.join(' ') || '<span>免费</span>';
     }
 
     function costHtml(cost) {
@@ -204,7 +205,7 @@
             parts.push('<span class="' + (lack ? 'lack' : '') + '" data-tip="res|' + esc(k) + '">' + esc(k) + ' ' + num(cost[k]) +
                 (capIssue ? ' ⚠' : '') + '</span>');
         }
-        return parts.join('') || '<span>免费</span>';
+        return parts.join(' ') || '<span>免费</span>';
     }
 
     /* ---------------- 效果文本 ---------------- */

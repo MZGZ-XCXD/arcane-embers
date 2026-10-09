@@ -297,6 +297,8 @@ h1, h2, h3, .serif { font-family: "Palatino Linotype", "Songti SC", Georgia, ser
 }
 .guide-list { margin: 0; padding-left: 18px; color: var(--text-secondary); font-size: .8rem; line-height: 1.75; }
 .guide-list li { margin-bottom: 3px; }
+.auto-row { font-size: .8rem; line-height: 1.6; }
+.auto-row input[type="checkbox"] { margin-right: 4px; }
 .cl-overview { margin: 8px 0 4px; }
 .cl-row {
     display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
@@ -2560,6 +2562,12 @@ window.CHANGELOG_DATA = {
     "source": "CHANGELOG.md",
     "overview": [
         {
+            "version": "1.3.3",
+            "date": "2026-10-09",
+            "type": "小改动",
+            "summary": "浮窗里的「造价 / 消耗」多项资源之间补上空格；设置页始终显示「自动符文 / 自动远征」两行（未解锁时写明去哪儿解锁）"
+        },
+        {
             "version": "1.3.2",
             "date": "2026-10-09",
             "type": "小改动",
@@ -2609,6 +2617,19 @@ window.CHANGELOG_DATA = {
         }
     ],
     "versions": [
+        {
+            "version": "1.3.3",
+            "date": "2026-10-09",
+            "sections": [
+                {
+                    "title": "修复",
+                    "items": [
+                        "<b>浮窗里的「造价 / 消耗」挤成一团<\/b>：建筑、升级、出征、事件等浮窗里的多项资源是拼成一串输出的， 中间没有分隔（例如「木材 500石料 400铁锭 60」），要盯半天才分得清哪一档数字属于哪个资源。 现在统一用空格分隔，读起来是「木材 500　石料 400　铁锭 60」。",
+                        "<b>找不到「自动符文」的开关<\/b>：自动化开关原本只在解锁对应传承后才渲染，没解锁时设置页里一片空白， 玩家根本不知道开关将来会出现在哪。现在「设置 → 运行与显示 → 自动化」<b>始终<\/b>显示两行： 已解锁就是可直接勾选的开关；未解锁则写明「🔒 未解锁 —— 在「传承 → 奥术遗物」里购买传承强化「自动符文」后，本页会出现这个开关」。"
+                    ]
+                }
+            ]
+        },
         {
             "version": "1.3.2",
             "date": "2026-10-09",
@@ -5861,7 +5882,8 @@ window.CHANGELOG_DATA = {
             const lack = have + 1e-6 < price[k];
             parts.push('<span class="' + (lack ? 'lack' : '') + '">' + esc(k) + ' ' + num(price[k]) + '</span>');
         }
-        return parts.join('') || '<span>免费</span>';
+        /* 用空格分隔：多个资源挤在一起会看不清（flex 容器里的空白节点不会被渲染，所以不会重复留白） */
+        return parts.join(' ') || '<span>免费</span>';
     }
 
     function costHtml(cost) {
@@ -5874,7 +5896,7 @@ window.CHANGELOG_DATA = {
             parts.push('<span class="' + (lack ? 'lack' : '') + '" data-tip="res|' + esc(k) + '">' + esc(k) + ' ' + num(cost[k]) +
                 (capIssue ? ' ⚠' : '') + '</span>');
         }
-        return parts.join('') || '<span>免费</span>';
+        return parts.join(' ') || '<span>免费</span>';
     }
 
     /* ---------------- 效果文本 ---------------- */
@@ -7409,6 +7431,19 @@ window.CHANGELOG_DATA = {
     }
 
     /* ---------------- 运行与显示 ---------------- */
+    /* 自动化开关：没解锁时也照样显示一行，并说明去哪儿解锁 —— 否则玩家根本找不到这个开关 */
+    function autoRow(opts) {
+        const s = GameState;
+        const unlocked = EffectsManager.hasSpecial(s, opts.special);
+        if (!unlocked) {
+            return '<div class="auto-row"><span class="hint">🔒 <b>' + G.esc(opts.name) + '</b>：未解锁　—　' +
+                G.esc(opts.how) + '</span></div>';
+        }
+        return '<div class="auto-row"><label class="hint" style="cursor:pointer">' +
+            '<input type="checkbox" data-act="' + opts.act + '"' + (s.settings[opts.setting] ? ' checked' : '') + '> ' +
+            '<b>' + G.esc(opts.name) + '</b>：' + G.esc(opts.desc) + '</label></div>';
+    }
+
     function runSection() {
         const s = GameState;
         let html = '<div class="section-title">运行与显示</div><div class="settings-card">';
@@ -7416,16 +7451,21 @@ window.CHANGELOG_DATA = {
         html += '<button class="btn" data-act="pause">' + (s.paused ? '▶ 继续游戏' : '⏸ 暂停游戏') + '</button>';
         html += '<button class="btn" data-act="theme">' + (s.settings.theme === 'dark' ? '☀ 切换到浅色主题' : '🌙 切换到深色主题') + '</button>';
         html += '</div>';
-        const auto = [];
-        if (EffectsManager.hasSpecial(s, 'autoBuild')) {
-            auto.push('<label class="hint" style="cursor:pointer"><input type="checkbox" data-act="toggleAutoBuild"' +
-                (s.settings.autoBuild ? ' checked' : '') + '> 自动建造：买得起就立刻建（不会把买不起的塞进队列）</label>');
-        }
-        if (EffectsManager.hasSpecial(s, 'autoExpedition')) {
-            auto.push('<label class="hint" style="cursor:pointer"><input type="checkbox" data-act="toggleAutoExp"' +
-                (s.settings.autoExpedition ? ' checked' : '') + '> 自动远征：上一支队伍归来后立刻前往同一区域</label>');
-        }
-        if (auto.length) html += '<div class="mt6" style="display:flex;flex-direction:column;gap:6px">' + auto.join('') + '</div>';
+        html += '<div class="section-sub">自动化</div>';
+        html += '<div class="mt6" style="display:flex;flex-direction:column;gap:6px">';
+        html += autoRow({
+            special: 'autoBuild', setting: 'autoBuild', act: 'toggleAutoBuild',
+            name: '自动符文（自动建造）',
+            desc: '买得起就立刻建，不会把买不起的塞进队列',
+            how: '在「传承 → 奥术遗物」里购买传承强化「自动符文」后，本页会出现这个开关',
+        });
+        html += autoRow({
+            special: 'autoExpedition', setting: 'autoExpedition', act: 'toggleAutoExp',
+            name: '自动远征',
+            desc: '上一支队伍归来后立刻前往同一区域',
+            how: '先在「传承 → 奥术遗物」里买「自动符文」，再买「自动远征」',
+        });
+        html += '</div>';
         html += '<div class="hint mt6">离线收益上限 ' + (2 + EffectsManager.additive(s, 'offlineHours')) + ' 小时（' +
             (EffectsManager.hasSpecial(s, 'offlinePerfect') ? '100%' : '50%') + ' 效率）。' +
             '键盘：数字键 1-9 与 0 切换标签页，空格暂停，Ctrl+S 保存。</div>';

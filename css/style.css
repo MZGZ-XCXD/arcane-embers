@@ -288,6 +288,8 @@ h1, h2, h3, .serif { font-family: "Palatino Linotype", "Songti SC", Georgia, ser
 }
 .guide-list { margin: 0; padding-left: 18px; color: var(--text-secondary); font-size: .8rem; line-height: 1.75; }
 .guide-list li { margin-bottom: 3px; }
+.auto-row { font-size: .8rem; line-height: 1.6; }
+.auto-row input[type="checkbox"] { margin-right: 4px; }
 .cl-overview { margin: 8px 0 4px; }
 .cl-row {
     display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;

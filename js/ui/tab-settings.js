@@ -26,6 +26,19 @@
     }
 
     /* ---------------- 运行与显示 ---------------- */
+    /* 自动化开关：没解锁时也照样显示一行，并说明去哪儿解锁 —— 否则玩家根本找不到这个开关 */
+    function autoRow(opts) {
+        const s = GameState;
+        const unlocked = EffectsManager.hasSpecial(s, opts.special);
+        if (!unlocked) {
+            return '<div class="auto-row"><span class="hint">🔒 <b>' + G.esc(opts.name) + '</b>：未解锁　—　' +
+                G.esc(opts.how) + '</span></div>';
+        }
+        return '<div class="auto-row"><label class="hint" style="cursor:pointer">' +
+            '<input type="checkbox" data-act="' + opts.act + '"' + (s.settings[opts.setting] ? ' checked' : '') + '> ' +
+            '<b>' + G.esc(opts.name) + '</b>：' + G.esc(opts.desc) + '</label></div>';
+    }
+
     function runSection() {
         const s = GameState;
         let html = '<div class="section-title">运行与显示</div><div class="settings-card">';
@@ -33,16 +46,21 @@
         html += '<button class="btn" data-act="pause">' + (s.paused ? '▶ 继续游戏' : '⏸ 暂停游戏') + '</button>';
         html += '<button class="btn" data-act="theme">' + (s.settings.theme === 'dark' ? '☀ 切换到浅色主题' : '🌙 切换到深色主题') + '</button>';
         html += '</div>';
-        const auto = [];
-        if (EffectsManager.hasSpecial(s, 'autoBuild')) {
-            auto.push('<label class="hint" style="cursor:pointer"><input type="checkbox" data-act="toggleAutoBuild"' +
-                (s.settings.autoBuild ? ' checked' : '') + '> 自动建造：买得起就立刻建（不会把买不起的塞进队列）</label>');
-        }
-        if (EffectsManager.hasSpecial(s, 'autoExpedition')) {
-            auto.push('<label class="hint" style="cursor:pointer"><input type="checkbox" data-act="toggleAutoExp"' +
-                (s.settings.autoExpedition ? ' checked' : '') + '> 自动远征：上一支队伍归来后立刻前往同一区域</label>');
-        }
-        if (auto.length) html += '<div class="mt6" style="display:flex;flex-direction:column;gap:6px">' + auto.join('') + '</div>';
+        html += '<div class="section-sub">自动化</div>';
+        html += '<div class="mt6" style="display:flex;flex-direction:column;gap:6px">';
+        html += autoRow({
+            special: 'autoBuild', setting: 'autoBuild', act: 'toggleAutoBuild',
+            name: '自动符文（自动建造）',
+            desc: '买得起就立刻建，不会把买不起的塞进队列',
+            how: '在「传承 → 奥术遗物」里购买传承强化「自动符文」后，本页会出现这个开关',
+        });
+        html += autoRow({
+            special: 'autoExpedition', setting: 'autoExpedition', act: 'toggleAutoExp',
+            name: '自动远征',
+            desc: '上一支队伍归来后立刻前往同一区域',
+            how: '先在「传承 → 奥术遗物」里买「自动符文」，再买「自动远征」',
+        });
+        html += '</div>';
         html += '<div class="hint mt6">离线收益上限 ' + (2 + EffectsManager.additive(s, 'offlineHours')) + ' 小时（' +
             (EffectsManager.hasSpecial(s, 'offlinePerfect') ? '100%' : '50%') + ' 效率）。' +
             '键盘：数字键 1-9 与 0 切换标签页，空格暂停，Ctrl+S 保存。</div>';
