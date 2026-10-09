@@ -94,7 +94,6 @@
             html += '<div class="cl-row">' +
                 '<span class="cl-ver">' + G.esc(row.version) + '</span>' +
                 '<span class="cl-date">' + G.esc(row.date) + '</span>' +
-                '<span class="cl-type">' + G.esc(row.type) + '</span>' +
                 '<span class="cl-sum">' + row.summary + '</span>' +
                 '</div>';
         }

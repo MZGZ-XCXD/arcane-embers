@@ -306,10 +306,6 @@ h1, h2, h3, .serif { font-family: "Palatino Linotype", "Songti SC", Georgia, ser
 }
 .cl-ver { color: var(--accent-2); font-weight: 600; }
 .cl-date { color: var(--text-dim); font-size: .72rem; }
-.cl-type {
-    font-size: .68rem; padding: 1px 6px; border-radius: 5px;
-    background: var(--bg-sunken); color: var(--text-secondary); border: 1px solid var(--border);
-}
 .cl-sum { color: var(--text-secondary); flex: 1 1 220px; }
 .cl-box { max-height: 46vh; overflow-y: auto; margin-top: 8px; padding-right: 4px; }
 .cl-version { margin-bottom: 10px; }
@@ -2562,61 +2558,69 @@ window.CHANGELOG_DATA = {
     "source": "CHANGELOG.md",
     "overview": [
         {
+            "version": "1.3.4",
+            "date": "2026-10-09",
+            "summary": "更新日志不再标注改动大小，只写版本号与改了什么"
+        },
+        {
             "version": "1.3.3",
             "date": "2026-10-09",
-            "type": "小改动",
             "summary": "浮窗里的「造价 / 消耗」多项资源之间补上空格；设置页始终显示「自动符文 / 自动远征」两行（未解锁时写明去哪儿解锁）"
         },
         {
             "version": "1.3.2",
             "date": "2026-10-09",
-            "type": "小改动",
             "summary": "「设置」独立成标签页（存档 / 导出导入 / 更新日志都在里面）；事件选项悬浮说明补上「消耗 / 获得 / 民望 / 持续效果」；精简各页顶部说明"
         },
         {
             "version": "1.3.1",
             "date": "2026-10-09",
-            "type": "小改动",
             "summary": "修复黄金死循环：「铸币学」不再要求黄金，11 项原本永远研究不出来的科技（含召唤法阵、议会制度）全部打通"
         },
         {
             "version": "1.3.0",
             "date": "2026-10-09",
-            "type": "大改动",
             "summary": "修复远征卡死与主循环容错；队列改为「等材料的订单」（倒计时=还差多久凑齐材料，凑齐即建成）；传承项按系统解锁显示；修复「文明火种」被上限截断"
         },
         {
             "version": "1.2.0",
             "date": "2026-10-08",
-            "type": "大改动",
             "summary": "队列规则重做（够了立即建、不够才排队、可重复排队）；事件按仓储上限出现，消耗不足的选项不可点"
         },
         {
             "version": "1.1.1",
             "date": "2026-10-08",
-            "type": "小改动",
             "summary": "更名为《秘法余烬 / Arcane Embers》，存档自动迁移，仓库更名为 <code>arcane-embers<\/code>"
         },
         {
             "version": "1.1.0",
             "date": "2026-10-08",
-            "type": "大改动",
             "summary": "新增建造队列、传送阵（英雄召唤）、9 项传承强化、1 项科技、6 项成就"
         },
         {
             "version": "1.0.1",
             "date": "2026-09-22",
-            "type": "小改动",
             "summary": "文档与仓库工具：README 重写、本更新日志、<code>.gitattributes<\/code> / <code>.gitignore<\/code>、单文件版构建脚本、界面截图"
         },
         {
             "version": "1.0.0",
             "date": "2026-09-22",
-            "type": "首个版本",
             "summary": "首个公开版本：54 建筑 / 64 科技 / 三层重置传承 / 远征与秘宝 / 贸易 / 事件与成就"
         }
     ],
     "versions": [
+        {
+            "version": "1.3.4",
+            "date": "2026-10-09",
+            "sections": [
+                {
+                    "title": "变更",
+                    "items": [
+                        "<b>更新日志不再标注改动大小<\/b>：无论是仓库里的 <code>CHANGELOG.md<\/code> 还是游戏内「设置 → 更新日志」， 都去掉了改动大小的分类标签，只保留<b>版本号、日期与改了什么<\/b>，读起来更直接。"
+                    ]
+                }
+            ]
+        },
         {
             "version": "1.3.3",
             "date": "2026-10-09",
@@ -7499,7 +7503,6 @@ window.CHANGELOG_DATA = {
             html += '<div class="cl-row">' +
                 '<span class="cl-ver">' + G.esc(row.version) + '</span>' +
                 '<span class="cl-date">' + G.esc(row.date) + '</span>' +
-                '<span class="cl-type">' + G.esc(row.type) + '</span>' +
                 '<span class="cl-sum">' + row.summary + '</span>' +
                 '</div>';
         }

@@ -297,10 +297,6 @@ h1, h2, h3, .serif { font-family: "Palatino Linotype", "Songti SC", Georgia, ser
 }
 .cl-ver { color: var(--accent-2); font-weight: 600; }
 .cl-date { color: var(--text-dim); font-size: .72rem; }
-.cl-type {
-    font-size: .68rem; padding: 1px 6px; border-radius: 5px;
-    background: var(--bg-sunken); color: var(--text-secondary); border: 1px solid var(--border);
-}
 .cl-sum { color: var(--text-secondary); flex: 1 1 220px; }
 .cl-box { max-height: 46vh; overflow-y: auto; margin-top: 8px; padding-right: 4px; }
 .cl-version { margin-bottom: 10px; }

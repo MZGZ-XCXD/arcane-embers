@@ -36,14 +36,14 @@ const overview = [];
             if (/^##\s/.test(l) && !/版本历史总览/.test(l)) break;
             if (!/^\|/.test(l)) continue;
             const cells = l.split('|').map(c => c.trim()).filter((c, idx, arr) => idx > 0 && idx < arr.length - 1);
-            if (cells.length < 4) continue;
+            if (cells.length < 3) continue;
             const version = cells[0].replace(/\*/g, '');
             if (!/^v?\d+\.\d+\.\d+$/.test(version)) continue;
             overview.push({
                 version: version,
                 date: cells[1],
-                type: cells[2],
-                summary: inline(cells[3]),
+                /* 摘要取最后一格：表格列数变化（例如以前有「类型」列）也不会取错 */
+                summary: inline(cells[cells.length - 1]),
             });
         }
     }
