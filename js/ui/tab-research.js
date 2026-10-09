@@ -70,14 +70,7 @@
     function renderTechs() {
         const s = GameState;
         const visible = TECHS_ORDER.filter(n => s.techs[n].visible);
-        const canNow = visible.filter(n => !s.techs[n].researched && ProductionEngine.techAvailable(s, n) && ResourcesManager.canAfford(TECHS_CONFIG[n].cost));
-        const doneTotal = visible.filter(n => s.techs[n].researched).length;
-        let html = '<div class="tab-intro">魔法知识（📖）是研究的主要消耗，它由藏书阁、咒法学院等建筑产出，' +
-            '并由它们提供 <b>知识上限</b>。研究立刻完成，是解锁建筑与全局加成的唯一途径。<br>' +
-            '<b>点击卡片任意处即可研究</b>；已完成的科技会收进「已完成」折叠块，' +
-            '整个时代研究完后该时代会自动折叠——点标题即可随时展开查看。' +
-            '<br>当前进度：已完成 <b>' + doneTotal + '</b> / ' + visible.length + ' 项（本时代清单）。</div>';
-        if (canNow.length) html += '<div class="hint pos" style="margin-bottom:8px">当前可以研究：' + canNow.map(G.esc).join('、') + '</div>';
+        let html = '<div class="tab-intro">魔法知识（📖）是研究的主要消耗，它由藏书阁、咒法学院等建筑产出，并由它们提供知识上限。</div>';
 
         const byEra = {};
         for (const n of visible) {
@@ -190,10 +183,8 @@
     function renderUpgrades() {
         const s = GameState;
         const names = UPGRADES_ORDER.filter(n => s.upgrades[n].visible);
-        let html = '<div class="tab-intro">升级可以无限重复购买（各有等级上限），价格随等级指数增长，' +
-            '是后期放大产能的主要手段。研究对应科技后解锁。</div>';
-        if (!names.length) return html + '<div class="hint">还没有可用的升级。研究「石斧」等科技后会出现。</div>';
-        return html + '<div class="card-grid">' + names.map(upgradeCard).join('') + '</div>';
+        if (!names.length) return '<div class="hint">还没有可用的升级。研究「石斧」等科技后会出现。</div>';
+        return '<div class="card-grid">' + names.map(upgradeCard).join('') + '</div>';
     }
 
     window.TabResearch = {

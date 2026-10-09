@@ -285,6 +285,40 @@ h1, h2, h3, .serif { font-family: "Palatino Linotype", "Songti SC", Georgia, ser
     min-height: 0;
 }
 .tab-intro { color: var(--text-secondary); font-size: .82rem; margin-bottom: 12px; line-height: 1.6; }
+
+/* ---------------- 设置页 ---------------- */
+.settings-card {
+    background: var(--bg-card); border: 1px solid var(--border-card);
+    border-radius: 10px; padding: 10px 12px; margin-bottom: 10px;
+}
+.section-sub {
+    margin: 12px 0 4px; font-size: .78rem; color: var(--accent-2);
+    padding-top: 8px; border-top: 1px solid var(--border);
+}
+.guide-list { margin: 0; padding-left: 18px; color: var(--text-secondary); font-size: .8rem; line-height: 1.75; }
+.guide-list li { margin-bottom: 3px; }
+.cl-overview { margin: 8px 0 4px; }
+.cl-row {
+    display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+    font-size: .76rem; padding: 4px 0; border-bottom: 1px dashed var(--border);
+}
+.cl-ver { color: var(--accent-2); font-weight: 600; }
+.cl-date { color: var(--text-dim); font-size: .72rem; }
+.cl-type {
+    font-size: .68rem; padding: 1px 6px; border-radius: 5px;
+    background: var(--bg-sunken); color: var(--text-secondary); border: 1px solid var(--border);
+}
+.cl-sum { color: var(--text-secondary); flex: 1 1 220px; }
+.cl-box { max-height: 46vh; overflow-y: auto; margin-top: 8px; padding-right: 4px; }
+.cl-version { margin-bottom: 10px; }
+.cl-version-head { display: flex; align-items: baseline; gap: 8px; }
+.cl-section { font-size: .74rem; color: var(--text-heading); margin: 6px 0 2px; }
+.cl-items { margin: 0; padding-left: 18px; font-size: .78rem; color: var(--text-secondary); line-height: 1.7; }
+.cl-items li { margin-bottom: 2px; }
+.cl-items code {
+    font-size: .74rem; padding: 0 4px; border-radius: 4px;
+    background: var(--bg-sunken); color: var(--text); border: 1px solid var(--border);
+}
 .section-title {
     font-size: .82rem; letter-spacing: 1px; color: var(--accent-2);
     margin: 14px 0 8px; padding-left: 8px; border-left: 3px solid var(--accent);
@@ -649,7 +683,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     <div class="topbar-actions">
       <button class="icon-btn" id="btn-pause" data-act="pause" title="暂停 / 继续">⏸</button>
       <button class="icon-btn" id="btn-theme" data-act="theme" title="切换明暗主题">🌙</button>
-      <button class="icon-btn" id="btn-settings" data-act="modal|settings" title="设置与存档">⚙</button>
+      <button class="icon-btn" id="btn-settings" data-act="tab|settings" title="设置、存档与更新日志">⚙</button>
     </div>
   </header>
 
@@ -657,7 +691,6 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     <aside class="sidebar">
       <section class="panel" id="panel-population"></section>
       <section class="panel" id="panel-resources"></section>
-      <section class="panel" id="panel-actions"></section>
     </aside>
 
     <main class="main-content">
@@ -2518,6 +2551,269 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     window.HEROES_CONFIG = HEROES;
     window.GACHA_CONFIG = GACHA;
 })();
+
+</script>
+<script>
+/* ===== js/config/changelog.js ===== */
+/* 由 tools/gen-changelog.js 自动生成，请勿直接编辑；改动请写 CHANGELOG.md 后重新生成。 */
+window.CHANGELOG_DATA = {
+    "source": "CHANGELOG.md",
+    "overview": [
+        {
+            "version": "1.3.2",
+            "date": "2026-10-09",
+            "type": "小改动",
+            "summary": "「设置」独立成标签页（存档 / 导出导入 / 更新日志都在里面）；事件选项悬浮说明补上「消耗 / 获得 / 民望 / 持续效果」；精简各页顶部说明"
+        },
+        {
+            "version": "1.3.1",
+            "date": "2026-10-09",
+            "type": "小改动",
+            "summary": "修复黄金死循环：「铸币学」不再要求黄金，11 项原本永远研究不出来的科技（含召唤法阵、议会制度）全部打通"
+        },
+        {
+            "version": "1.3.0",
+            "date": "2026-10-09",
+            "type": "大改动",
+            "summary": "修复远征卡死与主循环容错；队列改为「等材料的订单」（倒计时=还差多久凑齐材料，凑齐即建成）；传承项按系统解锁显示；修复「文明火种」被上限截断"
+        },
+        {
+            "version": "1.2.0",
+            "date": "2026-10-08",
+            "type": "大改动",
+            "summary": "队列规则重做（够了立即建、不够才排队、可重复排队）；事件按仓储上限出现，消耗不足的选项不可点"
+        },
+        {
+            "version": "1.1.1",
+            "date": "2026-10-08",
+            "type": "小改动",
+            "summary": "更名为《秘法余烬 / Arcane Embers》，存档自动迁移，仓库更名为 <code>arcane-embers<\/code>"
+        },
+        {
+            "version": "1.1.0",
+            "date": "2026-10-08",
+            "type": "大改动",
+            "summary": "新增建造队列、传送阵（英雄召唤）、9 项传承强化、1 项科技、6 项成就"
+        },
+        {
+            "version": "1.0.1",
+            "date": "2026-09-22",
+            "type": "小改动",
+            "summary": "文档与仓库工具：README 重写、本更新日志、<code>.gitattributes<\/code> / <code>.gitignore<\/code>、单文件版构建脚本、界面截图"
+        },
+        {
+            "version": "1.0.0",
+            "date": "2026-09-22",
+            "type": "首个版本",
+            "summary": "首个公开版本：54 建筑 / 64 科技 / 三层重置传承 / 远征与秘宝 / 贸易 / 事件与成就"
+        }
+    ],
+    "versions": [
+        {
+            "version": "1.3.2",
+            "date": "2026-10-09",
+            "sections": [
+                {
+                    "title": "变更",
+                    "items": [
+                        "<b>「设置」独立成一个标签页<\/b>：原来散在左侧「操作」面板与右上角弹窗里的存档功能（立即保存 / 导出存档 / 导入存档 / 自动保存 / 清除存档）、 运行选项（暂停、明暗主题、自动建造、自动远征）与玩法速览，现在全部收进标签栏最后一项「<b>设置<\/b>」； 顶栏右上角的 ⚙ 按钮改为直接跳到这一页（左侧「操作」面板已移除，界面更干净）。",
+                        "<b>游戏内更新日志<\/b>：设置页底部按版本列出全部改动，最新的排在最上面。这份日志由 <code>tools/gen-changelog.js<\/code> 从 <code>CHANGELOG.md<\/code> 生成到 <code>js/config/changelog.js<\/code>，所以文档与游戏内只有一份数据源，不会再两处维护。",
+                        "<b>事件选项的悬浮说明补全<\/b>：除了剧情说明，现在还会列出「消耗」（存量不足的自动标红）、「需要军力」、 「获得」、「民望变化」与「持续效果」，全部带具体数值。这些数据是用只记录、不生效的假接口把选项真实推演两遍得到的， 所以不会和实际结算对不上；结果带随机性的选项会显示成区间（例如「木材 400 ~ 900」）。",
+                        "<b>精简各页面的说明文字<\/b>：建筑页与升级页顶部的整段说明删除；科技页顶部只保留 「魔法知识是研究的主要消耗，它由藏书阁、咒法学院等建筑产出，并由它们提供知识上限。」； 建造队列空闲时只显示「队列空闲。」；远征队空闲时只显示「远征队待命中，当前军力 X（具体数值）」。",
+                        "键盘快捷键扩展为数字键 <b>1-9 与 0<\/b>（共 10 个标签页），空格暂停、Ctrl+S 保存不变。"
+                    ]
+                }
+            ]
+        },
+        {
+            "version": "1.3.1",
+            "date": "2026-10-09",
+            "sections": [
+                {
+                    "title": "修复",
+                    "items": [
+                        "<b>修复黄金的死循环<\/b>：「铸币学」本身要消耗 150 黄金才能研究，而它解锁的「金矿」、以及它下游「贸易学」解锁的「集市」， 又是全游戏仅有的两个黄金来源——如果不用随机事件碰运气，<b>有 11 项科技永远研究不出来<\/b>： 铸币学、贸易学、议会制度、召唤法阵、法师卫队、神殿建造、魔像学、幻术、猎魔人、高塔教育学、远征军制， 连带「召唤」页与「国策」页都开不了。 现在「铸币学」改为消耗 <b>魔法知识 300 + 石料 2000 + 铁锭 100<\/b>（铁锭来自前置科技「冶炼术」解锁的冶炼坊）， 黄金链条变成：冶炼术 → 铸币学 → 金矿 → 黄金 → 贸易学 / 集市 → 议会制度、召唤法阵…… 用脚本对整棵科技树做了可达性校验，<b>64 / 64 项科技现在都能确定性到达<\/b>（不依赖随机事件）。"
+                    ]
+                }
+            ]
+        },
+        {
+            "version": "1.3.0",
+            "date": "2026-10-09",
+            "sections": [
+                {
+                    "title": "修复",
+                    "items": [
+                        "<b>修复「点远征之后卡住、必须刷新页面」<\/b>：同一区域连续第二次派出远征队时，右侧远征小面板不会重建， 而进度条所在的节点已经被前一次的「待命中」提示条顶替，渲染时读到空节点直接抛错， <code>requestAnimationFrame<\/code> 主循环随之断掉——页面看起来就是彻底卡死。现在远征面板以「区域 + 出发日」作为签名重建， 并对进度条节点做了存在性判断，连续远征、跨区域远征都不会再出问题。",
+                        "<b>主循环加异常兜底<\/b>：单帧里的渲染或推进万一抛错，只跳过这一帧并记录一次日志， 不会再让整个循环断掉（同一类错误只提示一次，不会刷屏）。即使以后还有漏网的渲染问题，也不需再刷新页面。",
+                        "<b>修复「文明火种」看起来没生效<\/b>：重置后发放的启动物资会被木材 / 石料 / 食物 / 魔力的基础上限（300）截断， 木材 325 直接被压回 300，看起来就像传承没生效。现在「文明火种」会把这四项的基础上限一并抬高 相应数量（木材 +300、石料 +200、食物 +100、魔力 +80），承诺的物资一分不少。"
+                    ]
+                },
+                {
+                    "title": "变更",
+                    "items": [
+                        "<b>建造队列规则再简化：队列 = 「等材料的订单列表」。<\/b> 材料足够时点击<b>立即建成<\/b>，完全不排队；材料不足时才作为订单进入队列， 面板倒计时显示的是<b>「按当前净产量，还要多久才凑齐这些材料」<\/b>，并给出材料就绪度进度条； <b>材料一到手就立刻建成并出队<\/b>，不再有「入队 → 等材料 → 再等施工」这段多余等待。 取消订单不再涉及退款（此时还没有扣过任何材料）。同一目标依旧可以反复排队（伐木场点两下 = 两条订单）。",
+                        "原「施工速度」在「等材料」模型下已经没有意义，改为<b>「队列订单材料折扣」<\/b>： 传承「疾速施工」每级 −5%、「时间折叠」每级 −6%（合计最多 −60%）， 工程类英雄与「工坊大师 / 城建大师」成就同步改为折扣；折扣越低，订单要凑的材料越少。",
+                        "<b>传承项按解锁情况显示<\/b>：依赖某个系统的强化，在该系统解锁前不会出现—— 英雄类（召唤精通 / 命运微光 / 星界召唤 / 命运编织 / 万界共鸣）需要先研究科技「召唤法阵」， 远征与秘宝类（远征装备 / 秘宝槽位 / 秘宝工艺 / 记忆水晶 / 双倍远征 / 自动远征）需要先研究科技「城防」。 未解锁时既不在列表里显示，直接调用也会被拒绝；传承页会提示「还有 N 项会在解锁对应系统后出现」。",
+                        "队列面板改版：每个订单显示「还要多久建成 / 上限不足 / 无法估算」、材料就绪度与还需要凑齐的材料； 建造、研究、升级的按钮在材料不足时显示「排队等材料」。",
+                        "文档：README 不再提及其他同类游戏，改写为纯本作说明，并同步新的队列规则、传承解锁门槛与自检要点。"
+                    ]
+                },
+                {
+                    "title": "存档",
+                    "items": [
+                        "<code>SAVE_VERSION<\/code> 4 → 5：队列条目结构变化。旧存档里「已付款、施工中」的订单会在读档时<b>退回材料<\/b>并转换为等材料的订单， 不会重复扣费，也不会丢进度。"
+                    ]
+                }
+            ]
+        },
+        {
+            "version": "1.2.0",
+            "date": "2026-10-08",
+            "sections": [
+                {
+                    "title": "变更",
+                    "items": [
+                        "<b>建造 / 研究 / 升级的规则调整<\/b>：<b>资源足够时点击立即完成<\/b>，不再占用队列；<b>资源不足时<\/b>才作为「订单」进入队列等待资源，凑齐后自动开工并倒计时。",
+                        "<b>同一个目标可以反复排队<\/b>：例如伐木场点两下，队列里就是两条订单；队列满时，只要买得起，操作依然可以立即完成。",
+                        "队列面板区分两种状态：<b>施工中<\/b>（进度条 + 倒计时）与<b>等待资源<\/b>（显示所需材料）；取消订单时，施工中的会全额退回材料，等待中的直接移除。",
+                        "「自动符文」的自动建造只做立即建造，不会把买不起的内容塞进队列。"
+                    ]
+                },
+                {
+                    "title": "修复",
+                    "items": [
+                        "<b>事件选项现在真的会「点不动」<\/b>：资源或军力不足的选项会置灰并标出缺口，直接调用也会被拒绝（此前资源不足同样可以选择，等于白拿奖励）。",
+                        "<b>事件出现的门槛改为看仓储上限<\/b>：某个事件任一选项的消耗超过对应资源的上限时，事件不会出现；上限足够但存量不足时事件照常出现，只是那个选项不可点（军力需求同理，按军力上限判断）。",
+                        "事件选项的消耗现在是结构化数据（不再只写在提示文字里），因此可以准确判定与展示。"
+                    ]
+                },
+                {
+                    "title": "存档",
+                    "items": [
+                        "队列条目结构向后兼容：v1.1 旧存档里「已付款、施工中」的条目会自动补齐为新格式并正常完工。"
+                    ]
+                }
+            ]
+        },
+        {
+            "version": "1.1.1",
+            "date": "2026-10-08",
+            "sections": [
+                {
+                    "title": "变更",
+                    "items": [
+                        "<b>游戏更名为《秘法余烬 / Arcane Embers》<\/b>（旧名《魔法重建者 / Arcane Rebuilder》）。标题、品牌名、README、 单文件版文件名（<code>dist/arcane-embers.html<\/code>）与相关文案全部更新；玩法、数值与代码结构保持连续。",
+                        "存档键从 <code>magic-rebuilder-save<\/code> 迁移为 <code>arcane-embers-save<\/code>：首次打开会自动读取旧存档并迁移到新键， 之后删除旧键，<b>老玩家不会丢进度<\/b>；「清除存档」会同时清理新旧两个键。",
+                        "<b>GitHub 仓库更名为 <code>arcane-embers<\/code><\/b>：在线试玩地址随之变为 &lt;https://mzgz-xcxd.github.io/arcane-embers/&gt;， README、本日志的链接与本地推送脚本里的地址已同步更新（旧仓库地址会被 GitHub 自动重定向）。"
+                    ]
+                }
+            ]
+        },
+        {
+            "version": "1.1.0",
+            "date": "2026-10-08",
+            "sections": [
+                {
+                    "title": "新增",
+                    "items": [
+                        "<b>建造队列<\/b>：建造 / 研究 / 升级不再瞬间完成，而是先进入队列按工期推进。初始 <b>5 个槽位<\/b>可并行施工；右侧新增队列面板，实时显示条目、进度条与倒计时，随时可以「取消并退回材料」（全额退还）。同一目标不会重复排队，队列满时按钮会显示「队列已满」。",
+                        "<b>传送阵（英雄召唤）<\/b>：研究学院时代的新科技「<b>召唤法阵<\/b>」后，标签栏会出现「召唤」页。 * 卡池包含 <b>C / B / A / S / EX<\/b> 五档共 31 位英雄，以及「资源馈赠」和什么都没抽到的「空」； * 档位越高效果越强、概率越低；重复抽到同一位英雄会提升<b>觉醒等级<\/b>（每级 +30%，最高 5 级），满觉后再抽到会转化为奥术遗物； * 保底：连续 10 抽未出 A 级以上、连续 60 抽未出 S 级以上、连续 250 抽未出 EX 级时，下一次必定获得对应档位； * 支持单抽与十连（十连 9 折）；「幸运」与「召唤折扣」可成长（幸运最多把 S/EX 权重提升到 3 倍，折扣最多减免 80%）。",
+                        "<b>英雄分类（10 类）<\/b>：战力 / 资源 / 仓储 / 知识 / 工程 / 经济 / 民生 / 远征 / 幸运 / 命运，分别对应军力与远征、全局产出、存量上限、魔法知识、建造与研究速度、贸易与黄金、民望与人口、远征收益、抽卡运气与消耗、重置遗物收益。所有已获得英雄的效果自动生效，并随觉醒与传承强化放大。",
+                        "<b>新增传承强化（9 项）<\/b>：工坊扩建（队列 +1 槽/级）、疾速施工（施工速度 +12%/级）、召唤精通（英雄效果 +15%/级）、命运微光（运气与折扣）、并行法阵（队列 +2 槽/级）、时间折叠（施工速度 +20%/级）、星界召唤（英雄效果 +40%/级）、命运编织（运气与折扣）、万界共鸣（英雄效果 +100%、队列 +2 槽/级）。队列槽位上限可到 20 以上。",
+                        "<b>新增科技<\/b>：「召唤法阵」（学院时代，需「咒法学」+「天文学」）。",
+                        "<b>新增成就（6 项）<\/b>：初次召唤、幸运之子、神话降临、英雄殿堂、工坊大师、城建大师。"
+                    ]
+                },
+                {
+                    "title": "变更",
+                    "items": [
+                        "建筑 / 科技 / 升级卡片会显示「建造中 ×N」「研究中」「已在队列中」等状态标记。",
+                        "「自动符文」的自动建造改为排队建造，队列满时自动等待。",
+                        "英雄收藏、传承强化与成就跨重置保留；建造队列在重置时清空。",
+                        "为新增效果补充中文说明：军力、建造队列槽位、建造与研究速度、召唤运气、召唤消耗、英雄效果。",
+                        "README 增加建造队列与传送阵两张界面截图。"
+                    ]
+                },
+                {
+                    "title": "修复",
+                    "items": [
+                        "修复重置会清空英雄收藏的问题（英雄属于长期收藏，现在跨重置保留）。",
+                        "为「幸运」与「召唤折扣」加上上限，避免后期抽卡概率与消耗失衡。"
+                    ]
+                },
+                {
+                    "title": "存档",
+                    "items": [
+                        "<code>SAVE_VERSION<\/code> 3 → 4；旧存档读取时会自动补齐 <code>queue<\/code> 与 <code>heroes<\/code> 字段，不会丢进度。"
+                    ]
+                }
+            ]
+        },
+        {
+            "version": "1.0.1",
+            "date": "2026-09-22",
+            "sections": [
+                {
+                    "title": "新增",
+                    "items": [
+                        "新增本更新日志（<code>CHANGELOG.md<\/code>）与维护约定（未发布 → 发版改写、版本号规则、<code>SAVE_VERSION<\/code> 提示）。",
+                        "新增 <code>.gitattributes<\/code>（统一 LF 行尾）与 <code>.gitignore<\/code>（忽略系统/编辑器杂项与本地脚本）。",
+                        "新增 <code>tools/build-single-file.js<\/code>：一条命令把样式与脚本内联成单文件版（<code>dist/<\/code>）。",
+                        "新增 4 张界面截图（建筑页、科技折叠、传承、浅色主题）供 README 使用。"
+                    ]
+                },
+                {
+                    "title": "变更",
+                    "items": [
+                        "README 重写：加入在线试玩与单文件版说明、主要系统一览表、上手路线、目录结构、数值设计要点与开发说明。"
+                    ]
+                }
+            ]
+        },
+        {
+            "version": "1.0.0",
+            "date": "2026-09-22",
+            "sections": [
+                {
+                    "title": "新增",
+                    "items": [
+                        "世界观与六个时代：灰烬 → 学徒 → 学院 → 高塔 → 星界 → 虚空",
+                        "资源链：20 种资源（木材/石料/铁矿/木炭/食物/黄金 → 铁锭/魔晶/符文/秘银 → 奥术合金/星尘/以太/贤者之石，以及魔力、魔法知识、政策点与 3 种传承资源）",
+                        "54 座建筑，分采集 / 加工 / 魔力 / 居住 / 研究 / 储存 / 民生 / 军备 / 奇观九类，含模式切换（元素祭坛、观星台）与全局加成建筑",
+                        "人口约束与建筑效率系统：原料短缺与人力不足会同时压低效率，效率反向影响产量与消耗",
+                        "63 项科技分六个时代，含解锁型、加成型与减成本型；16 项可重复升级",
+                        "6 条国策滑杆（税收 / 开采倾向 / 魔力配给 / 研究重心 / 尚武 / 元素倾向）",
+                        "19 个随机事件：多选项、即时结算、限时增益与减益",
+                        "遗迹远征 6 层与随机词条秘宝：3 个装备槽（可扩展至 5 个），含高数值但重置会碎裂的\"脆弱秘宝\"",
+                        "贸易市场：集市决定贸易规模，价格随买入/卖出热度浮动并缓慢回归",
+                        "三层重置传承（时空回响 → 星辰升华 → 原初归寂）与 31 项永久强化",
+                        "7 项可自选激活的试炼（完成后永久加成的挑战）、23 项自动检测成就",
+                        "离线收益、明暗双主题、自动建造与自动远征、存档自动保存与导入导出"
+                    ]
+                },
+                {
+                    "title": "变更",
+                    "items": [
+                        "建筑页卡片精简为「名称 + 已建数量 + 操作按钮」，产出 / 消耗 / 上限 / 人口需求 / 效率 / 造价 / 说明全部移入鼠标悬浮浮窗，一屏可见建筑数量大约翻倍",
+                        "建筑、科技、升级、传承卡片支持整卡点击（点卡片任意处 = 建造 ×1 / 研究 / 升级 / 强化），卡片内的批量与停用按钮优先级更高",
+                        "科技页按时代折叠：已研究的科技收进「已完成 N 项」折叠块（展开后为单行条目，可再展开完整说明），一个时代的科技全部研究完后该时代标题整体折叠"
+                    ]
+                },
+                {
+                    "title": "修复",
+                    "items": [
+                        "修复界面每帧重建 DOM 造成的按钮闪烁、点击偶发失效、出现文本插入光标等问题（改为轻量 DOM 补丁刷新、鼠标按下期间冻结重绘、界面文本禁选）",
+                        "修复解锁新内容时建筑 / 升级价格显示为空的问题",
+                        "修复零人口时产业链完全停摆的死锁（拾荒棚改为不需要人口）",
+                        "修复魔力与魔法知识上限过低导致部分科技永远无法研究的问题，并为生产建筑补充自带储量上限",
+                        "重新平衡早期产能与成本曲线：提升木材/石料/魔力/知识产出，下调科技与建筑造价"
+                    ]
+                }
+            ]
+        }
+    ]
+};
 
 </script>
 
@@ -4624,9 +4920,49 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         return choice;
     }
 
+    /* 预览某个选项「扣什么、得什么」：
+       用只记录、不生效的假接口把 run 跑两遍（rnd 分别返回 0 与 1），把随机分支都覆盖到；
+       条件分支（例如「军力是否足够」）按玩家当前状态走，所以预览与此刻的真实结果一致。 */
+    function preview(state, ev, index) {
+        const choice = (ev && ev.choices && ev.choices[index]) || null;
+        if (!choice || typeof choice.run !== 'function') return null;
+        const runs = [];
+        for (const rndValue of [0, 1]) {
+            const taken = {}, given = {}, happy = [], buffs = [];
+            const api = {
+                state: state,
+                rnd: () => rndValue,
+                has: (res, amount) => ResourcesManager.amount(res) >= (amount === undefined ? 1 : amount),
+                log: () => {},
+                give: map => { for (const k in map) given[k] = Math.max(given[k] || 0, map[k]); },
+                take: map => { for (const k in map) taken[k] = Math.max(taken[k] || 0, map[k]); },
+                happy: v => { if (happy.indexOf(v) < 0) happy.push(v); },
+                buff: (name, label, days, effect) => { buffs.push({ label: label, days: days, effect: effect || {} }); },
+                artifact: () => null,
+            };
+            try { choice.run(api); } catch (e) { /* 预览失败不影响游戏 */ }
+            runs.push({ taken: taken, given: given, happy: happy, buffs: buffs });
+        }
+        const cost = {}, gain = {};
+        for (const r of runs) {
+            for (const k in r.taken) cost[k] = Math.max(cost[k] || 0, r.taken[k]);
+            for (const k in r.given) {
+                const cur = gain[k];
+                gain[k] = cur === undefined
+                    ? { min: r.given[k], max: r.given[k] }
+                    : { min: Math.min(cur.min, r.given[k]), max: Math.max(cur.max, r.given[k]) };
+            }
+        }
+        const happy = [];
+        for (const r of runs) for (const v of r.happy) if (happy.indexOf(v) < 0) happy.push(v);
+        const buffs = [];
+        for (const r of runs) for (const b of r.buffs) if (!buffs.some(x => x.label === b.label)) buffs.push(b);
+        return { cost: cost, gain: gain, happy: happy, buffs: buffs };
+    }
+
     window.EventEngine = {
         tick, tickEffects, buff, addLog, current, resolve, availableEvents, scheduleNext,
-        choicePayable, costFitsCaps, eventFitsStorage,
+        choicePayable, costFitsCaps, eventFitsStorage, preview,
     };
 })();
 
@@ -5609,6 +5945,17 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     const G = window.UI;
 
     /* ---------------- 悬浮提示内容 ---------------- */
+    /* 事件选项的「获得」文本：两遍预览的收益取范围 */
+    function gainHtml(gain) {
+        const parts = [];
+        for (const k in gain) {
+            const g = gain[k];
+            const txt = g.min === g.max ? U.fmtNum(g.max) : U.fmtNum(g.min) + ' ~ ' + U.fmtNum(g.max);
+            parts.push('<span class="pos">' + G.esc(k) + '　' + txt + '</span>');
+        }
+        return parts.join('') || '<span class="dim">没有直接收获</span>';
+    }
+
     function tipHtml(key) {
         if (!key) return null;
         const parts = key.split('|');
@@ -5818,6 +6165,45 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
             return html;
         }
 
+        /* 事件选项：剧情说明 + 明确的「扣什么 / 得什么」 */
+        if (type === 'evchoice') {
+            const ev = EventEngine.current(s);
+            if (!ev) return null;
+            const idx = Number(arg);
+            const c = ev.choices[idx];
+            if (!c) return null;
+            const pv = EventEngine.preview(s, ev, idx);
+            let html = '<h4>' + G.esc(c.text) + '</h4>';
+            if (c.hint) html += '<div class="dim">' + G.esc(c.hint) + '</div>';
+            html += '<hr>';
+            if (pv && Object.keys(pv.cost).length) {
+                html += '<div class="kv"><span>消耗</span><span>' + G.costHtml(pv.cost) + '</span></div>';
+            } else {
+                html += '<div class="kv"><span>消耗</span><span class="dim">不消耗任何资源</span></div>';
+            }
+            if (c.needPower) {
+                const okPower = s.localResources.power.amount + 1e-9 >= c.needPower;
+                html += '<div class="kv"><span>需要军力</span><span class="' + (okPower ? 'pos' : 'lack') + '">' +
+                    U.fmtNum(c.needPower) + (okPower ? '（当前足够）' : '（当前只有 ' + U.fmtNum(s.localResources.power.amount) + '）') + '</span></div>';
+            }
+            html += '<div class="kv"><span>获得</span><span>' + gainHtml(pv ? pv.gain : {}) + '</span></div>';
+            if (pv && pv.happy.length) {
+                const vals = pv.happy.slice().sort((a, b) => a - b);
+                html += '<div class="kv"><span>民望</span><span class="' +
+                    (vals[vals.length - 1] >= 0 ? 'pos' : 'neg') + '">' +
+                    vals.map(v => (v >= 0 ? '+' : '') + U.fmtNum(v, 0)).join(' 或 ') + '</span></div>';
+            }
+            if (pv) {
+                for (const b of pv.buffs) {
+                    const lines = G.effectLines(b.effect);
+                    html += '<div class="kv"><span>持续效果</span><span class="pos">' + G.esc(b.label) +
+                        '（' + U.fmtNum(b.days, 0) + ' 日' + (lines.length ? '：' + lines.map(G.esc).join('；') : '') + '）</span></div>';
+                }
+            }
+            if (!pv) html += '<div class="dim">（该选项的结果视情况而定，详见描述。）</div>';
+            return html;
+        }
+
         if (type === 'offline') {
             const rep = s.offlineReport;
             if (!rep) return null;
@@ -5996,29 +6382,6 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         }
     }
 
-    /* ---------------- 操作面板 ---------------- */
-    function renderActions() {
-        const s = GameState;
-        let html = '<div class="panel-title">操作</div>';
-        html += '<div class="btn-row">';
-        html += '<button class="btn" data-act="save">💾 保存</button>';
-        html += '<button class="btn" data-act="modal|export">📤 导出</button>';
-        html += '<button class="btn" data-act="modal|import">📥 导入</button>';
-        html += '<button class="btn" data-act="modal|settings">⚙ 设置</button>';
-        html += '<button class="btn" data-act="pause">' + (s.paused ? '▶ 继续' : '⏸ 暂停') + '</button>';
-        html += '<button class="btn" data-act="theme">' + (s.settings.theme === 'dark' ? '☀ 浅色' : '🌙 深色') + '</button>';
-        html += '</div>';
-        const auto = [];
-        if (EffectsManager.hasSpecial(s, 'autoBuild')) auto.push('<label class="hint" style="cursor:pointer"><input type="checkbox" data-act="toggleAutoBuild"' + (s.settings.autoBuild ? ' checked' : '') + '> 自动建造</label>');
-        if (EffectsManager.hasSpecial(s, 'autoExpedition')) auto.push('<label class="hint" style="cursor:pointer"><input type="checkbox" data-act="toggleAutoExp"' + (s.settings.autoExpedition ? ' checked' : '') + '> 自动远征</label>');
-        if (auto.length) html += '<div class="mt6" style="display:flex;gap:10px;flex-wrap:wrap">' + auto.join('') + '</div>';
-        html += '<div class="hint mt6">存档自动保存于浏览器本地；离线收益上限 ' +
-            (2 + EffectsManager.additive(s, 'offlineHours')) + ' 小时（' +
-            (EffectsManager.hasSpecial(s, 'offlinePerfect') ? '100%' : '50%') + ' 效率）。</div>';
-        html += '<div class="btn-row mt6"><button class="btn danger" data-act="modal|hardreset">清除存档</button></div>';
-        G.setHTML(document.getElementById('panel-actions'), html);
-    }
-
     /* ---------------- 建造队列面板 ---------------- */
     const queueRefs = {};
     function renderQueue() {
@@ -6034,9 +6397,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
             box.__sig = sig;
             let html = '<div class="panel-title">建造队列<span class="right">' + items.length + ' / ' + slots + ' 槽</span></div>';
             if (!items.length) {
-                html += '<div class="hint">队列空闲。材料足够时点击卡片会<b>立即建成</b>，根本不会排队；' +
-                    '材料不够时才会作为订单排在这里等待，面板显示「还要多久凑齐材料」，材料一到手就立刻建成。' +
-                    '扩容靠传承强化与工程类英雄。</div>';
+                html += '<div class="hint">队列空闲。</div>';
                 G.setHTML(box, html);
                 for (const k in queueRefs) delete queueRefs[k];
                 return;
@@ -6106,7 +6467,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
             const payable = EventEngine.choicePayable ? EventEngine.choicePayable(s, c) : true;
             html += '<div class="event-choice">';
             html += '<button class="btn wide' + (payable ? '' : ' locked') + '" data-act="eventchoice|' + i + '"' +
-                (payable ? '' : ' disabled') + ' data-tip="text|' + G.esc(c.hint || '') + '">' + G.esc(c.text) + '</button>';
+                (payable ? '' : ' disabled') + ' data-tip="evchoice|' + i + '">' + G.esc(c.text) + '</button>';
             const needs = [];
             if (c.cost && Object.keys(c.cost).length) needs.push('消耗 ' + G.costHtml(c.cost));
             if (c.needPower) {
@@ -6135,8 +6496,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
             if (!a) {
                 expRefs.bar = expRefs.progress = expRefs.chance = expRefs.remain = null;
                 const power = s.localResources.power.amount * (1 + EffectsManager.additive(s, 'expeditionPower'));
-                G.setHTML(box, '<div class="panel-title">远征队</div><div class="hint">远征队待命中。当前军力 ' + U.fmtNum(power) +
-                    '，前往「远征」标签页选择目标。</div>');
+                G.setHTML(box, '<div class="panel-title">远征队</div><div class="hint">远征队待命中，当前军力 ' + U.fmtNum(power) + '。</div>');
                 return;
             }
             let html = '<div class="panel-title">远征中<span class="right">' + G.esc(a.region) + '</span></div>';
@@ -6195,30 +6555,6 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     }
 
     /* ---------------- 弹窗 ---------------- */
-    function settingsModal() {
-        const s = GameState;
-        const html = '<h2>设置</h2>' +
-            '<h3>显示</h3>' +
-            '<div class="btn-row"><button class="btn" data-act="theme">切换明暗主题</button>' +
-            '<button class="btn" data-act="pause">' + (s.paused ? '继续游戏' : '暂停游戏') + '</button></div>' +
-            '<h3>存档</h3>' +
-            '<p>自动保存在浏览器本地（约每 25 秒一次）。离开页面后再次打开会结算离线收益。</p>' +
-            '<div class="btn-row mt6"><label class="hint" style="cursor:pointer"><input type="checkbox" data-act="toggleAutosave"' + (s.settings.autosave ? ' checked' : '') + '> 启用自动保存</label></div>' +
-            '<div class="btn-row mt6"><button class="btn" data-act="save">立即保存</button>' +
-            '<button class="btn" data-act="modal|export">导出存档</button>' +
-            '<button class="btn" data-act="modal|import">导入存档</button></div>' +
-            '<h3>危险操作</h3><p>清除本地存档会彻底删除进度（包括所有传承）。</p>' +
-            '<div class="btn-row mt6"><button class="btn danger" data-act="modal|hardreset">清除存档</button></div>' +
-            '<h3>玩法速览</h3><ul>' +
-            '<li>大多数建筑需要「人口」才能运转，人口由居所提供。</li>' +
-            '<li>建筑的效率会受原料短缺与人口不足同时限制，短缺时效率会持续下降。</li>' +
-            '<li>研究与建造都受资源「上限」限制，用仓库类建筑提高上限。</li>' +
-            '<li>「时空回响」等重置会清空进度，但保留传承资源与强化。</li>' +
-            '</ul>' +
-            '<div class="modal-actions"><button class="btn" data-act="closemodal">关闭</button></div>';
-        G.openModal(html);
-    }
-
     function exportModal() {
         const data = SaveEngine.exportSave(GameState);
         const html = '<h2>导出存档</h2><p>复制下面的文本并妥善保存。随时可以在「导入存档」中粘贴回来。</p>' +
@@ -6250,9 +6586,9 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     }
 
     window.Panels = {
-        tipHtml, renderHeader, renderPopulation, renderResources, renderActions,
+        tipHtml, renderHeader, renderPopulation, renderResources,
         renderEvent, renderExpeditionPanel, renderLog, renderStats, renderQueue,
-        settingsModal, exportModal, importModal, offlineModal,
+        exportModal, importModal, offlineModal,
     };
 })();
 
@@ -6334,15 +6670,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
             counts[cfg.type] = (counts[cfg.type] || 0) + 1;
         }
 
-        let html = '<div class="tab-intro">大崩坏之后，一切都要重新盖起来。建筑需要 <b>人口</b> 维持运转，' +
-            '并会因为 <b>原料短缺</b> 或 <b>人手不足</b> 而降低效率——效率会同时影响产量与消耗。<br>' +
-            '<b>点击卡片任意处即可建造 ×1</b>；「+5 / +10 / 最大」用于批量建造，' +
-            '「停用」可暂时关掉一座建筑（停用后不再消耗原料与人口）。<br>' +
-            '材料足够时点击会<b>立即建成</b>；材料不足时会排进右侧队列，显示「还要多久凑齐材料」，凑齐的瞬间就自动建成。<br>' +
-            '<b>把鼠标移到卡片上</b>即可查看该建筑的产出、消耗、上限、人口需求、效率、造价与说明；' +
-            '名称旁的 <span class="tag warn">受限</span> 标记表示它当前没有满效率运转。</div>';
-
-        html += '<div class="btn-row" style="margin-bottom:8px">';
+        let html = '<div class="btn-row" style="margin-bottom:8px">';
         html += '<button class="btn tiny' + (filters.type === '全部' ? ' active' : '') + '" data-act="filter|全部">全部</button>';
         for (const t of TYPES) {
             if (!counts[t]) continue;
@@ -6447,14 +6775,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     function renderTechs() {
         const s = GameState;
         const visible = TECHS_ORDER.filter(n => s.techs[n].visible);
-        const canNow = visible.filter(n => !s.techs[n].researched && ProductionEngine.techAvailable(s, n) && ResourcesManager.canAfford(TECHS_CONFIG[n].cost));
-        const doneTotal = visible.filter(n => s.techs[n].researched).length;
-        let html = '<div class="tab-intro">魔法知识（📖）是研究的主要消耗，它由藏书阁、咒法学院等建筑产出，' +
-            '并由它们提供 <b>知识上限</b>。研究立刻完成，是解锁建筑与全局加成的唯一途径。<br>' +
-            '<b>点击卡片任意处即可研究</b>；已完成的科技会收进「已完成」折叠块，' +
-            '整个时代研究完后该时代会自动折叠——点标题即可随时展开查看。' +
-            '<br>当前进度：已完成 <b>' + doneTotal + '</b> / ' + visible.length + ' 项（本时代清单）。</div>';
-        if (canNow.length) html += '<div class="hint pos" style="margin-bottom:8px">当前可以研究：' + canNow.map(G.esc).join('、') + '</div>';
+        let html = '<div class="tab-intro">魔法知识（📖）是研究的主要消耗，它由藏书阁、咒法学院等建筑产出，并由它们提供知识上限。</div>';
 
         const byEra = {};
         for (const n of visible) {
@@ -6567,10 +6888,8 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     function renderUpgrades() {
         const s = GameState;
         const names = UPGRADES_ORDER.filter(n => s.upgrades[n].visible);
-        let html = '<div class="tab-intro">升级可以无限重复购买（各有等级上限），价格随等级指数增长，' +
-            '是后期放大产能的主要手段。研究对应科技后解锁。</div>';
-        if (!names.length) return html + '<div class="hint">还没有可用的升级。研究「石斧」等科技后会出现。</div>';
-        return html + '<div class="card-grid">' + names.map(upgradeCard).join('') + '</div>';
+        if (!names.length) return '<div class="hint">还没有可用的升级。研究「石斧」等科技后会出现。</div>';
+        return '<div class="card-grid">' + names.map(upgradeCard).join('') + '</div>';
     }
 
     window.TabResearch = {
@@ -7061,6 +7380,124 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 
 </script>
 <script>
+/* ===== js/ui/tab-settings.js ===== */
+/* 设置标签页：存档、运行与显示、玩法速览、更新日志 */
+(function () {
+    const U = window.Utils;
+    const G = window.UI;
+
+    /* ---------------- 存档 ---------------- */
+    function saveSection() {
+        const s = GameState;
+        let html = '<div class="section-title">存档</div><div class="settings-card">';
+        html += '<div class="hint">进度保存在浏览器本地（约每 25 秒自动保存一次，离开页面时也会保存）。' +
+            '也可以导出成一段文本自己收好，或者把导出的文本粘贴回来覆盖当前进度。</div>';
+        html += '<div class="btn-row mt6">';
+        html += '<button class="btn" data-act="save">💾 立即保存</button>';
+        html += '<button class="btn" data-act="modal|export">📤 导出存档</button>';
+        html += '<button class="btn" data-act="modal|import">📥 导入存档</button>';
+        html += '</div>';
+        html += '<div class="mt6" style="display:flex;gap:14px;flex-wrap:wrap">';
+        html += '<label class="hint" style="cursor:pointer"><input type="checkbox" data-act="toggleAutosave"' +
+            (s.settings.autosave ? ' checked' : '') + '> 启用自动保存</label>';
+        html += '</div>';
+        html += '<div class="section-sub">危险操作</div>';
+        html += '<div class="hint">清除本地存档会彻底删除进度，包括所有传承强化、成就与英雄收藏，无法恢复。</div>';
+        html += '<div class="btn-row mt6"><button class="btn danger" data-act="modal|hardreset">清除存档</button></div>';
+        html += '</div>';
+        return html;
+    }
+
+    /* ---------------- 运行与显示 ---------------- */
+    function runSection() {
+        const s = GameState;
+        let html = '<div class="section-title">运行与显示</div><div class="settings-card">';
+        html += '<div class="btn-row">';
+        html += '<button class="btn" data-act="pause">' + (s.paused ? '▶ 继续游戏' : '⏸ 暂停游戏') + '</button>';
+        html += '<button class="btn" data-act="theme">' + (s.settings.theme === 'dark' ? '☀ 切换到浅色主题' : '🌙 切换到深色主题') + '</button>';
+        html += '</div>';
+        const auto = [];
+        if (EffectsManager.hasSpecial(s, 'autoBuild')) {
+            auto.push('<label class="hint" style="cursor:pointer"><input type="checkbox" data-act="toggleAutoBuild"' +
+                (s.settings.autoBuild ? ' checked' : '') + '> 自动建造：买得起就立刻建（不会把买不起的塞进队列）</label>');
+        }
+        if (EffectsManager.hasSpecial(s, 'autoExpedition')) {
+            auto.push('<label class="hint" style="cursor:pointer"><input type="checkbox" data-act="toggleAutoExp"' +
+                (s.settings.autoExpedition ? ' checked' : '') + '> 自动远征：上一支队伍归来后立刻前往同一区域</label>');
+        }
+        if (auto.length) html += '<div class="mt6" style="display:flex;flex-direction:column;gap:6px">' + auto.join('') + '</div>';
+        html += '<div class="hint mt6">离线收益上限 ' + (2 + EffectsManager.additive(s, 'offlineHours')) + ' 小时（' +
+            (EffectsManager.hasSpecial(s, 'offlinePerfect') ? '100%' : '50%') + ' 效率）。' +
+            '键盘：数字键 1-9 与 0 切换标签页，空格暂停，Ctrl+S 保存。</div>';
+        html += '</div>';
+        return html;
+    }
+
+    /* ---------------- 玩法速览 ---------------- */
+    function guideSection() {
+        let html = '<div class="section-title">玩法速览</div><div class="settings-card"><ul class="guide-list">';
+        html += '<li>大多数建筑需要<b>人口</b>才能运转，人口由居所提供。</li>';
+        html += '<li>建筑的效率会同时受「原料短缺」与「人手不足」限制，效率又反过来影响产量与消耗。</li>';
+        html += '<li>研究与建造都受资源<b>上限</b>限制，用仓库类建筑提高上限。</li>';
+        html += '<li>建造 / 研究 / 升级：材料够就<b>立即完成</b>；不够时点击会<b>排队等材料</b>，右侧面板显示还要多久凑齐，凑齐的瞬间自动建成。</li>';
+        html += '<li>「时空回响」等重置会清空这一轮的进度，但保留传承资源、传承强化、成就、试炼与英雄收藏。</li>';
+        html += '</ul></div>';
+        return html;
+    }
+
+    /* ---------------- 更新日志 ---------------- */
+    function changelogSection() {
+        const d = window.CHANGELOG_DATA;
+        if (!d || !d.versions || !d.versions.length) {
+            return '<div class="section-title">更新日志</div><div class="settings-card"><div class="hint">没有找到更新日志数据。</div></div>';
+        }
+        let html = '<div class="section-title">更新日志</div><div class="settings-card">';
+        html += '<div class="hint">所有改动都按版本记录在这里，最新的排在最上面。完整文档见仓库里的 CHANGELOG.md。</div>';
+        /* 版本总览 */
+        html += '<div class="cl-overview">';
+        for (const row of d.overview) {
+            html += '<div class="cl-row">' +
+                '<span class="cl-ver">' + G.esc(row.version) + '</span>' +
+                '<span class="cl-date">' + G.esc(row.date) + '</span>' +
+                '<span class="cl-type">' + G.esc(row.type) + '</span>' +
+                '<span class="cl-sum">' + row.summary + '</span>' +
+                '</div>';
+        }
+        html += '</div>';
+        /* 各版本明细 */
+        html += '<div class="cl-box">';
+        for (const v of d.versions) {
+            html += '<div class="cl-version"><div class="cl-version-head">' +
+                '<span class="cl-ver">' + G.esc(v.version) + '</span>' +
+                '<span class="cl-date">' + G.esc(v.date) + '</span></div>';
+            for (const sec of v.sections) {
+                html += '<div class="cl-section">' + G.esc(sec.title) + '</div>';
+                html += '<ul class="cl-items">';
+                for (const it of sec.items) html += '<li>' + it + '</li>';
+                html += '</ul>';
+            }
+            html += '</div>';
+        }
+        html += '</div>';
+        html += '</div>';
+        return html;
+    }
+
+    function render() {
+        let html = '<div class="tab-intro">这一页是存档、运行选项与更新日志。游戏内的说明与快捷入口都收在这里，' +
+            '顶栏右侧的 ⚙ 也会直接跳到本页。</div>';
+        html += saveSection();
+        html += runSection();
+        html += guideSection();
+        html += changelogSection();
+        return html;
+    }
+
+    window.TabSettings = { render };
+})();
+
+</script>
+<script>
 /* ===== js/ui/app.js ===== */
 /* 界面装配：标签页调度、事件委托、渲染循环 */
 (function () {
@@ -7077,6 +7514,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         { id: 'market', name: '贸易', icon: '🪙', render: () => TabWorld.renderMarket() },
         { id: 'ascend', name: '传承', icon: '✦', render: () => TabAscend.renderAscend() },
         { id: 'achievements', name: '成就', icon: '🏆', render: () => TabWorld.renderAchievements() },
+        { id: 'settings', name: '设置', icon: '⚙', render: () => TabSettings.render() },
     ];
 
     let activeTab = 'buildings';
@@ -7142,7 +7580,6 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         Panels.renderHeader();
         Panels.renderPopulation();
         Panels.renderResources();
-        Panels.renderActions();
         Panels.renderEvent();
         Panels.renderExpeditionPanel();
         Panels.renderQueue();
@@ -7311,8 +7748,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
                 G.closeModal();
                 break;
             case 'modal':
-                if (arg1 === 'settings') Panels.settingsModal();
-                else if (arg1 === 'export') Panels.exportModal();
+                if (arg1 === 'export') Panels.exportModal();
                 else if (arg1 === 'import') Panels.importModal();
                 else if (arg1 === 'hardreset') {
                     G.confirmBox('清除存档', '这会彻底删除本地存档与全部传承进度，无法恢复。确定吗？', () => SaveEngine.hardReset(), '清除存档');
@@ -7425,8 +7861,9 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     document.addEventListener('keydown', e => {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
         const tabs = visibleTabs();
-        const idx = Number(e.key);
-        if (idx >= 1 && idx <= tabs.length) {
+        /* 数字键 1-9 对应前九个标签；第 10 个（设置）用 0 */
+        const idx = e.key === '0' ? 10 : Number(e.key);
+        if (idx >= 1 && idx <= tabs.length && (e.key === '0' || idx <= 9)) {
             activeTab = tabs[idx - 1].id;
             render();
         }
@@ -7452,7 +7889,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
             '<li>人口是所有建筑的燃料，仓库决定你能囤多少——上限不够时就没法研究更贵的科技。</li>' +
             '<li>攒够 200 点「魔法知识上限」后，就可以在「传承」里执行第一次 <b>时空回响</b>，用奥术遗物买永久强化。</li>' +
             '</ul>' +
-            '<p class="hint">提示：数字键 1-8 切换标签页，空格暂停，进度会自动保存在浏览器里。</p>' +
+            '<p class="hint">提示：数字键 1-9 与 0 切换标签页，空格暂停，进度会自动保存在浏览器里；存档与更新日志在「设置」页。</p>' +
             '<div class="modal-actions left"><label class="hint" style="cursor:pointer">' +
             '<input type="checkbox" id="welcome-skip"> 以后不再显示</label></div>' +
             '<div class="modal-actions"><button class="btn primary" data-act="closemodal">开始重建</button></div>';

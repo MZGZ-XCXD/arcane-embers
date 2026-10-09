@@ -140,8 +140,48 @@
         return choice;
     }
 
+    /* 预览某个选项「扣什么、得什么」：
+       用只记录、不生效的假接口把 run 跑两遍（rnd 分别返回 0 与 1），把随机分支都覆盖到；
+       条件分支（例如「军力是否足够」）按玩家当前状态走，所以预览与此刻的真实结果一致。 */
+    function preview(state, ev, index) {
+        const choice = (ev && ev.choices && ev.choices[index]) || null;
+        if (!choice || typeof choice.run !== 'function') return null;
+        const runs = [];
+        for (const rndValue of [0, 1]) {
+            const taken = {}, given = {}, happy = [], buffs = [];
+            const api = {
+                state: state,
+                rnd: () => rndValue,
+                has: (res, amount) => ResourcesManager.amount(res) >= (amount === undefined ? 1 : amount),
+                log: () => {},
+                give: map => { for (const k in map) given[k] = Math.max(given[k] || 0, map[k]); },
+                take: map => { for (const k in map) taken[k] = Math.max(taken[k] || 0, map[k]); },
+                happy: v => { if (happy.indexOf(v) < 0) happy.push(v); },
+                buff: (name, label, days, effect) => { buffs.push({ label: label, days: days, effect: effect || {} }); },
+                artifact: () => null,
+            };
+            try { choice.run(api); } catch (e) { /* 预览失败不影响游戏 */ }
+            runs.push({ taken: taken, given: given, happy: happy, buffs: buffs });
+        }
+        const cost = {}, gain = {};
+        for (const r of runs) {
+            for (const k in r.taken) cost[k] = Math.max(cost[k] || 0, r.taken[k]);
+            for (const k in r.given) {
+                const cur = gain[k];
+                gain[k] = cur === undefined
+                    ? { min: r.given[k], max: r.given[k] }
+                    : { min: Math.min(cur.min, r.given[k]), max: Math.max(cur.max, r.given[k]) };
+            }
+        }
+        const happy = [];
+        for (const r of runs) for (const v of r.happy) if (happy.indexOf(v) < 0) happy.push(v);
+        const buffs = [];
+        for (const r of runs) for (const b of r.buffs) if (!buffs.some(x => x.label === b.label)) buffs.push(b);
+        return { cost: cost, gain: gain, happy: happy, buffs: buffs };
+    }
+
     window.EventEngine = {
         tick, tickEffects, buff, addLog, current, resolve, availableEvents, scheduleNext,
-        choicePayable, costFitsCaps, eventFitsStorage,
+        choicePayable, costFitsCaps, eventFitsStorage, preview,
     };
 })();

@@ -4,6 +4,17 @@
     const G = window.UI;
 
     /* ---------------- 悬浮提示内容 ---------------- */
+    /* 事件选项的「获得」文本：两遍预览的收益取范围 */
+    function gainHtml(gain) {
+        const parts = [];
+        for (const k in gain) {
+            const g = gain[k];
+            const txt = g.min === g.max ? U.fmtNum(g.max) : U.fmtNum(g.min) + ' ~ ' + U.fmtNum(g.max);
+            parts.push('<span class="pos">' + G.esc(k) + '　' + txt + '</span>');
+        }
+        return parts.join('') || '<span class="dim">没有直接收获</span>';
+    }
+
     function tipHtml(key) {
         if (!key) return null;
         const parts = key.split('|');
@@ -213,6 +224,45 @@
             return html;
         }
 
+        /* 事件选项：剧情说明 + 明确的「扣什么 / 得什么」 */
+        if (type === 'evchoice') {
+            const ev = EventEngine.current(s);
+            if (!ev) return null;
+            const idx = Number(arg);
+            const c = ev.choices[idx];
+            if (!c) return null;
+            const pv = EventEngine.preview(s, ev, idx);
+            let html = '<h4>' + G.esc(c.text) + '</h4>';
+            if (c.hint) html += '<div class="dim">' + G.esc(c.hint) + '</div>';
+            html += '<hr>';
+            if (pv && Object.keys(pv.cost).length) {
+                html += '<div class="kv"><span>消耗</span><span>' + G.costHtml(pv.cost) + '</span></div>';
+            } else {
+                html += '<div class="kv"><span>消耗</span><span class="dim">不消耗任何资源</span></div>';
+            }
+            if (c.needPower) {
+                const okPower = s.localResources.power.amount + 1e-9 >= c.needPower;
+                html += '<div class="kv"><span>需要军力</span><span class="' + (okPower ? 'pos' : 'lack') + '">' +
+                    U.fmtNum(c.needPower) + (okPower ? '（当前足够）' : '（当前只有 ' + U.fmtNum(s.localResources.power.amount) + '）') + '</span></div>';
+            }
+            html += '<div class="kv"><span>获得</span><span>' + gainHtml(pv ? pv.gain : {}) + '</span></div>';
+            if (pv && pv.happy.length) {
+                const vals = pv.happy.slice().sort((a, b) => a - b);
+                html += '<div class="kv"><span>民望</span><span class="' +
+                    (vals[vals.length - 1] >= 0 ? 'pos' : 'neg') + '">' +
+                    vals.map(v => (v >= 0 ? '+' : '') + U.fmtNum(v, 0)).join(' 或 ') + '</span></div>';
+            }
+            if (pv) {
+                for (const b of pv.buffs) {
+                    const lines = G.effectLines(b.effect);
+                    html += '<div class="kv"><span>持续效果</span><span class="pos">' + G.esc(b.label) +
+                        '（' + U.fmtNum(b.days, 0) + ' 日' + (lines.length ? '：' + lines.map(G.esc).join('；') : '') + '）</span></div>';
+                }
+            }
+            if (!pv) html += '<div class="dim">（该选项的结果视情况而定，详见描述。）</div>';
+            return html;
+        }
+
         if (type === 'offline') {
             const rep = s.offlineReport;
             if (!rep) return null;
@@ -391,29 +441,6 @@
         }
     }
 
-    /* ---------------- 操作面板 ---------------- */
-    function renderActions() {
-        const s = GameState;
-        let html = '<div class="panel-title">操作</div>';
-        html += '<div class="btn-row">';
-        html += '<button class="btn" data-act="save">💾 保存</button>';
-        html += '<button class="btn" data-act="modal|export">📤 导出</button>';
-        html += '<button class="btn" data-act="modal|import">📥 导入</button>';
-        html += '<button class="btn" data-act="modal|settings">⚙ 设置</button>';
-        html += '<button class="btn" data-act="pause">' + (s.paused ? '▶ 继续' : '⏸ 暂停') + '</button>';
-        html += '<button class="btn" data-act="theme">' + (s.settings.theme === 'dark' ? '☀ 浅色' : '🌙 深色') + '</button>';
-        html += '</div>';
-        const auto = [];
-        if (EffectsManager.hasSpecial(s, 'autoBuild')) auto.push('<label class="hint" style="cursor:pointer"><input type="checkbox" data-act="toggleAutoBuild"' + (s.settings.autoBuild ? ' checked' : '') + '> 自动建造</label>');
-        if (EffectsManager.hasSpecial(s, 'autoExpedition')) auto.push('<label class="hint" style="cursor:pointer"><input type="checkbox" data-act="toggleAutoExp"' + (s.settings.autoExpedition ? ' checked' : '') + '> 自动远征</label>');
-        if (auto.length) html += '<div class="mt6" style="display:flex;gap:10px;flex-wrap:wrap">' + auto.join('') + '</div>';
-        html += '<div class="hint mt6">存档自动保存于浏览器本地；离线收益上限 ' +
-            (2 + EffectsManager.additive(s, 'offlineHours')) + ' 小时（' +
-            (EffectsManager.hasSpecial(s, 'offlinePerfect') ? '100%' : '50%') + ' 效率）。</div>';
-        html += '<div class="btn-row mt6"><button class="btn danger" data-act="modal|hardreset">清除存档</button></div>';
-        G.setHTML(document.getElementById('panel-actions'), html);
-    }
-
     /* ---------------- 建造队列面板 ---------------- */
     const queueRefs = {};
     function renderQueue() {
@@ -429,9 +456,7 @@
             box.__sig = sig;
             let html = '<div class="panel-title">建造队列<span class="right">' + items.length + ' / ' + slots + ' 槽</span></div>';
             if (!items.length) {
-                html += '<div class="hint">队列空闲。材料足够时点击卡片会<b>立即建成</b>，根本不会排队；' +
-                    '材料不够时才会作为订单排在这里等待，面板显示「还要多久凑齐材料」，材料一到手就立刻建成。' +
-                    '扩容靠传承强化与工程类英雄。</div>';
+                html += '<div class="hint">队列空闲。</div>';
                 G.setHTML(box, html);
                 for (const k in queueRefs) delete queueRefs[k];
                 return;
@@ -501,7 +526,7 @@
             const payable = EventEngine.choicePayable ? EventEngine.choicePayable(s, c) : true;
             html += '<div class="event-choice">';
             html += '<button class="btn wide' + (payable ? '' : ' locked') + '" data-act="eventchoice|' + i + '"' +
-                (payable ? '' : ' disabled') + ' data-tip="text|' + G.esc(c.hint || '') + '">' + G.esc(c.text) + '</button>';
+                (payable ? '' : ' disabled') + ' data-tip="evchoice|' + i + '">' + G.esc(c.text) + '</button>';
             const needs = [];
             if (c.cost && Object.keys(c.cost).length) needs.push('消耗 ' + G.costHtml(c.cost));
             if (c.needPower) {
@@ -530,8 +555,7 @@
             if (!a) {
                 expRefs.bar = expRefs.progress = expRefs.chance = expRefs.remain = null;
                 const power = s.localResources.power.amount * (1 + EffectsManager.additive(s, 'expeditionPower'));
-                G.setHTML(box, '<div class="panel-title">远征队</div><div class="hint">远征队待命中。当前军力 ' + U.fmtNum(power) +
-                    '，前往「远征」标签页选择目标。</div>');
+                G.setHTML(box, '<div class="panel-title">远征队</div><div class="hint">远征队待命中，当前军力 ' + U.fmtNum(power) + '。</div>');
                 return;
             }
             let html = '<div class="panel-title">远征中<span class="right">' + G.esc(a.region) + '</span></div>';
@@ -590,30 +614,6 @@
     }
 
     /* ---------------- 弹窗 ---------------- */
-    function settingsModal() {
-        const s = GameState;
-        const html = '<h2>设置</h2>' +
-            '<h3>显示</h3>' +
-            '<div class="btn-row"><button class="btn" data-act="theme">切换明暗主题</button>' +
-            '<button class="btn" data-act="pause">' + (s.paused ? '继续游戏' : '暂停游戏') + '</button></div>' +
-            '<h3>存档</h3>' +
-            '<p>自动保存在浏览器本地（约每 25 秒一次）。离开页面后再次打开会结算离线收益。</p>' +
-            '<div class="btn-row mt6"><label class="hint" style="cursor:pointer"><input type="checkbox" data-act="toggleAutosave"' + (s.settings.autosave ? ' checked' : '') + '> 启用自动保存</label></div>' +
-            '<div class="btn-row mt6"><button class="btn" data-act="save">立即保存</button>' +
-            '<button class="btn" data-act="modal|export">导出存档</button>' +
-            '<button class="btn" data-act="modal|import">导入存档</button></div>' +
-            '<h3>危险操作</h3><p>清除本地存档会彻底删除进度（包括所有传承）。</p>' +
-            '<div class="btn-row mt6"><button class="btn danger" data-act="modal|hardreset">清除存档</button></div>' +
-            '<h3>玩法速览</h3><ul>' +
-            '<li>大多数建筑需要「人口」才能运转，人口由居所提供。</li>' +
-            '<li>建筑的效率会受原料短缺与人口不足同时限制，短缺时效率会持续下降。</li>' +
-            '<li>研究与建造都受资源「上限」限制，用仓库类建筑提高上限。</li>' +
-            '<li>「时空回响」等重置会清空进度，但保留传承资源与强化。</li>' +
-            '</ul>' +
-            '<div class="modal-actions"><button class="btn" data-act="closemodal">关闭</button></div>';
-        G.openModal(html);
-    }
-
     function exportModal() {
         const data = SaveEngine.exportSave(GameState);
         const html = '<h2>导出存档</h2><p>复制下面的文本并妥善保存。随时可以在「导入存档」中粘贴回来。</p>' +
@@ -645,8 +645,8 @@
     }
 
     window.Panels = {
-        tipHtml, renderHeader, renderPopulation, renderResources, renderActions,
+        tipHtml, renderHeader, renderPopulation, renderResources,
         renderEvent, renderExpeditionPanel, renderLog, renderStats, renderQueue,
-        settingsModal, exportModal, importModal, offlineModal,
+        exportModal, importModal, offlineModal,
     };
 })();

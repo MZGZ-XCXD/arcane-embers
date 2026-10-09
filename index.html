@@ -25,7 +25,7 @@
     <div class="topbar-actions">
       <button class="icon-btn" id="btn-pause" data-act="pause" title="暂停 / 继续">⏸</button>
       <button class="icon-btn" id="btn-theme" data-act="theme" title="切换明暗主题">🌙</button>
-      <button class="icon-btn" id="btn-settings" data-act="modal|settings" title="设置与存档">⚙</button>
+      <button class="icon-btn" id="btn-settings" data-act="tab|settings" title="设置、存档与更新日志">⚙</button>
     </div>
   </header>
 
@@ -33,7 +33,6 @@
     <aside class="sidebar">
       <section class="panel" id="panel-population"></section>
       <section class="panel" id="panel-resources"></section>
-      <section class="panel" id="panel-actions"></section>
     </aside>
 
     <main class="main-content">
@@ -68,6 +67,7 @@
 <script src="js/config/events.js"></script>
 <script src="js/config/expeditions.js"></script>
 <script src="js/config/heroes.js"></script>
+<script src="js/config/changelog.js"></script>
 
 <!-- ===== 引擎（与界面解耦） ===== -->
 <script src="js/engine/utils.js"></script>
@@ -93,6 +93,7 @@
 <script src="js/ui/tab-ascend.js"></script>
 <script src="js/ui/tab-world.js"></script>
 <script src="js/ui/tab-summon.js"></script>
+<script src="js/ui/tab-settings.js"></script>
 <script src="js/ui/app.js"></script>
 
 <script src="js/main.js"></script>

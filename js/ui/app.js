@@ -13,6 +13,7 @@
         { id: 'market', name: '贸易', icon: '🪙', render: () => TabWorld.renderMarket() },
         { id: 'ascend', name: '传承', icon: '✦', render: () => TabAscend.renderAscend() },
         { id: 'achievements', name: '成就', icon: '🏆', render: () => TabWorld.renderAchievements() },
+        { id: 'settings', name: '设置', icon: '⚙', render: () => TabSettings.render() },
     ];
 
     let activeTab = 'buildings';
@@ -78,7 +79,6 @@
         Panels.renderHeader();
         Panels.renderPopulation();
         Panels.renderResources();
-        Panels.renderActions();
         Panels.renderEvent();
         Panels.renderExpeditionPanel();
         Panels.renderQueue();
@@ -247,8 +247,7 @@
                 G.closeModal();
                 break;
             case 'modal':
-                if (arg1 === 'settings') Panels.settingsModal();
-                else if (arg1 === 'export') Panels.exportModal();
+                if (arg1 === 'export') Panels.exportModal();
                 else if (arg1 === 'import') Panels.importModal();
                 else if (arg1 === 'hardreset') {
                     G.confirmBox('清除存档', '这会彻底删除本地存档与全部传承进度，无法恢复。确定吗？', () => SaveEngine.hardReset(), '清除存档');
@@ -361,8 +360,9 @@
     document.addEventListener('keydown', e => {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
         const tabs = visibleTabs();
-        const idx = Number(e.key);
-        if (idx >= 1 && idx <= tabs.length) {
+        /* 数字键 1-9 对应前九个标签；第 10 个（设置）用 0 */
+        const idx = e.key === '0' ? 10 : Number(e.key);
+        if (idx >= 1 && idx <= tabs.length && (e.key === '0' || idx <= 9)) {
             activeTab = tabs[idx - 1].id;
             render();
         }
@@ -388,7 +388,7 @@
             '<li>人口是所有建筑的燃料，仓库决定你能囤多少——上限不够时就没法研究更贵的科技。</li>' +
             '<li>攒够 200 点「魔法知识上限」后，就可以在「传承」里执行第一次 <b>时空回响</b>，用奥术遗物买永久强化。</li>' +
             '</ul>' +
-            '<p class="hint">提示：数字键 1-8 切换标签页，空格暂停，进度会自动保存在浏览器里。</p>' +
+            '<p class="hint">提示：数字键 1-9 与 0 切换标签页，空格暂停，进度会自动保存在浏览器里；存档与更新日志在「设置」页。</p>' +
             '<div class="modal-actions left"><label class="hint" style="cursor:pointer">' +
             '<input type="checkbox" id="welcome-skip"> 以后不再显示</label></div>' +
             '<div class="modal-actions"><button class="btn primary" data-act="closemodal">开始重建</button></div>';

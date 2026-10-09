@@ -276,6 +276,40 @@ h1, h2, h3, .serif { font-family: "Palatino Linotype", "Songti SC", Georgia, ser
     min-height: 0;
 }
 .tab-intro { color: var(--text-secondary); font-size: .82rem; margin-bottom: 12px; line-height: 1.6; }
+
+/* ---------------- 设置页 ---------------- */
+.settings-card {
+    background: var(--bg-card); border: 1px solid var(--border-card);
+    border-radius: 10px; padding: 10px 12px; margin-bottom: 10px;
+}
+.section-sub {
+    margin: 12px 0 4px; font-size: .78rem; color: var(--accent-2);
+    padding-top: 8px; border-top: 1px solid var(--border);
+}
+.guide-list { margin: 0; padding-left: 18px; color: var(--text-secondary); font-size: .8rem; line-height: 1.75; }
+.guide-list li { margin-bottom: 3px; }
+.cl-overview { margin: 8px 0 4px; }
+.cl-row {
+    display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+    font-size: .76rem; padding: 4px 0; border-bottom: 1px dashed var(--border);
+}
+.cl-ver { color: var(--accent-2); font-weight: 600; }
+.cl-date { color: var(--text-dim); font-size: .72rem; }
+.cl-type {
+    font-size: .68rem; padding: 1px 6px; border-radius: 5px;
+    background: var(--bg-sunken); color: var(--text-secondary); border: 1px solid var(--border);
+}
+.cl-sum { color: var(--text-secondary); flex: 1 1 220px; }
+.cl-box { max-height: 46vh; overflow-y: auto; margin-top: 8px; padding-right: 4px; }
+.cl-version { margin-bottom: 10px; }
+.cl-version-head { display: flex; align-items: baseline; gap: 8px; }
+.cl-section { font-size: .74rem; color: var(--text-heading); margin: 6px 0 2px; }
+.cl-items { margin: 0; padding-left: 18px; font-size: .78rem; color: var(--text-secondary); line-height: 1.7; }
+.cl-items li { margin-bottom: 2px; }
+.cl-items code {
+    font-size: .74rem; padding: 0 4px; border-radius: 4px;
+    background: var(--bg-sunken); color: var(--text); border: 1px solid var(--border);
+}
 .section-title {
     font-size: .82rem; letter-spacing: 1px; color: var(--accent-2);
     margin: 14px 0 8px; padding-left: 8px; border-left: 3px solid var(--accent);
