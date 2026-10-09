@@ -168,8 +168,12 @@
             const need = cfg.requireReset;
             if (need === 'any' || need === opts.type) {
                 st.completed = true;
-                EventEngine.addLog(state, '⚔️ 完成试炼「' + cfg.id + '」，永久获得：' + cfg.rewardText);
-                if (window.UI && UI.toast) UI.toast('⚔️ 试炼完成：' + cfg.id, 'gold');
+                /* 完成后自动关闭试炼：惩罚（看 active）立刻解除，奖励（看 completed）永久保留。
+                   想再拿星级加成可以随时重新激活，奖励不会重复获得。 */
+                st.active = false;
+                EventEngine.addLog(state, '⚔️ 完成试炼「' + cfg.id + '」，永久获得：' + cfg.rewardText +
+                    '（试炼已自动关闭，限制解除，奖励永久生效）');
+                if (window.UI && UI.toast) UI.toast('⚔️ 试炼完成：' + cfg.id + '（已自动关闭）', 'gold');
             }
         }
 

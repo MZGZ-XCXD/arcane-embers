@@ -2558,6 +2558,11 @@ window.CHANGELOG_DATA = {
     "source": "CHANGELOG.md",
     "overview": [
         {
+            "version": "1.3.5",
+            "date": "2026-10-09",
+            "summary": "试炼完成对应重置后自动关闭（限制立刻解除），奖励永久保留；传承页补上试炼状态说明"
+        },
+        {
             "version": "1.3.4",
             "date": "2026-10-09",
             "summary": "更新日志不再标注改动大小，只写版本号与改了什么"
@@ -2609,6 +2614,26 @@ window.CHANGELOG_DATA = {
         }
     ],
     "versions": [
+        {
+            "version": "1.3.5",
+            "date": "2026-10-09",
+            "sections": [
+                {
+                    "title": "修复",
+                    "items": [
+                        "<b>试炼完成后没有自动关闭<\/b>：激活试炼、按它的条件完成对应重置之后，试炼会标记为「已完成」并给出永久奖励， 但状态仍然是「进行中」——限制一直压着玩家，必须自己再去点一次「取消激活」。 现在完成的那一刻就会自动关闭，限制立刻解除。",
+                        "<b>奖励不会因为关闭而消失<\/b>：这是本次专门核对过的一点。试炼的*限制*看 <code>active<\/code>、*奖励*看 <code>completed<\/code>， 两者本来就是分开结算的，所以自动关闭只会解除惩罚，奖励照常永久生效。 测试里直接量了效果数值：传承页的「灰烬余烬」在关闭后，成本增长率从 <code>+25%<\/code> 回到 <code>-2%<\/code>（惩罚消失、奖励留下）。",
+                        "传承页的试炼卡片与悬浮提示补上状态说明：完成后显示「奖励已拿到」而不只是「已完成」， 按钮变成「再次激活（只为星级加成）」，并提示「奖励已永久生效，不需要保持激活」。"
+                    ]
+                },
+                {
+                    "title": "说明",
+                    "items": [
+                        "星级加成（每点星级让本次重置收获 +5%）仍然只统计<b>当前开着<\/b>的试炼。完成并自动关闭后这一步加成会消失， 想继续吃星级加成需要重新激活（奖励不会重复获得）。如果你希望「已完成」的试炼也永久计入星级，告诉我，我可以改。"
+                    ]
+                }
+            ]
+        },
         {
             "version": "1.3.4",
             "date": "2026-10-09",
@@ -5193,8 +5218,12 @@ window.CHANGELOG_DATA = {
             const need = cfg.requireReset;
             if (need === 'any' || need === opts.type) {
                 st.completed = true;
-                EventEngine.addLog(state, '⚔️ 完成试炼「' + cfg.id + '」，永久获得：' + cfg.rewardText);
-                if (window.UI && UI.toast) UI.toast('⚔️ 试炼完成：' + cfg.id, 'gold');
+                /* 完成后自动关闭试炼：惩罚（看 active）立刻解除，奖励（看 completed）永久保留。
+                   想再拿星级加成可以随时重新激活，奖励不会重复获得。 */
+                st.active = false;
+                EventEngine.addLog(state, '⚔️ 完成试炼「' + cfg.id + '」，永久获得：' + cfg.rewardText +
+                    '（试炼已自动关闭，限制解除，奖励永久生效）');
+                if (window.UI && UI.toast) UI.toast('⚔️ 试炼完成：' + cfg.id + '（已自动关闭）', 'gold');
             }
         }
 
@@ -6184,10 +6213,14 @@ window.CHANGELOG_DATA = {
         if (type === 'challenge') {
             const cfg = CHALLENGES_CONFIG.find(c => c.id === arg);
             if (!cfg) return null;
+            const st = s.challenges[cfg.id] || {};
             let html = '<h4>' + G.esc(cfg.name) + ' · ' + '★'.repeat(cfg.star) + '</h4>';
             html += '<div class="dim">' + G.esc(cfg.desc) + '</div><hr>';
+            html += '<div class="kv"><span>状态</span><span class="' + (st.completed ? 'pos' : (st.active ? 'neg' : '')) + '">' +
+                (st.active ? (st.completed ? '奖励已拿到 · 挑战中' : '进行中（限制生效）') : (st.completed ? '奖励已拿到（试炼已关闭）' : '未激活')) + '</span></div>';
             html += '<div>完成条件：' + (cfg.requireReset === 'any' ? '任意重置' : (cfg.requireReset === 'star' ? '星辰升华' : '原初归寂')) + '</div>';
             html += '<div class="kv"><span>完成奖励</span><span class="pos">' + G.esc(cfg.rewardText) + '</span></div>';
+            html += '<hr><div class="dim">完成后试炼会自动关闭：限制立即解除，奖励永久生效（奖励只看「已完成」，不看是否还开着）。</div>';
             return html;
         }
 
@@ -7047,12 +7080,17 @@ window.CHANGELOG_DATA = {
         let html = '<div class="card' + (st.active ? ' affordable' : '') + (st.completed ? ' researched' : '') + '" data-tip="challenge|' + G.esc(cfg.id) + '">';
         html += '<div class="card-head"><div class="card-name">⚔️ ' + G.esc(cfg.id) +
             '<span class="tag">' + '★'.repeat(cfg.star) + '</span></div>' +
-            '<div class="card-count" style="font-size:.78rem">' + (st.completed ? '已完成' : (st.active ? '进行中' : '未激活')) + '</div></div>';
+            '<div class="card-count" style="font-size:.78rem">' +
+            (st.active ? (st.completed ? '奖励已拿到 · 挑战中' : '进行中') : (st.completed ? '奖励已拿到' : '未激活')) +
+            '</div></div>';
         html += '<div class="card-desc">' + G.esc(cfg.desc) + '</div>';
         html += '<div class="hint">完成方式：' + (cfg.requireReset === 'any' ? '任意重置' : (cfg.requireReset === 'star' ? '星辰升华' : '原初归寂')) +
             '　奖励：<span class="pos">' + G.esc(cfg.rewardText) + '</span></div>';
+        if (st.completed && !st.active) {
+            html += '<div class="hint pos">奖励已永久生效，不需要保持激活。想继续吃星级加成可以重新激活。</div>';
+        }
         html += '<div class="card-actions"><button class="btn tiny' + (st.active ? ' active' : '') + '" data-act="challenge|' + G.esc(cfg.id) + '">' +
-            (st.active ? '取消激活' : '激活试炼') + '</button></div>';
+            (st.active ? '取消激活' : (st.completed ? '再次激活（只为星级加成）' : '激活试炼')) + '</button></div>';
         html += '</div>';
         return html;
     }
@@ -7085,7 +7123,8 @@ window.CHANGELOG_DATA = {
 
         html += '<div class="section-title">试炼</div>';
         html += '<div class="hint" style="margin-bottom:8px">激活试炼会立刻施加严苛的限制，' +
-            '但只要在对应的重置中坚持到底，就能永久获得奖励。当前激活星级：<b>' + Actions.activeStars(s) +
+            '但只要在对应的重置中坚持到底，就能永久获得奖励。<b>完成时试炼会自动关闭</b>（限制立刻解除，奖励永久保留）；' +
+            '想继续靠它拿星级加成，可以随时重新激活。当前激活星级：<b>' + Actions.activeStars(s) +
             '</b>（每点星级让本次重置收获 +5%）。</div>';
         html += '<div class="card-grid wide">' + CHALLENGES_CONFIG.map(challengeRow).join('') + '</div>';
         return html;

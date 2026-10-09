@@ -217,10 +217,14 @@
         if (type === 'challenge') {
             const cfg = CHALLENGES_CONFIG.find(c => c.id === arg);
             if (!cfg) return null;
+            const st = s.challenges[cfg.id] || {};
             let html = '<h4>' + G.esc(cfg.name) + ' · ' + '★'.repeat(cfg.star) + '</h4>';
             html += '<div class="dim">' + G.esc(cfg.desc) + '</div><hr>';
+            html += '<div class="kv"><span>状态</span><span class="' + (st.completed ? 'pos' : (st.active ? 'neg' : '')) + '">' +
+                (st.active ? (st.completed ? '奖励已拿到 · 挑战中' : '进行中（限制生效）') : (st.completed ? '奖励已拿到（试炼已关闭）' : '未激活')) + '</span></div>';
             html += '<div>完成条件：' + (cfg.requireReset === 'any' ? '任意重置' : (cfg.requireReset === 'star' ? '星辰升华' : '原初归寂')) + '</div>';
             html += '<div class="kv"><span>完成奖励</span><span class="pos">' + G.esc(cfg.rewardText) + '</span></div>';
+            html += '<hr><div class="dim">完成后试炼会自动关闭：限制立即解除，奖励永久生效（奖励只看「已完成」，不看是否还开着）。</div>';
             return html;
         }
 

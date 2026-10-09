@@ -118,12 +118,17 @@
         let html = '<div class="card' + (st.active ? ' affordable' : '') + (st.completed ? ' researched' : '') + '" data-tip="challenge|' + G.esc(cfg.id) + '">';
         html += '<div class="card-head"><div class="card-name">⚔️ ' + G.esc(cfg.id) +
             '<span class="tag">' + '★'.repeat(cfg.star) + '</span></div>' +
-            '<div class="card-count" style="font-size:.78rem">' + (st.completed ? '已完成' : (st.active ? '进行中' : '未激活')) + '</div></div>';
+            '<div class="card-count" style="font-size:.78rem">' +
+            (st.active ? (st.completed ? '奖励已拿到 · 挑战中' : '进行中') : (st.completed ? '奖励已拿到' : '未激活')) +
+            '</div></div>';
         html += '<div class="card-desc">' + G.esc(cfg.desc) + '</div>';
         html += '<div class="hint">完成方式：' + (cfg.requireReset === 'any' ? '任意重置' : (cfg.requireReset === 'star' ? '星辰升华' : '原初归寂')) +
             '　奖励：<span class="pos">' + G.esc(cfg.rewardText) + '</span></div>';
+        if (st.completed && !st.active) {
+            html += '<div class="hint pos">奖励已永久生效，不需要保持激活。想继续吃星级加成可以重新激活。</div>';
+        }
         html += '<div class="card-actions"><button class="btn tiny' + (st.active ? ' active' : '') + '" data-act="challenge|' + G.esc(cfg.id) + '">' +
-            (st.active ? '取消激活' : '激活试炼') + '</button></div>';
+            (st.active ? '取消激活' : (st.completed ? '再次激活（只为星级加成）' : '激活试炼')) + '</button></div>';
         html += '</div>';
         return html;
     }
@@ -156,7 +161,8 @@
 
         html += '<div class="section-title">试炼</div>';
         html += '<div class="hint" style="margin-bottom:8px">激活试炼会立刻施加严苛的限制，' +
-            '但只要在对应的重置中坚持到底，就能永久获得奖励。当前激活星级：<b>' + Actions.activeStars(s) +
+            '但只要在对应的重置中坚持到底，就能永久获得奖励。<b>完成时试炼会自动关闭</b>（限制立刻解除，奖励永久保留）；' +
+            '想继续靠它拿星级加成，可以随时重新激活。当前激活星级：<b>' + Actions.activeStars(s) +
             '</b>（每点星级让本次重置收获 +5%）。</div>';
         html += '<div class="card-grid wide">' + CHALLENGES_CONFIG.map(challengeRow).join('') + '</div>';
         return html;
