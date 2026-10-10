@@ -34,10 +34,16 @@
         }
         tipEl.classList.add('show');
         const rect = tipEl.getBoundingClientRect();
+        const vw = window.innerWidth, vh = window.innerHeight;
+        const pad = 8;
         let left = x + 16;
         let top = y + 16;
-        if (left + rect.width > window.innerWidth - 8) left = x - rect.width - 12;
-        if (top + rect.height > window.innerHeight - 8) top = Math.max(8, y - rect.height - 12);
+        if (left + rect.width > vw - pad) left = x - rect.width - 12;
+        if (top + rect.height > vh - pad) top = y - rect.height - 12;
+        /* 兜底夹紧：手指点在哪里都要保证浮窗完整留在屏幕内
+           （手机上往左翻时 left 可能算成负数，浮窗就整个看不见了） */
+        left = Math.min(Math.max(pad, left), Math.max(pad, vw - rect.width - pad));
+        top = Math.min(Math.max(pad, top), Math.max(pad, vh - rect.height - pad));
         tipEl.style.left = left + 'px';
         tipEl.style.top = top + 'px';
     }
@@ -176,6 +182,11 @@
             }
             if (n.nodeType === 8) continue;               // 注释
             if (o.tagName !== n.tagName) { oldParent.replaceChild(n.cloneNode(true), o); continue; }
+            /* 这个节点被复用了：补丁可能已经把它里面的文字节点删掉，
+               而 setText / innerHTML 的「内容没变就不重写」缓存还留着旧值，
+               于是数字会凭空消失（例如解锁新资源后，已有资源行的存量整列空掉）。
+               清掉复用节点的文本缓存，下一轮更新就会老老实实重写。 */
+            o.__lastText = undefined;
             syncAttrs(o, n);
             syncChildren(o, n);
         }
