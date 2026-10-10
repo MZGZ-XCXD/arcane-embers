@@ -66,8 +66,11 @@
         const power = s.localResources.power.amount * (1 + EffectsManager.additive(s, 'expeditionPower'));
         const chance = ExpeditionEngine.successChance(s, region);
         const check = ExpeditionEngine.canStart(s, region);
-        const busy = !!s.expedition.active;
+        const busy = ExpeditionEngine.activeCount(s) >= ExpeditionEngine.maxParties(s);
         const weak = power < region.power * 0.5;
+        const dur = ExpeditionEngine.durationOf(s, region);
+        const cut = ExpeditionEngine.masteryCut(s, region);
+        const dropHero = window.Heroes ? Heroes.expeditionHeroFor(region.name) : null;
         let cls = 'card' + (check.ok && !weak ? ' affordable' : '') + (busy ? ' disabled' : '');
         let html = '<div class="' + cls + '" data-tip="exp|' + G.esc(region.name) + '">';
         html += '<div class="card-head"><div class="card-name">' + G.esc(region.name) +
@@ -75,9 +78,15 @@
         html += '<div class="card-desc">' + G.esc(region.desc) + '</div>';
         html += '<div class="card-stats">';
         html += '<div class="row"><span class="k">建议军力</span><span class="v ' + (power >= region.power ? 'pos' : 'neg') + '">' + U.fmtInt(region.power) + '</span></div>';
-        html += '<div class="row"><span class="k">耗时</span><span class="v">' + region.days + ' 日</span></div>';
+        html += '<div class="row"><span class="k">耗时</span><span class="v">' + dur + ' 日' +
+            (cut > 0 ? '<small> 熟路 −' + Math.round(cut * 100) + '%</small>' : '') + '</span></div>';
         html += '<div class="row"><span class="k">秘宝概率</span><span class="v">' + U.fmtPct(region.artifact) + '</span></div>';
         html += '</div>';
+        if (dropHero) {
+            const got = Heroes.hasHero(s, dropHero.id);
+            html += '<div class="hint ' + (got ? 'pos' : '') + '">遗迹英雄：' + G.esc(dropHero.name) +
+                (got ? '（已结识）' : '（首次成功必得）') + '</div>';
+        }
         html += '<div class="price">出发消耗：' + G.costHtml(region.cost) + '</div>';
         if (weak) html += '<div class="hint neg">军力远低于建议值，成功率很低。</div>';
         html += '<div class="card-actions"><button class="btn tiny primary" data-act="exp|' + G.esc(region.name) + '"' +
@@ -113,6 +122,21 @@
         html += '<div class="row"><span class="k">已完成远征</span><span class="v">' + s.stats.expeditions + ' 次（失败 ' + s.stats.expeditionsFailed + '）</span></div>';
         html += '<div class="row"><span class="k">装备槽</span><span class="v">' + s.artifacts.equipped.filter(Boolean).length + ' / ' + Artifacts.artifactSlots(s) + '</span></div>';
         html += '</div>';
+        const outNow = ExpeditionEngine.activeCount(s);
+        const partySlots = ExpeditionEngine.maxParties(s);
+        let extra = '<div class="card-stats" style="margin-bottom:10px">';
+        extra += '<div class="row"><span class="k">在外远征队</span><span class="v">' + outNow + ' / ' + partySlots + ' 支</span></div>';
+        if (window.Heroes && Heroes.hasMech(s, 'artifactPity')) {
+            const need = (window.HERO_MECHS.artifactPity || {}).need || 5;
+            extra += '<div class="row"><span class="k">秘宝保底</span><span class="v">' + Math.min(s.expedition.dry || 0, need) + ' / ' + need +
+                ' 次成功</span></div>';
+        }
+        if (partySlots < 2 && window.Heroes) {
+            const second = Heroes.heroWithMech('secondParty');
+            if (second) extra += '<div class="hint">从「' + G.esc(second.drop) + '」带回「' + G.esc(second.name) + '」可解锁第二支远征队。</div>';
+        }
+        extra += '</div>';
+        html += extra;
 
         /* 秘宝 */
         html += '<div class="section-title">秘宝</div>';

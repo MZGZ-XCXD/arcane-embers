@@ -199,7 +199,17 @@
             html += '<div class="kv"><span>建议军力</span><span>' + U.fmtInt(r.power) + '</span></div>';
             html += '<div class="kv"><span>你的军力</span><span class="' + (power >= r.power ? 'pos' : 'neg') + '">' + U.fmtInt(power) + '</span></div>';
             html += '<div class="kv"><span>成功率</span><span>' + U.fmtPct(chance) + '</span></div>';
-            html += '<div class="kv"><span>耗时</span><span>' + r.days + ' 日</span></div>';
+            const dur = ExpeditionEngine.durationOf(s, r);
+            const cut = ExpeditionEngine.masteryCut(s, r);
+            html += '<div class="kv"><span>耗时</span><span>' + dur + ' 日' +
+                (cut > 0 ? '（熟路 −' + Math.round(cut * 100) + '%）' : '') + '</span></div>';
+            html += '<div class="kv"><span>已成功探索</span><span>' + ExpeditionEngine.masteredClears(s, r) + ' 次</span></div>';
+            const dropHero = window.Heroes ? Heroes.expeditionHeroFor(r.name) : null;
+            if (dropHero) {
+                const got = Heroes.hasHero(s, dropHero.id);
+                html += '<div class="kv"><span>遗迹英雄</span><span class="' + (got ? 'pos' : 'gold') + '">' +
+                    G.esc(dropHero.name) + (got ? '（已结识）' : '（首次成功必得）') + '</span></div>';
+            }
             html += '<hr><div>出发消耗：' + G.costHtml(r.cost) + '</div>';
             const loot = [];
             for (const k in r.loot) loot.push(k + ' ' + U.fmtNum(r.loot[k][0]) + '~' + U.fmtNum(r.loot[k][1]));
@@ -315,22 +325,39 @@
             let html = '<h4>' + G.esc(hero.name) + ' · ' + r.name + '</h4>';
             html += '<div class="dim">' + cat.icon + ' ' + G.esc(cat.key) + '：' + G.esc(cat.desc) + '</div>';
             html += '<div class="dim">' + G.esc(hero.desc) + '</div><hr>';
-            html += '<div class="kv"><span>基础出现率</span><span>约 ' + U.fmtPct(Heroes.rarityChance(hero.rarity), 2) + ' / 抽</span></div>';
-            if (r.beyond) {
-                html += '<div class="kv"><span>保底</span><span class="dim">没有保底</span></div>';
-                html += '<div class="kv"><span>跨越时间线</span><span class="gold">抽到即永久保留（重置也不会失去）</span></div>';
+            const mech = Heroes.heroMech(hero);
+            if (hero.source === 'expedition') {
+                html += '<div class="kv"><span>获得方式</span><span class="gold">遗迹限定 · 只从「' + G.esc(hero.drop) + '」带回</span></div>';
+                html += '<div class="kv"><span>出现时机</span><span>' +
+                    (owned === undefined ? '首次成功必得，之后每次成功 15%' : '已结识（重复带回会化成奥术遗物）') + '</span></div>';
+                if (mech) {
+                    html += '<div class="kv"><span>机制</span><span class="pos">' + G.esc(mech.name) + '</span></div>';
+                    html += '<div class="dim">' + G.esc(mech.text) + '</div>';
+                }
+            } else {
+                html += '<div class="kv"><span>基础出现率</span><span>约 ' + U.fmtPct(Heroes.rarityChance(hero.rarity), 2) + ' / 抽</span></div>';
+                if (r.beyond) {
+                    html += '<div class="kv"><span>保底</span><span class="dim">没有保底</span></div>';
+                    html += '<div class="kv"><span>跨越时间线</span><span class="gold">抽到即永久保留（重置也不会失去）</span></div>';
+                }
             }
             if (owned === undefined) {
-                html += '<div class="neg">尚未召唤到这位英雄。</div>';
-                html += '<hr><div class="dim">基础效果（' + r.name + ' × ' + r.mult + '）：' +
-                    G.esc(G.effectLines(Heroes.heroEffect(hero)).join('；')) + '</div>';
-            } else {
-                html += '<div class="kv"><span>觉醒等级</span><span class="gold">' + owned + ' / ' + GACHA_CONFIG.awakeningMax + '</span></div>';
-                for (const line of (window.TabSummon ? TabSummon.effectLines(hero, owned) : [])) {
-                    html += '<div class="kv"><span>' + G.esc(line) + '</span><span></span></div>';
+                html += '<div class="neg">' + (hero.source === 'expedition' ? '还没有从遗迹里带回它。' : '尚未召唤到这位英雄。') + '</div>';
+                if (hero.source !== 'expedition') {
+                    html += '<hr><div class="dim">基础效果（' + r.name + ' × ' + r.mult + '）：' +
+                        G.esc(G.effectLines(Heroes.heroEffect(hero)).join('；')) + '</div>';
                 }
-                html += '<hr><div class="dim">重复召唤会提升觉醒等级（每级 +' +
-                    Math.round(GACHA_CONFIG.awakeningStep * 100) + '%），满觉后再抽到会转化为奥术遗物。</div>';
+            } else {
+                if (hero.source === 'expedition') {
+                    html += '<div class="kv"><span>状态</span><span class="pos">机制已生效</span></div>';
+                } else {
+                    html += '<div class="kv"><span>觉醒等级</span><span class="gold">' + owned + ' / ' + GACHA_CONFIG.awakeningMax + '</span></div>';
+                    for (const line of (window.TabSummon ? TabSummon.effectLines(hero, owned) : [])) {
+                        html += '<div class="kv"><span>' + G.esc(line) + '</span><span></span></div>';
+                    }
+                    html += '<hr><div class="dim">重复召唤会提升觉醒等级（每级 +' +
+                        Math.round(GACHA_CONFIG.awakeningStep * 100) + '%），满觉后再抽到会转化为奥术遗物。</div>';
+                }
             }
             return html;
         }
@@ -565,38 +592,49 @@
         const s = GameState;
         const box = document.getElementById('panel-expedition');
         if (!box) return;
-        const a = s.expedition.active;
-        /* 签名带上 startDay：同一区域的两次远征也会各自重建，避免复用已被顶替的节点 */
-        const sig = a ? ('active|' + a.region + '|' + Math.round(a.startDay * 1000)) : 'idle';
+        const parties = ExpeditionEngine.parties(s);
+        const slots = ExpeditionEngine.maxParties(s);
+        /* 签名带上队伍 id：增减队伍都会重建，避免复用已被顶替的节点 */
+        const sig = parties.map(p => p.id).join(',') + '|' + slots;
         if (box.__sig !== sig) {
             box.__sig = sig;
-            if (!a) {
-                expRefs.bar = expRefs.progress = expRefs.chance = expRefs.remain = null;
+            for (const k in expRefs) delete expRefs[k];
+            if (!parties.length) {
                 const power = s.localResources.power.amount * (1 + EffectsManager.additive(s, 'expeditionPower'));
                 G.setHTML(box, '<div class="panel-title">远征队</div><div class="hint">远征队待命中，当前军力 ' + U.fmtNum(power) + '。</div>');
                 return;
             }
-            let html = '<div class="panel-title">远征中<span class="right">' + G.esc(a.region) + '</span></div>';
-            html += G.bar(0, '').replace('class="bar "', 'class="bar" id="exp-bar"');
-            html += '<div class="mini"><span id="exp-progress"></span><span id="exp-chance"></span></div>';
-            html += '<div class="hint mt6" id="exp-remain"></div>';
+            let html = '<div class="panel-title">远征中<span class="right">' + parties.length + ' / ' + slots + ' 支</span></div>';
+            for (const p of parties) {
+                html += '<div class="exp-party">';
+                html += '<div class="mini"><span>' + G.esc(p.region) + '</span><span data-exp-eta="' + G.esc(p.id) + '"></span></div>';
+                html += G.bar(0, '').replace('class="bar "', 'class="bar" data-exp-bar="' + G.esc(p.id) + '"');
+                html += '<div class="hint" data-exp-remain="' + G.esc(p.id) + '"></div>';
+                html += '</div>';
+            }
             G.setHTML(box, html);
-            expRefs.bar = box.querySelector('#exp-bar');
-            expRefs.progress = box.querySelector('#exp-progress');
-            expRefs.chance = box.querySelector('#exp-chance');
-            expRefs.remain = box.querySelector('#exp-remain');
+            for (const p of parties) {
+                expRefs[p.id] = {
+                    bar: box.querySelector('[data-exp-bar="' + p.id + '"]'),
+                    eta: box.querySelector('[data-exp-eta="' + p.id + '"]'),
+                    remain: box.querySelector('[data-exp-remain="' + p.id + '"]'),
+                };
+            }
         }
-        if (!a) return;
-        const region = ExpeditionEngine.findRegion(a.region);
-        const p = ExpeditionEngine.progress(s);
-        const chance = ExpeditionEngine.successChance(s, region);
-        if (expRefs.bar && expRefs.bar.firstElementChild) {
-            expRefs.bar.firstElementChild.style.width = (U.clamp(p, 0, 1) * 100).toFixed(1) + '%';
+        if (!parties.length) return;
+        for (const p of parties) {
+            const ref = expRefs[p.id];
+            if (!ref) continue;
+            const region = ExpeditionEngine.findRegion(p.region);
+            const pr = ExpeditionEngine.progress(s, p);
+            const chance = ExpeditionEngine.successChance(s, region);
+            if (ref.bar && ref.bar.firstElementChild) {
+                ref.bar.firstElementChild.style.width = (U.clamp(pr, 0, 1) * 100).toFixed(1) + '%';
+            }
+            G.setText(ref.eta, U.fmtPct(pr) + '　成功率 ' + U.fmtPct(chance));
+            G.setText(ref.remain, '剩余 ' + U.fmtDuration(ExpeditionEngine.remaining(s, p)) + '。' +
+                (s.expedition.history.length ? '上次结果：' + (s.expedition.history[0].success ? '成功' : '失败') : ''));
         }
-        G.setText(expRefs.progress, '进度 ' + U.fmtPct(p));
-        G.setText(expRefs.chance, '预计成功率 ' + U.fmtPct(chance));
-        G.setText(expRefs.remain, '剩余 ' + U.fmtDuration(ExpeditionEngine.remaining(s)) + '。' +
-            (s.expedition.history.length ? '上次结果：' + (s.expedition.history[0].success ? '成功' : '失败') : ''));
     }
 
     /* ---------------- 日志 ---------------- */

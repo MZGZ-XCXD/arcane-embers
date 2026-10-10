@@ -146,10 +146,15 @@
     }
 
     function resetAvailability(state) {
+        const researched = name => !!(state.techs[name] && state.techs[name].researched);
         return {
+            /* 时空回响看「魔法知识上限 ≥ 200」——上限会随重置归零，天然要重新发展一遍。
+               星辰升华 / 原初归寂原来要求「持有 300 遗物 / 60 星辉」，
+               可这两种资源是跨重置保留的：一旦攒够就永久满足条件，可以无限重置刷资源。
+               改成要求研究出对应时代的科技，这样每一次重置都得先把文明重新推回那个阶段。 */
             relic: state.resources['魔法知识'].cap >= 200,
-            star: ResourcesManager.amount('奥术遗物') >= 300,
-            core: ResourcesManager.amount('星辉') >= 60,
+            star: researched('星辉共鸣'),      // 第 4 时代 · 高塔时代
+            core: researched('虚空撕裂'),      // 第 6 时代 · 虚空时代
         };
     }
 
@@ -257,14 +262,14 @@
             return { ok: true, msg: '时空回响！获得 ' + Utils.fmtInt(gain) + ' 奥术遗物。' };
         }
         if (type === 'star') {
-            if (!avail.star) return { ok: false, msg: '需要持有 300 枚奥术遗物。' };
+            if (!avail.star) return { ok: false, msg: '需要先研究「星辉共鸣」（第 4 时代 · 高塔时代）。' };
             const relics = relicGain(state) * 2;
             const stars = starGain(state);
             performReset(state, { type: 'star', relic: relics, star: stars, label: '星辰升华' });
             return { ok: true, msg: '星辰升华！获得 ' + Utils.fmtInt(relics) + ' 奥术遗物与 ' + Utils.fmtInt(stars) + ' 星辉。' };
         }
         if (type === 'core') {
-            if (!avail.core) return { ok: false, msg: '需要持有 60 枚星辉。' };
+            if (!avail.core) return { ok: false, msg: '需要先研究「虚空撕裂」（第 6 时代 · 虚空时代）。' };
             const relics = relicGain(state) * 5;
             const stars = Math.floor(starGain(state) * 1.5);
             const cores = coreGain(state);

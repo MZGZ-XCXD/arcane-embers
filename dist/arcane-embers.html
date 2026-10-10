@@ -651,6 +651,8 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
 .hint { font-size: .72rem; color: var(--text-dim); line-height: 1.55; }
+.exp-party { padding: 3px 0 5px; }
+.exp-party + .exp-party { border-top: 1px dashed var(--border); padding-top: 6px; }
 .center { text-align: center; }
 .mt6 { margin-top: 6px; } .mt10 { margin-top: 10px; }
 .row-between { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
@@ -2565,13 +2567,41 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         远征: { key: '远征', icon: '🧭', desc: '提升远征收益',        effect: { expeditionReward: 0.3, expeditionPower: 0.12 } },
         幸运: { key: '幸运', icon: '🍀', desc: '提升抽卡运气并降低召唤消耗', effect: { luck: 0.3, summonDiscount: 0.06 } },
         命运: { key: '命运', icon: '🌌', desc: '提升重置时获得的奥术遗物', effect: { relicGain: 0.12 } },
+        /* 遗迹限定英雄：没有任何数值加成，能力全写在机制上（见 mech 字段） */
+        遗迹: { key: '遗迹', icon: '🗿', desc: '只在遗迹里能找到的机制型英雄', effect: {} },
     };
 
     const HEROES = [];
+
+    /* 遗迹限定英雄的「机制」：文案与数值都写在这里，引擎直接读这份配置，
+       避免说明与实际效果两处对不上。 */
+    const MECHS = {
+        mastery: { name: '轻车熟路', per: 0.05, max: 0.5,
+            text: '重复探索同一层遗迹时，每成功一次该层耗时 −5%（最多 −50%）。' },
+        noLoss: { name: '从不空手',
+            text: '远征失败也不再折损收获，按 100% 结算（原本失败只有 25%）。' },
+        positiveOnly: { name: '一眼识货',
+            text: '从遗迹带回的秘宝只会出现正面词条。' },
+        artifactPity: { name: '必有所得', need: 5,
+            text: '每累计 5 次成功远征，必定带回一件秘宝（计数显示在远征页）。' },
+        fastTravel: { name: '背星而行', mul: 0.5,
+            text: '所有远征耗时减半。' },
+        secondParty: { name: '双线并进', extra: 1,
+            text: '解锁第二支远征队，可以同时派两队前往遗迹。' },
+    };
     /* id 默认就是名字；需要改名而不作废存档时，把原来的名字当作 id 传进来即可
-       （收藏、觉醒等级、历史记录都以 id 为键） */
-    function H(name, rarity, category, desc, extra, id) {
-        HEROES.push({ id: id || name, name: name, rarity: rarity, category: category, desc: desc, extra: extra || null });
+       （收藏、觉醒等级、历史记录都以 id 为键）。
+       opts.source = 'expedition' 表示它不进传送阵卡池，只能从遗迹掉落；
+       opts.drop 记录掉落的那一层；opts.mech 是它提供的机制（见 engine/expedition.js）。 */
+    function H(name, rarity, category, desc, extra, opts) {
+        opts = opts || {};
+        HEROES.push({
+            id: opts.id || name, name: name, rarity: rarity, category: category,
+            desc: desc, extra: extra || null,
+            source: opts.source || 'gacha',
+            drop: opts.drop || null,
+            mech: opts.mech || null,
+        });
     }
 
     /* ---------------- C 级：学徒 ---------------- */
@@ -2620,11 +2650,28 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
        这三位不在任何保底里，权重也只有 0.15；但他们一旦落到你手上，
        就同时存在于所有时间线——重置也不会失去。 */
     H('时间之艾赫卡托尔', 'EX', '命运', '它来自一条从未发生的时间线。你召唤到的不是它本身，而是它在所有时间线里的总和。',
-        { relicGain: 0.5 }, '未生之刻');
+        { relicGain: 0.5 }, { id: '未生之刻' });
     H('虚空之涅斐洛斯', 'EX', '仓储', '每一条时间线的城市都系在同一个锚点上，所以你扩建的其实是全部的仓库。',
-        { capAll: 0.5, offlineHours: 8 }, '万界之锚');
+        { capAll: 0.5, offlineHours: 8 }, { id: '万界之锚' });
     H('生命之库米罗尼', 'EX', '资源', '大崩坏烧掉的是这座城市，不是它。灰烬落尽的地方，它总能重新点一次火。',
-        { globalProd: 0.35, happiness: 200 }, '灰烬之母·万世之火');
+        { globalProd: 0.35, happiness: 200 }, { id: '灰烬之母·万世之火' });
+
+    /* ---------------- 遗迹限定：机制型英雄 ----------------
+       这一组不进传送阵卡池，只能从对应那一层遗迹带回来：
+       首次成功探索该层必得，之后若还没拿到，每次成功有 15% 再遇一次。
+       他们没有数值加成（分类「遗迹」的效果是空的），能力全写在机制上。 */
+    H('焦土向导', 'B', '遗迹', '在灰烬里来回走了几十遍的人。他知道哪条路已经被风沙埋了，哪条还能走。',
+        null, { source: 'expedition', drop: '灰烬荒原', mech: 'mastery' });
+    H('沼泽引路人', 'B', '遗迹', '脚踝以下是泥，膝盖以上是雾。他从不保证能赢，只保证不空手回来。',
+        null, { source: 'expedition', drop: '幽影沼泽', mech: 'noLoss' });
+    H('浮空技师', 'A', '遗迹', '在悬空的碎块上拆过一百座实验室。他一眼就能看出哪块符石是坏的、直接掰掉。',
+        null, { source: 'expedition', drop: '破碎浮空岛', mech: 'positiveOnly' });
+    H('裂隙测绘者', 'A', '遗迹', '他记录每一次下潜的坐标。第五次之后，裂缝里总会留下点他能带走的东西。',
+        null, { source: 'expedition', drop: '深渊裂隙', mech: 'artifactPity' });
+    H('星界领航员', 'S', '遗迹', '背对星空走路的人。别人要走一个月的路，他十四天就能到。',
+        null, { source: 'expedition', drop: '星界回廊', mech: 'fastTravel' });
+    H('门后的低语', 'SS', '遗迹', '它不跟随任何人，只是在你耳边重复两个坐标——于是你可以同时往两个方向派人。',
+        null, { source: 'expedition', drop: '虚空之门', mech: 'secondParty' });
 
     const GACHA = {
         /* 每次召唤的消耗（×10 时享受 batchDiscount 折扣） */
@@ -2652,6 +2699,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     window.HERO_RARITIES = RARITIES;
     window.HERO_CATEGORIES = CATEGORIES;
     window.HEROES_CONFIG = HEROES;
+    window.HERO_MECHS = MECHS;
     window.GACHA_CONFIG = GACHA;
 })();
 
@@ -2662,6 +2710,11 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 window.CHANGELOG_DATA = {
     "source": "CHANGELOG.md",
     "overview": [
+        {
+            "version": "0.6.0",
+            "date": "2026-10-10",
+            "summary": "新增 6 位「遗迹限定」机制型英雄（只从对应遗迹掉落）；远征支持第二支队伍、熟路减时、败不空手、秘宝鉴定与保底；三层重置的解锁条件改为对应科技（修掉可以无限重置刷资源的漏洞）"
+        },
         {
             "version": "0.5.1",
             "date": "2026-10-10",
@@ -2749,6 +2802,32 @@ window.CHANGELOG_DATA = {
         }
     ],
     "versions": [
+        {
+            "version": "0.6.0",
+            "date": "2026-10-10",
+            "sections": [
+                {
+                    "title": "新增",
+                    "items": [
+                        "<b>6 位「遗迹限定」英雄<\/b>（新分类「遗迹」）：不进传送阵卡池，只能从<b>对应那一层遗迹<\/b>带回来—— 首次成功探索该层必得；之后若还没拿到，每次成功有 15% 再遇一次；重复带回会化成奥术遗物。 他们没有数值加成，能力全部是<b>机制<\/b>： * 灰烬荒原 · <b>焦土向导<\/b>（B）：轻车熟路——重复探索同一层，每成功一次该层耗时 −5%，最多 −50%； * 幽影沼泽 · <b>沼泽引路人<\/b>（B）：从不空手——远征失败也按 100% 结算收获（原本失败只有 25%）； * 破碎浮空岛 · <b>浮空技师<\/b>（A）：一眼识货——从遗迹带回的秘宝只会出现正面词条； * 深渊裂隙 · <b>裂隙测绘者<\/b>（A）：必有所得——每累计 5 次成功远征，保底带回一件秘宝； * 星界回廊 · <b>星界领航员<\/b>（S）：背星而行——所有远征耗时减半； * 虚空之门 · <b>门后的低语<\/b>（SS）：双线并进——解锁第二支远征队，可以同时派两队。",
+                        "<b>远征队可以同时派出两支<\/b>（需要「门后的低语」）：右侧远征面板会分别列出每支队伍的进度与倒计时， 自动远征也会自动补满空位；地图卡片上会显示该层的熟练折扣，以及还没结识的遗迹英雄。",
+                        "远征页新增「在外远征队」与「秘宝保底进度」两项显示。"
+                    ]
+                },
+                {
+                    "title": "变更",
+                    "items": [
+                        "<b>三层重置的解锁条件改了<\/b>（修掉一个可以无限刷资源的漏洞）： 原来星辰升华要求「持有 300 枚奥术遗物」、原初归寂要求「持有 60 枚星辉」， 可这两种资源是<b>跨重置保留<\/b>的——只要攒够一次，条件就永久满足，于是可以反复重置白拿遗物与星辉。 现在改为要求<b>本轮研究出对应时代的科技<\/b>： * 时空回响：魔法知识上限 ≥ 200（不变——上限会随重置归零，本来就刷不动）； * 星辰升华：需要研究「星辉共鸣」（第 4 时代 · 高塔时代）； * 原初归寂：需要研究「虚空撕裂」（第 6 时代 · 虚空时代）。 这样每次重置都得把文明重新推到对应阶段，重置不再是免费的资源提款机。"
+                    ]
+                },
+                {
+                    "title": "存档",
+                    "items": [
+                        "<code>SAVE_VERSION<\/code> 5 → 6：远征状态由「单支队伍」改为「一组队伍」，旧档里正在外面的那支队伍会被包进列表继续跑； 同时补齐熟练度、秘宝保底计数等字段，不会丢进度。"
+                    ]
+                }
+            ]
+        },
         {
             "version": "0.5.1",
             "date": "2026-10-10",
@@ -3210,7 +3289,7 @@ window.CHANGELOG_DATA = {
 /* ===== js/engine/state.js ===== */
 /* 游戏状态与资源管理 */
 (function () {
-    const SAVE_VERSION = 5;
+    const SAVE_VERSION = 6;
 
     /* 全局唯一状态对象（引用始终不变，便于各模块共享） */
     const GameState = {
@@ -3233,7 +3312,7 @@ window.CHANGELOG_DATA = {
         queue: { items: [] },
         heroes: null,
         market: { resources: {}, heat: {}, volume: 0, trades: 0 },
-        expedition: { active: null, auto: false, history: [] },
+        expedition: { active: [], auto: false, history: [], mastery: {}, dry: 0 },
         activeEffects: [],
         eventLogs: [],
         pendingEvent: null,
@@ -3312,7 +3391,7 @@ window.CHANGELOG_DATA = {
         s.queue = { items: [] };
         s.heroes = freshHeroes();
         s.market = { resources: {}, heat: {}, volume: 0, trades: 0 };
-        s.expedition = { active: null, auto: false, history: [] };
+        s.expedition = { active: [], auto: false, history: [], mastery: {}, dry: 0 };
         s.activeEffects = [];
         s.eventLogs = [];
         s.pendingEvent = null;
@@ -4281,7 +4360,9 @@ window.CHANGELOG_DATA = {
         tier = tier || 1;
         const quality = tier + EffectsManager.additive(state, 'artifactQuality') * 3;
         const count = Utils.clamp(1 + Math.floor(Utils.rnd(0, 2 + quality * 0.6)), 1, 6);
-        const positiveChance = Utils.clamp(0.42 + quality * 0.045, 0.3, 0.78);
+        /* 「浮空技师」在场时，带回来的秘宝只出正面词条 */
+        const positiveOnly = !!(window.Heroes && Heroes.hasMech(state, 'positiveOnly'));
+        const positiveChance = positiveOnly ? 1 : Utils.clamp(0.42 + quality * 0.045, 0.3, 0.78);
         const effects = [];
         const usedKeys = {};
 
@@ -4309,7 +4390,7 @@ window.CHANGELOG_DATA = {
                 key = 'global';
                 if (usedKeys[key]) continue;
                 usedKeys[key] = true;
-                const v = Math.random() < positiveChance ? scale : -scale;
+                const v = (positiveOnly || Math.random() < positiveChance) ? scale : -scale;
                 eff = { globalProd: v };
             } else if (kind === 'resource') {
                 const list = Object.keys(state.resources).filter(r => !RESOURCES_CONFIG[r].prestige && state.resources[r].visible);
@@ -4318,7 +4399,7 @@ window.CHANGELOG_DATA = {
                 key = 'res:' + res;
                 if (usedKeys[key]) continue;
                 usedKeys[key] = true;
-                const v = Math.random() < positiveChance ? scale * 1.2 : -scale * 1.2;
+                const v = (positiveOnly || Math.random() < positiveChance) ? scale * 1.2 : -scale * 1.2;
                 const inner = {}; inner[res] = v;
                 eff = { resourceProd: inner };
             } else {
@@ -4326,7 +4407,7 @@ window.CHANGELOG_DATA = {
                 if (usedKeys[key]) continue;
                 usedKeys[key] = true;
                 const v = (10 + Utils.rnd(0, 25)) * (1 + quality * 0.25);
-                eff = { happiness: Math.random() < positiveChance ? v : -v };
+                eff = { happiness: (positiveOnly || Math.random() < positiveChance) ? v : -v };
             }
             if (eff) effects.push(eff);
         }
@@ -4784,6 +4865,52 @@ window.CHANGELOG_DATA = {
         return HEROES_CONFIG.find(h => h.id === id) || null;
     }
 
+    /* 是否已经拥有这只英雄（觉醒 0 级也算拥有） */
+    function hasHero(state, id) {
+        return !!(state.heroes && state.heroes.owned && state.heroes.owned[id] !== undefined);
+    }
+
+    /* 这只英雄提供的机制（遗迹限定英雄用），没有则返回 null */
+    function heroMech(heroOrId) {
+        const hero = typeof heroOrId === 'string' ? heroById(heroOrId) : heroOrId;
+        return hero && hero.mech ? (window.HERO_MECHS[hero.mech] || null) : null;
+    }
+
+    /* 某一层遗迹掉落的限定英雄 */
+    function expeditionHeroFor(regionName) {
+        return HEROES_CONFIG.find(h => h.source === 'expedition' && h.drop === regionName) || null;
+    }
+
+    /* 某个机制的拥有者 / 是否已经拥有该机制 */
+    function heroWithMech(key) {
+        return HEROES_CONFIG.find(h => h.mech === key) || null;
+    }
+    function hasMech(state, key) {
+        const h = heroWithMech(key);
+        return !!(h && hasHero(state, h.id));
+    }
+
+    /* 从遗迹招募一只英雄：首次获得即入收藏；重复获得直接转成奥术遗物
+       （机制型英雄没有觉醒等级，多出来的份数换成实在的资源） */
+    function recruit(state, id) {
+        const hero = heroById(id);
+        if (!hero || !state.heroes) return { ok: false };
+        const owned = state.heroes.owned;
+        state.heroes.byRarity[hero.rarity] = (state.heroes.byRarity[hero.rarity] || 0) + 1;
+        if (owned[id] === undefined) {
+            owned[id] = 0;
+            state.heroes.history.unshift({ type: 'hero', rarity: hero.rarity, name: hero.name, isNew: true, day: state.gameDays });
+            if (state.heroes.history.length > 30) state.heroes.history.pop();
+            return { ok: true, isNew: true, hero: hero };
+        }
+        const relic = HERO_RARITIES[hero.rarity].dupRelic;
+        ResourcesManager.add({ 奥术遗物: relic });
+        state.heroes.dupRelics = (state.heroes.dupRelics || 0) + relic;
+        state.heroes.history.unshift({ type: 'hero', rarity: hero.rarity, name: hero.name, dupRelic: relic, day: state.gameDays });
+        if (state.heroes.history.length > 30) state.heroes.history.pop();
+        return { ok: true, isNew: false, relic: relic, hero: hero };
+    }
+
     function scaleEffect(eff, mult) {
         const out = {};
         for (const k in eff) {
@@ -4886,8 +5013,9 @@ window.CHANGELOG_DATA = {
     }
 
     function pickHero(rarity) {
-        const pool = HEROES_CONFIG.filter(h => h.rarity === rarity);
-        if (!pool.length) return HEROES_CONFIG[0];
+        /* 遗迹限定英雄不进卡池——它们只能从对应那一层遗迹掉落 */
+        const pool = HEROES_CONFIG.filter(h => h.rarity === rarity && h.source !== 'expedition');
+        if (!pool.length) return HEROES_CONFIG.filter(h => h.source !== 'expedition')[0];
         return pool[Math.floor(Math.random() * pool.length)];
     }
 
@@ -5025,6 +5153,8 @@ window.CHANGELOG_DATA = {
         heroById, heroEffect, awakenMultiplier, ownedEffects,
         pullCost, canSummon, summon, stats, ownedCount, totalCount, pickRarity,
         luckMultiplier, effectiveDiscount, rarityChance,
+        hasHero, heroMech, expeditionHeroFor, recruit,
+        heroWithMech, hasMech, pickHero,
     };
 })();
 
@@ -5033,9 +5163,43 @@ window.CHANGELOG_DATA = {
 /* ===== js/engine/expedition.js ===== */
 /* =========================================================
    遗迹远征：派出队伍 → 等待若干游戏日 → 按军力判定成败
+   远征队可以同时有多支（由遗迹英雄「门后的低语」解锁第二支）。
+   遗迹限定英雄会在这里改变规则：熟悉路线、败不空手、鉴定秘宝、
+   保底探宝、缩短行程、多派一队。
    ========================================================= */
 (function () {
+    let seq = 1;
+    const M = () => window.HERO_MECHS || {};
+
     function findRegion(name) { return EXPEDITIONS_CONFIG.find(r => r.name === name); }
+
+    /* 在外面的远征队 */
+    function parties(state) {
+        if (!Array.isArray(state.expedition.active)) state.expedition.active = [];
+        return state.expedition.active;
+    }
+    function activeCount(state) { return parties(state).length; }
+    function maxParties(state) {
+        const m = M().secondParty;
+        return 1 + (m && window.Heroes && Heroes.hasMech(state, 'secondParty') ? (m.extra || 1) : 0);
+    }
+    function masteredClears(state, region) {
+        const map = state.expedition.mastery || {};
+        return map[region.name] || 0;
+    }
+    /* 熟路带来的耗时折扣（0 ~ 上限） */
+    function masteryCut(state, region) {
+        const m = M().mastery;
+        if (!m || !window.Heroes || !Heroes.hasMech(state, 'mastery')) return 0;
+        return Math.min(m.max || 0.5, masteredClears(state, region) * (m.per || 0.05));
+    }
+    /* 这层遗迹的实际耗时（含熟路与「背星而行」） */
+    function durationOf(state, region) {
+        let days = region.days * (1 - masteryCut(state, region));
+        const fast = M().fastTravel;
+        if (fast && window.Heroes && Heroes.hasMech(state, 'fastTravel')) days *= (fast.mul || 0.5);
+        return Math.max(1, Math.round(days));
+    }
 
     function successChance(state, region) {
         const power = state.localResources.power.amount * (1 + EffectsManager.additive(state, 'expeditionPower'));
@@ -5044,7 +5208,11 @@ window.CHANGELOG_DATA = {
     }
 
     function canStart(state, region) {
-        if (state.expedition.active) return { ok: false, msg: '远征队仍在外面。' };
+        if (!region) return { ok: false, msg: '未知区域。' };
+        const slots = maxParties(state);
+        if (activeCount(state) >= slots) {
+            return { ok: false, msg: slots > 1 ? '两支远征队都在外面，等它们回来。' : '远征队仍在外面。' };
+        }
         if (!ResourcesManager.canAfford(region.cost)) return { ok: false, msg: '物资不足。', lack: ResourcesManager.missing(region.cost) };
         return { ok: true };
     }
@@ -5055,25 +5223,26 @@ window.CHANGELOG_DATA = {
         const check = canStart(state, region);
         if (!check.ok) return check;
         ResourcesManager.spend(region.cost);
-        state.expedition.active = {
+        const dur = durationOf(state, region);
+        const party = {
+            id: 'ex' + (seq++),
             region: name,
             startDay: state.gameDays,
-            endDay: state.gameDays + region.days,
-            duration: region.days,
+            endDay: state.gameDays + dur,
+            duration: dur,
         };
-        return { ok: true, msg: '远征队已出发前往「' + name + '」。' };
+        parties(state).push(party);
+        return { ok: true, msg: '远征队已出发前往「' + name + '」（预计 ' + dur + ' 日）。', party: party };
     }
 
-    function progress(state) {
-        const a = state.expedition.active;
-        if (!a) return 0;
-        return Utils.clamp((state.gameDays - a.startDay) / Math.max(1e-6, a.endDay - a.startDay), 0, 1);
+    function progress(state, party) {
+        if (!party) return 0;
+        return Utils.clamp((state.gameDays - party.startDay) / Math.max(1e-6, party.endDay - party.startDay), 0, 1);
     }
 
-    function remaining(state) {
-        const a = state.expedition.active;
-        if (!a) return 0;
-        return Math.max(0, a.endDay - state.gameDays);
+    function remaining(state, party) {
+        if (!party) return 0;
+        return Math.max(0, party.endDay - state.gameDays);
     }
 
     function rollLoot(state, region, factor) {
@@ -5090,22 +5259,38 @@ window.CHANGELOG_DATA = {
         return gained;
     }
 
-    /* 结算（由主循环在到点时调用） */
-    function finish(state) {
-        const a = state.expedition.active;
-        if (!a) return null;
-        const region = findRegion(a.region);
-        if (!region) { state.expedition.active = null; return null; }
+    /* 结算一支远征队（由主循环在到点时调用） */
+    function finish(state, party) {
+        const list = parties(state);
+        const idx = list.indexOf(party);
+        if (idx >= 0) list.splice(idx, 1);
+        const region = findRegion(party.region);
+        if (!region) return null;
 
+        const noLoss = !!(M().noLoss && window.Heroes && Heroes.hasMech(state, 'noLoss'));
         const rewardMult = (1 + EffectsManager.additive(state, 'expeditionReward'));
         const chance = successChance(state, region);
         const success = Math.random() < chance;
-        const factor = (success ? 1 : 0.25) * rewardMult;
+        const factor = (success ? 1 : (noLoss ? 1 : 0.25)) * rewardMult;
         const loot = rollLoot(state, region, factor);
 
+        /* 走熟的路线：只有成功才累积 */
+        state.expedition.mastery = state.expedition.mastery || {};
+        const clearsBefore = state.expedition.mastery[region.name] || 0;
+        if (success) state.expedition.mastery[region.name] = clearsBefore + 1;
+
+        /* 秘宝：原本按概率，拥有「必有所得」后每 N 次成功保底一件 */
         let artifact = null;
-        if (success && Math.random() < region.artifact * Utils.clamp(1 + EffectsManager.additive(state, 'artifactQuality'), 0.5, 3)) {
-            artifact = window.Artifacts ? Artifacts.generate(state, region.tier) : null;
+        if (success) {
+            const pity = M().artifactPity;
+            const hasPity = !!(pity && window.Heroes && Heroes.hasMech(state, 'artifactPity'));
+            state.expedition.dry = (state.expedition.dry || 0) + 1;
+            const base = region.artifact * Utils.clamp(1 + EffectsManager.additive(state, 'artifactQuality'), 0.5, 3);
+            const guaranteed = hasPity && state.expedition.dry >= (pity.need || 5);
+            if (window.Artifacts && (Math.random() < base || guaranteed)) {
+                artifact = Artifacts.generate(state, region.tier);
+                state.expedition.dry = 0;
+            }
         }
 
         for (const res in loot) ResourcesManager.add({ [res]: loot[res] });
@@ -5124,14 +5309,25 @@ window.CHANGELOG_DATA = {
         state.expedition.history.unshift(record);
         if (state.expedition.history.length > 30) state.expedition.history.pop();
 
-        const name = region.name;
-        state.expedition.active = null;
+        /* 这一层遗迹的限定英雄：首次成功必得，之后还没拿到时每次成功 15% 再遇一次 */
+        let heroDrop = null;
+        const drop = window.Heroes ? Heroes.expeditionHeroFor(region.name) : null;
+        if (success && drop && !Heroes.hasHero(state, drop.id)) {
+            const firstClear = clearsBefore === 0;
+            if (firstClear || Math.random() < 0.15) {
+                const r = Heroes.recruit(state, drop.id);
+                heroDrop = { hero: drop, isNew: !!r.isNew, relic: r.relic || 0 };
+                record.hero = drop.name;
+            }
+        }
 
-        return Object.assign(record, { regionName: name, artifactObj: artifact });
+        const name = region.name;
+        return Object.assign(record, { regionName: name, artifactObj: artifact, heroDrop: heroDrop });
     }
 
     window.ExpeditionEngine = {
         findRegion, successChance, canStart, start, progress, remaining, finish,
+        parties, activeCount, maxParties, durationOf, masteryCut, masteredClears,
     };
 })();
 
@@ -5506,10 +5702,15 @@ window.CHANGELOG_DATA = {
     }
 
     function resetAvailability(state) {
+        const researched = name => !!(state.techs[name] && state.techs[name].researched);
         return {
+            /* 时空回响看「魔法知识上限 ≥ 200」——上限会随重置归零，天然要重新发展一遍。
+               星辰升华 / 原初归寂原来要求「持有 300 遗物 / 60 星辉」，
+               可这两种资源是跨重置保留的：一旦攒够就永久满足条件，可以无限重置刷资源。
+               改成要求研究出对应时代的科技，这样每一次重置都得先把文明重新推回那个阶段。 */
             relic: state.resources['魔法知识'].cap >= 200,
-            star: ResourcesManager.amount('奥术遗物') >= 300,
-            core: ResourcesManager.amount('星辉') >= 60,
+            star: researched('星辉共鸣'),      // 第 4 时代 · 高塔时代
+            core: researched('虚空撕裂'),      // 第 6 时代 · 虚空时代
         };
     }
 
@@ -5617,14 +5818,14 @@ window.CHANGELOG_DATA = {
             return { ok: true, msg: '时空回响！获得 ' + Utils.fmtInt(gain) + ' 奥术遗物。' };
         }
         if (type === 'star') {
-            if (!avail.star) return { ok: false, msg: '需要持有 300 枚奥术遗物。' };
+            if (!avail.star) return { ok: false, msg: '需要先研究「星辉共鸣」（第 4 时代 · 高塔时代）。' };
             const relics = relicGain(state) * 2;
             const stars = starGain(state);
             performReset(state, { type: 'star', relic: relics, star: stars, label: '星辰升华' });
             return { ok: true, msg: '星辰升华！获得 ' + Utils.fmtInt(relics) + ' 奥术遗物与 ' + Utils.fmtInt(stars) + ' 星辉。' };
         }
         if (type === 'core') {
-            if (!avail.core) return { ok: false, msg: '需要持有 60 枚星辉。' };
+            if (!avail.core) return { ok: false, msg: '需要先研究「虚空撕裂」（第 6 时代 · 虚空时代）。' };
             const relics = relicGain(state) * 5;
             const stars = Math.floor(starGain(state) * 1.5);
             const cores = coreGain(state);
@@ -5842,7 +6043,16 @@ window.CHANGELOG_DATA = {
             if (state.heroes.dupRelics === undefined) state.heroes.dupRelics = 0;
             if (!Array.isArray(state.heroes.history)) state.heroes.history = [];
         }
-        if (!state.expedition) state.expedition = { active: null, auto: false, history: [] };
+        if (!state.expedition) state.expedition = { active: [], auto: false, history: [], mastery: {}, dry: 0 };
+        /* 远征结构改版：以前只能同时派一支队伍（active 是单个对象），现在是一组队伍。
+           旧档里正在外面的那支队伍包进数组继续跑，不会丢。 */
+        if (state.expedition.active && !Array.isArray(state.expedition.active)) {
+            state.expedition.active = [state.expedition.active];
+        }
+        if (!Array.isArray(state.expedition.active)) state.expedition.active = [];
+        if (!Array.isArray(state.expedition.history)) state.expedition.history = [];
+        if (!state.expedition.mastery || typeof state.expedition.mastery !== 'object') state.expedition.mastery = {};
+        if (typeof state.expedition.dry !== 'number') state.expedition.dry = 0;
         if (!state.stats) state.stats = { playSeconds: 0, resets: { relic: 0, star: 0, core: 0 }, expeditions: 0, expeditionsFailed: 0, artifactsFound: 0, maxChallengeStars: 0, events: 0, history: [] };
         if (!state.settings) state.settings = { theme: 'dark', autosave: true, autoBuild: true, autoExpedition: true, buyAmount: 1 };
         if (!state.market) state.market = { resources: {}, heat: {}, volume: 0, trades: 0 };
@@ -6008,10 +6218,12 @@ window.CHANGELOG_DATA = {
         /* 建造队列结算 */
         if (window.QueueEngine) QueueEngine.tick(state);
 
-        /* 远征结算 */
-        if (state.expedition.active && state.gameDays >= state.expedition.active.endDay) {
-            const result = ExpeditionEngine.finish(state);
-            if (result) {
+        /* 远征结算：可能同时有多支队伍到点（「门后的低语」解锁第二支） */
+        if (Array.isArray(state.expedition.active) && state.expedition.active.length) {
+            for (const party of state.expedition.active.slice()) {
+                if (state.gameDays < party.endDay) continue;
+                const result = ExpeditionEngine.finish(state, party);
+                if (!result) continue;
                 const lootText = Object.keys(result.loot).map(k => Utils.fmtNum(result.loot[k]) + ' ' + k).join('、');
                 EventEngine.addLog(state, (result.success ? '⚔️ 远征「' + result.regionName + '」成功' : '🏳️ 远征「' + result.regionName + '」失败') +
                     '，带回：' + (lootText || '几乎没有东西'));
@@ -6020,6 +6232,11 @@ window.CHANGELOG_DATA = {
                     Artifacts.addToInventory(state, result.artifactObj);
                     EventEngine.addLog(state, '💠 发现秘宝「' + result.artifactObj.name + '」！');
                     if (window.UI && UI.toast) UI.toast('💠 发现秘宝：' + result.artifactObj.name, 'gold');
+                }
+                if (result.heroDrop) {
+                    EventEngine.addLog(state, '🧭 在「' + result.regionName + '」里结识了「' + result.heroDrop.hero.name + '」' +
+                        (result.heroDrop.isNew ? '，它加入了你的英雄殿堂！' : '，重复的它化作了 ' + Utils.fmtNum(result.heroDrop.relic) + ' 枚奥术遗物。'));
+                    if (window.UI && UI.toast) UI.toast('🧭 遗迹英雄：' + result.heroDrop.hero.name, 'gold');
                 }
                 ProductionEngine.computeProductionAndCaps(state);
             }
@@ -6605,7 +6822,17 @@ window.CHANGELOG_DATA = {
             html += '<div class="kv"><span>建议军力</span><span>' + U.fmtInt(r.power) + '</span></div>';
             html += '<div class="kv"><span>你的军力</span><span class="' + (power >= r.power ? 'pos' : 'neg') + '">' + U.fmtInt(power) + '</span></div>';
             html += '<div class="kv"><span>成功率</span><span>' + U.fmtPct(chance) + '</span></div>';
-            html += '<div class="kv"><span>耗时</span><span>' + r.days + ' 日</span></div>';
+            const dur = ExpeditionEngine.durationOf(s, r);
+            const cut = ExpeditionEngine.masteryCut(s, r);
+            html += '<div class="kv"><span>耗时</span><span>' + dur + ' 日' +
+                (cut > 0 ? '（熟路 −' + Math.round(cut * 100) + '%）' : '') + '</span></div>';
+            html += '<div class="kv"><span>已成功探索</span><span>' + ExpeditionEngine.masteredClears(s, r) + ' 次</span></div>';
+            const dropHero = window.Heroes ? Heroes.expeditionHeroFor(r.name) : null;
+            if (dropHero) {
+                const got = Heroes.hasHero(s, dropHero.id);
+                html += '<div class="kv"><span>遗迹英雄</span><span class="' + (got ? 'pos' : 'gold') + '">' +
+                    G.esc(dropHero.name) + (got ? '（已结识）' : '（首次成功必得）') + '</span></div>';
+            }
             html += '<hr><div>出发消耗：' + G.costHtml(r.cost) + '</div>';
             const loot = [];
             for (const k in r.loot) loot.push(k + ' ' + U.fmtNum(r.loot[k][0]) + '~' + U.fmtNum(r.loot[k][1]));
@@ -6721,22 +6948,39 @@ window.CHANGELOG_DATA = {
             let html = '<h4>' + G.esc(hero.name) + ' · ' + r.name + '</h4>';
             html += '<div class="dim">' + cat.icon + ' ' + G.esc(cat.key) + '：' + G.esc(cat.desc) + '</div>';
             html += '<div class="dim">' + G.esc(hero.desc) + '</div><hr>';
-            html += '<div class="kv"><span>基础出现率</span><span>约 ' + U.fmtPct(Heroes.rarityChance(hero.rarity), 2) + ' / 抽</span></div>';
-            if (r.beyond) {
-                html += '<div class="kv"><span>保底</span><span class="dim">没有保底</span></div>';
-                html += '<div class="kv"><span>跨越时间线</span><span class="gold">抽到即永久保留（重置也不会失去）</span></div>';
+            const mech = Heroes.heroMech(hero);
+            if (hero.source === 'expedition') {
+                html += '<div class="kv"><span>获得方式</span><span class="gold">遗迹限定 · 只从「' + G.esc(hero.drop) + '」带回</span></div>';
+                html += '<div class="kv"><span>出现时机</span><span>' +
+                    (owned === undefined ? '首次成功必得，之后每次成功 15%' : '已结识（重复带回会化成奥术遗物）') + '</span></div>';
+                if (mech) {
+                    html += '<div class="kv"><span>机制</span><span class="pos">' + G.esc(mech.name) + '</span></div>';
+                    html += '<div class="dim">' + G.esc(mech.text) + '</div>';
+                }
+            } else {
+                html += '<div class="kv"><span>基础出现率</span><span>约 ' + U.fmtPct(Heroes.rarityChance(hero.rarity), 2) + ' / 抽</span></div>';
+                if (r.beyond) {
+                    html += '<div class="kv"><span>保底</span><span class="dim">没有保底</span></div>';
+                    html += '<div class="kv"><span>跨越时间线</span><span class="gold">抽到即永久保留（重置也不会失去）</span></div>';
+                }
             }
             if (owned === undefined) {
-                html += '<div class="neg">尚未召唤到这位英雄。</div>';
-                html += '<hr><div class="dim">基础效果（' + r.name + ' × ' + r.mult + '）：' +
-                    G.esc(G.effectLines(Heroes.heroEffect(hero)).join('；')) + '</div>';
-            } else {
-                html += '<div class="kv"><span>觉醒等级</span><span class="gold">' + owned + ' / ' + GACHA_CONFIG.awakeningMax + '</span></div>';
-                for (const line of (window.TabSummon ? TabSummon.effectLines(hero, owned) : [])) {
-                    html += '<div class="kv"><span>' + G.esc(line) + '</span><span></span></div>';
+                html += '<div class="neg">' + (hero.source === 'expedition' ? '还没有从遗迹里带回它。' : '尚未召唤到这位英雄。') + '</div>';
+                if (hero.source !== 'expedition') {
+                    html += '<hr><div class="dim">基础效果（' + r.name + ' × ' + r.mult + '）：' +
+                        G.esc(G.effectLines(Heroes.heroEffect(hero)).join('；')) + '</div>';
                 }
-                html += '<hr><div class="dim">重复召唤会提升觉醒等级（每级 +' +
-                    Math.round(GACHA_CONFIG.awakeningStep * 100) + '%），满觉后再抽到会转化为奥术遗物。</div>';
+            } else {
+                if (hero.source === 'expedition') {
+                    html += '<div class="kv"><span>状态</span><span class="pos">机制已生效</span></div>';
+                } else {
+                    html += '<div class="kv"><span>觉醒等级</span><span class="gold">' + owned + ' / ' + GACHA_CONFIG.awakeningMax + '</span></div>';
+                    for (const line of (window.TabSummon ? TabSummon.effectLines(hero, owned) : [])) {
+                        html += '<div class="kv"><span>' + G.esc(line) + '</span><span></span></div>';
+                    }
+                    html += '<hr><div class="dim">重复召唤会提升觉醒等级（每级 +' +
+                        Math.round(GACHA_CONFIG.awakeningStep * 100) + '%），满觉后再抽到会转化为奥术遗物。</div>';
+                }
             }
             return html;
         }
@@ -6971,38 +7215,49 @@ window.CHANGELOG_DATA = {
         const s = GameState;
         const box = document.getElementById('panel-expedition');
         if (!box) return;
-        const a = s.expedition.active;
-        /* 签名带上 startDay：同一区域的两次远征也会各自重建，避免复用已被顶替的节点 */
-        const sig = a ? ('active|' + a.region + '|' + Math.round(a.startDay * 1000)) : 'idle';
+        const parties = ExpeditionEngine.parties(s);
+        const slots = ExpeditionEngine.maxParties(s);
+        /* 签名带上队伍 id：增减队伍都会重建，避免复用已被顶替的节点 */
+        const sig = parties.map(p => p.id).join(',') + '|' + slots;
         if (box.__sig !== sig) {
             box.__sig = sig;
-            if (!a) {
-                expRefs.bar = expRefs.progress = expRefs.chance = expRefs.remain = null;
+            for (const k in expRefs) delete expRefs[k];
+            if (!parties.length) {
                 const power = s.localResources.power.amount * (1 + EffectsManager.additive(s, 'expeditionPower'));
                 G.setHTML(box, '<div class="panel-title">远征队</div><div class="hint">远征队待命中，当前军力 ' + U.fmtNum(power) + '。</div>');
                 return;
             }
-            let html = '<div class="panel-title">远征中<span class="right">' + G.esc(a.region) + '</span></div>';
-            html += G.bar(0, '').replace('class="bar "', 'class="bar" id="exp-bar"');
-            html += '<div class="mini"><span id="exp-progress"></span><span id="exp-chance"></span></div>';
-            html += '<div class="hint mt6" id="exp-remain"></div>';
+            let html = '<div class="panel-title">远征中<span class="right">' + parties.length + ' / ' + slots + ' 支</span></div>';
+            for (const p of parties) {
+                html += '<div class="exp-party">';
+                html += '<div class="mini"><span>' + G.esc(p.region) + '</span><span data-exp-eta="' + G.esc(p.id) + '"></span></div>';
+                html += G.bar(0, '').replace('class="bar "', 'class="bar" data-exp-bar="' + G.esc(p.id) + '"');
+                html += '<div class="hint" data-exp-remain="' + G.esc(p.id) + '"></div>';
+                html += '</div>';
+            }
             G.setHTML(box, html);
-            expRefs.bar = box.querySelector('#exp-bar');
-            expRefs.progress = box.querySelector('#exp-progress');
-            expRefs.chance = box.querySelector('#exp-chance');
-            expRefs.remain = box.querySelector('#exp-remain');
+            for (const p of parties) {
+                expRefs[p.id] = {
+                    bar: box.querySelector('[data-exp-bar="' + p.id + '"]'),
+                    eta: box.querySelector('[data-exp-eta="' + p.id + '"]'),
+                    remain: box.querySelector('[data-exp-remain="' + p.id + '"]'),
+                };
+            }
         }
-        if (!a) return;
-        const region = ExpeditionEngine.findRegion(a.region);
-        const p = ExpeditionEngine.progress(s);
-        const chance = ExpeditionEngine.successChance(s, region);
-        if (expRefs.bar && expRefs.bar.firstElementChild) {
-            expRefs.bar.firstElementChild.style.width = (U.clamp(p, 0, 1) * 100).toFixed(1) + '%';
+        if (!parties.length) return;
+        for (const p of parties) {
+            const ref = expRefs[p.id];
+            if (!ref) continue;
+            const region = ExpeditionEngine.findRegion(p.region);
+            const pr = ExpeditionEngine.progress(s, p);
+            const chance = ExpeditionEngine.successChance(s, region);
+            if (ref.bar && ref.bar.firstElementChild) {
+                ref.bar.firstElementChild.style.width = (U.clamp(pr, 0, 1) * 100).toFixed(1) + '%';
+            }
+            G.setText(ref.eta, U.fmtPct(pr) + '　成功率 ' + U.fmtPct(chance));
+            G.setText(ref.remain, '剩余 ' + U.fmtDuration(ExpeditionEngine.remaining(s, p)) + '。' +
+                (s.expedition.history.length ? '上次结果：' + (s.expedition.history[0].success ? '成功' : '失败') : ''));
         }
-        G.setText(expRefs.progress, '进度 ' + U.fmtPct(p));
-        G.setText(expRefs.chance, '预计成功率 ' + U.fmtPct(chance));
-        G.setText(expRefs.remain, '剩余 ' + U.fmtDuration(ExpeditionEngine.remaining(s)) + '。' +
-            (s.expedition.history.length ? '上次结果：' + (s.expedition.history[0].success ? '成功' : '失败') : ''));
     }
 
     /* ---------------- 日志 ---------------- */
@@ -7444,16 +7699,18 @@ window.CHANGELOG_DATA = {
         },
         star: {
             title: '星辰升华', type: 'star',
-            desc: '把整座城市的存在形式升华为星光。比时空回响更彻底，同时获得大量遗物与星辉。',
+            desc: '把整座城市的存在形式升华为星光。比时空回响更彻底，同时获得大量遗物与星辉。' +
+                '需要先把文明重新推到「星辉共鸣」这一步才能再次执行。',
             gainText: s => '获得 <b>' + U.fmtInt(Actions.relicGain(s) * 2) + '</b> 奥术遗物与 <b>' + U.fmtInt(Actions.starGain(s)) + '</b> 星辉',
-            need: s => ResourcesManager.amount('奥术遗物') >= 300 ? null : '需要持有 300 枚奥术遗物（当前 ' + U.fmtNum(ResourcesManager.amount('奥术遗物')) + '）',
+            need: s => (s.techs['星辉共鸣'] && s.techs['星辉共鸣'].researched) ? null : '需要先研究「星辉共鸣」（第 4 时代 · 高塔时代）',
         },
         core: {
             title: '原初归寂', type: 'core',
-            desc: '让世界回到被书写之前的空白。最深的一层重置，产出原初之核。',
+            desc: '让世界回到被书写之前的空白。最深的一层重置，产出原初之核。' +
+                '需要先把文明重新推到「虚空撕裂」这一步才能再次执行。',
             gainText: s => '获得 <b>' + U.fmtInt(Actions.coreGain(s)) + '</b> 原初之核、<b>' + U.fmtInt(Actions.starGain(s) * 1.5) +
                 '</b> 星辉与 <b>' + U.fmtInt(Actions.relicGain(s) * 5) + '</b> 奥术遗物',
-            need: s => ResourcesManager.amount('星辉') >= 60 ? null : '需要持有 60 枚星辉（当前 ' + U.fmtNum(ResourcesManager.amount('星辉')) + '）',
+            need: s => (s.techs['虚空撕裂'] && s.techs['虚空撕裂'].researched) ? null : '需要先研究「虚空撕裂」（第 6 时代 · 虚空时代）',
         },
     };
 
@@ -7632,8 +7889,11 @@ window.CHANGELOG_DATA = {
         const power = s.localResources.power.amount * (1 + EffectsManager.additive(s, 'expeditionPower'));
         const chance = ExpeditionEngine.successChance(s, region);
         const check = ExpeditionEngine.canStart(s, region);
-        const busy = !!s.expedition.active;
+        const busy = ExpeditionEngine.activeCount(s) >= ExpeditionEngine.maxParties(s);
         const weak = power < region.power * 0.5;
+        const dur = ExpeditionEngine.durationOf(s, region);
+        const cut = ExpeditionEngine.masteryCut(s, region);
+        const dropHero = window.Heroes ? Heroes.expeditionHeroFor(region.name) : null;
         let cls = 'card' + (check.ok && !weak ? ' affordable' : '') + (busy ? ' disabled' : '');
         let html = '<div class="' + cls + '" data-tip="exp|' + G.esc(region.name) + '">';
         html += '<div class="card-head"><div class="card-name">' + G.esc(region.name) +
@@ -7641,9 +7901,15 @@ window.CHANGELOG_DATA = {
         html += '<div class="card-desc">' + G.esc(region.desc) + '</div>';
         html += '<div class="card-stats">';
         html += '<div class="row"><span class="k">建议军力</span><span class="v ' + (power >= region.power ? 'pos' : 'neg') + '">' + U.fmtInt(region.power) + '</span></div>';
-        html += '<div class="row"><span class="k">耗时</span><span class="v">' + region.days + ' 日</span></div>';
+        html += '<div class="row"><span class="k">耗时</span><span class="v">' + dur + ' 日' +
+            (cut > 0 ? '<small> 熟路 −' + Math.round(cut * 100) + '%</small>' : '') + '</span></div>';
         html += '<div class="row"><span class="k">秘宝概率</span><span class="v">' + U.fmtPct(region.artifact) + '</span></div>';
         html += '</div>';
+        if (dropHero) {
+            const got = Heroes.hasHero(s, dropHero.id);
+            html += '<div class="hint ' + (got ? 'pos' : '') + '">遗迹英雄：' + G.esc(dropHero.name) +
+                (got ? '（已结识）' : '（首次成功必得）') + '</div>';
+        }
         html += '<div class="price">出发消耗：' + G.costHtml(region.cost) + '</div>';
         if (weak) html += '<div class="hint neg">军力远低于建议值，成功率很低。</div>';
         html += '<div class="card-actions"><button class="btn tiny primary" data-act="exp|' + G.esc(region.name) + '"' +
@@ -7679,6 +7945,21 @@ window.CHANGELOG_DATA = {
         html += '<div class="row"><span class="k">已完成远征</span><span class="v">' + s.stats.expeditions + ' 次（失败 ' + s.stats.expeditionsFailed + '）</span></div>';
         html += '<div class="row"><span class="k">装备槽</span><span class="v">' + s.artifacts.equipped.filter(Boolean).length + ' / ' + Artifacts.artifactSlots(s) + '</span></div>';
         html += '</div>';
+        const outNow = ExpeditionEngine.activeCount(s);
+        const partySlots = ExpeditionEngine.maxParties(s);
+        let extra = '<div class="card-stats" style="margin-bottom:10px">';
+        extra += '<div class="row"><span class="k">在外远征队</span><span class="v">' + outNow + ' / ' + partySlots + ' 支</span></div>';
+        if (window.Heroes && Heroes.hasMech(s, 'artifactPity')) {
+            const need = (window.HERO_MECHS.artifactPity || {}).need || 5;
+            extra += '<div class="row"><span class="k">秘宝保底</span><span class="v">' + Math.min(s.expedition.dry || 0, need) + ' / ' + need +
+                ' 次成功</span></div>';
+        }
+        if (partySlots < 2 && window.Heroes) {
+            const second = Heroes.heroWithMech('secondParty');
+            if (second) extra += '<div class="hint">从「' + G.esc(second.drop) + '」带回「' + G.esc(second.name) + '」可解锁第二支远征队。</div>';
+        }
+        extra += '</div>';
+        html += extra;
 
         /* 秘宝 */
         html += '<div class="section-title">秘宝</div>';
@@ -7778,14 +8059,21 @@ window.CHANGELOG_DATA = {
         const has = owned !== undefined;
         const r = HERO_RARITIES[hero.rarity];
         const cat = HERO_CATEGORIES[hero.category];
+        const mech = window.Heroes ? Heroes.heroMech(hero) : null;
+        const isDrop = hero.source === 'expedition';
         let html = '<div class="hero-card ' + (has ? 'owned' : 'locked') + '" data-tip="hero|' + G.esc(hero.id) + '" style="--rar:' + r.color + '">';
         html += '<div class="hero-head"><span class="hero-rar">' + r.name + '</span>' +
             '<span class="hero-cat">' + cat.icon + ' ' + G.esc(cat.key) + '</span>' +
-            (has ? '<span class="hero-awaken">觉醒 ' + owned + '</span>' : '') + '</div>';
+            (isDrop ? '<span class="hero-awaken">遗迹限定</span>' : (has ? '<span class="hero-awaken">觉醒 ' + owned + '</span>' : '')) + '</div>';
         html += '<div class="hero-name">' + G.esc(hero.name) + '</div>';
         if (r.beyond) html += '<div class="hero-beyond">跨越时间线：抽到即永久保留，重置也不会失去</div>';
-        html += '<div class="hero-desc">' + (has ? G.esc(hero.desc) : '尚未召唤到这位英雄。') + '</div>';
-        if (has) {
+        html += '<div class="hero-desc">' + ((has || isDrop) ? G.esc(hero.desc) : '尚未召唤到这位英雄。') + '</div>';
+        if (mech) {
+            html += '<div class="hero-eff"><div class="row"><span class="k">机制</span><span class="v pos">' + G.esc(mech.name) + '</span></div>' +
+                '<div class="hint">' + G.esc(mech.text) + '</div>' +
+                '<div class="hint">' + (has ? '已结识 · 重复带回会化成奥术遗物'
+                    : '出处：' + G.esc(hero.drop) + '（首次成功必得）') + '</div></div>';
+        } else if (has) {
             html += '<div class="hero-eff">' + effectLines(hero, owned).map(t =>
                 '<div class="row"><span class="k">效果</span><span class="v pos">' + G.esc(t) + '</span></div>').join('') + '</div>';
         } else {
@@ -7815,7 +8103,9 @@ window.CHANGELOG_DATA = {
             GACHA_CONFIG.awakeningMax + ' 级），满觉后再抽到会转化为奥术遗物。<br>' +
             '卡池里除了英雄，还有资源馈赠与<b>空</b>（什么都没抽到）。<br>' +
             '最高一档 <b>EX</b> 是跨越时间线的存在：<b>没有保底</b>、概率极低，' +
-            '但它一旦落到你手上就属于所有时间线——永久保留，重置也不会失去。</div>';
+            '但它一旦落到你手上就属于所有时间线——永久保留，重置也不会失去。<br>' +
+            '另外有 <b>6 位遗迹限定英雄</b>（分类「遗迹」）不进卡池，只能从对应那一层遗迹带回来，' +
+            '他们的能力不是数值加成，而是改变远征规则本身。</div>';
 
         /* 传送阵本体 */
         html += '<div class="summon-panel">';

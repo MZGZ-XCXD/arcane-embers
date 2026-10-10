@@ -37,14 +37,21 @@
         const has = owned !== undefined;
         const r = HERO_RARITIES[hero.rarity];
         const cat = HERO_CATEGORIES[hero.category];
+        const mech = window.Heroes ? Heroes.heroMech(hero) : null;
+        const isDrop = hero.source === 'expedition';
         let html = '<div class="hero-card ' + (has ? 'owned' : 'locked') + '" data-tip="hero|' + G.esc(hero.id) + '" style="--rar:' + r.color + '">';
         html += '<div class="hero-head"><span class="hero-rar">' + r.name + '</span>' +
             '<span class="hero-cat">' + cat.icon + ' ' + G.esc(cat.key) + '</span>' +
-            (has ? '<span class="hero-awaken">觉醒 ' + owned + '</span>' : '') + '</div>';
+            (isDrop ? '<span class="hero-awaken">遗迹限定</span>' : (has ? '<span class="hero-awaken">觉醒 ' + owned + '</span>' : '')) + '</div>';
         html += '<div class="hero-name">' + G.esc(hero.name) + '</div>';
         if (r.beyond) html += '<div class="hero-beyond">跨越时间线：抽到即永久保留，重置也不会失去</div>';
-        html += '<div class="hero-desc">' + (has ? G.esc(hero.desc) : '尚未召唤到这位英雄。') + '</div>';
-        if (has) {
+        html += '<div class="hero-desc">' + ((has || isDrop) ? G.esc(hero.desc) : '尚未召唤到这位英雄。') + '</div>';
+        if (mech) {
+            html += '<div class="hero-eff"><div class="row"><span class="k">机制</span><span class="v pos">' + G.esc(mech.name) + '</span></div>' +
+                '<div class="hint">' + G.esc(mech.text) + '</div>' +
+                '<div class="hint">' + (has ? '已结识 · 重复带回会化成奥术遗物'
+                    : '出处：' + G.esc(hero.drop) + '（首次成功必得）') + '</div></div>';
+        } else if (has) {
             html += '<div class="hero-eff">' + effectLines(hero, owned).map(t =>
                 '<div class="row"><span class="k">效果</span><span class="v pos">' + G.esc(t) + '</span></div>').join('') + '</div>';
         } else {
@@ -74,7 +81,9 @@
             GACHA_CONFIG.awakeningMax + ' 级），满觉后再抽到会转化为奥术遗物。<br>' +
             '卡池里除了英雄，还有资源馈赠与<b>空</b>（什么都没抽到）。<br>' +
             '最高一档 <b>EX</b> 是跨越时间线的存在：<b>没有保底</b>、概率极低，' +
-            '但它一旦落到你手上就属于所有时间线——永久保留，重置也不会失去。</div>';
+            '但它一旦落到你手上就属于所有时间线——永久保留，重置也不会失去。<br>' +
+            '另外有 <b>6 位遗迹限定英雄</b>（分类「遗迹」）不进卡池，只能从对应那一层遗迹带回来，' +
+            '他们的能力不是数值加成，而是改变远征规则本身。</div>';
 
         /* 传送阵本体 */
         html += '<div class="summon-panel">';

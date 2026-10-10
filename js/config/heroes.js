@@ -31,13 +31,41 @@
         远征: { key: '远征', icon: '🧭', desc: '提升远征收益',        effect: { expeditionReward: 0.3, expeditionPower: 0.12 } },
         幸运: { key: '幸运', icon: '🍀', desc: '提升抽卡运气并降低召唤消耗', effect: { luck: 0.3, summonDiscount: 0.06 } },
         命运: { key: '命运', icon: '🌌', desc: '提升重置时获得的奥术遗物', effect: { relicGain: 0.12 } },
+        /* 遗迹限定英雄：没有任何数值加成，能力全写在机制上（见 mech 字段） */
+        遗迹: { key: '遗迹', icon: '🗿', desc: '只在遗迹里能找到的机制型英雄', effect: {} },
     };
 
     const HEROES = [];
+
+    /* 遗迹限定英雄的「机制」：文案与数值都写在这里，引擎直接读这份配置，
+       避免说明与实际效果两处对不上。 */
+    const MECHS = {
+        mastery: { name: '轻车熟路', per: 0.05, max: 0.5,
+            text: '重复探索同一层遗迹时，每成功一次该层耗时 −5%（最多 −50%）。' },
+        noLoss: { name: '从不空手',
+            text: '远征失败也不再折损收获，按 100% 结算（原本失败只有 25%）。' },
+        positiveOnly: { name: '一眼识货',
+            text: '从遗迹带回的秘宝只会出现正面词条。' },
+        artifactPity: { name: '必有所得', need: 5,
+            text: '每累计 5 次成功远征，必定带回一件秘宝（计数显示在远征页）。' },
+        fastTravel: { name: '背星而行', mul: 0.5,
+            text: '所有远征耗时减半。' },
+        secondParty: { name: '双线并进', extra: 1,
+            text: '解锁第二支远征队，可以同时派两队前往遗迹。' },
+    };
     /* id 默认就是名字；需要改名而不作废存档时，把原来的名字当作 id 传进来即可
-       （收藏、觉醒等级、历史记录都以 id 为键） */
-    function H(name, rarity, category, desc, extra, id) {
-        HEROES.push({ id: id || name, name: name, rarity: rarity, category: category, desc: desc, extra: extra || null });
+       （收藏、觉醒等级、历史记录都以 id 为键）。
+       opts.source = 'expedition' 表示它不进传送阵卡池，只能从遗迹掉落；
+       opts.drop 记录掉落的那一层；opts.mech 是它提供的机制（见 engine/expedition.js）。 */
+    function H(name, rarity, category, desc, extra, opts) {
+        opts = opts || {};
+        HEROES.push({
+            id: opts.id || name, name: name, rarity: rarity, category: category,
+            desc: desc, extra: extra || null,
+            source: opts.source || 'gacha',
+            drop: opts.drop || null,
+            mech: opts.mech || null,
+        });
     }
 
     /* ---------------- C 级：学徒 ---------------- */
@@ -86,11 +114,28 @@
        这三位不在任何保底里，权重也只有 0.15；但他们一旦落到你手上，
        就同时存在于所有时间线——重置也不会失去。 */
     H('时间之艾赫卡托尔', 'EX', '命运', '它来自一条从未发生的时间线。你召唤到的不是它本身，而是它在所有时间线里的总和。',
-        { relicGain: 0.5 }, '未生之刻');
+        { relicGain: 0.5 }, { id: '未生之刻' });
     H('虚空之涅斐洛斯', 'EX', '仓储', '每一条时间线的城市都系在同一个锚点上，所以你扩建的其实是全部的仓库。',
-        { capAll: 0.5, offlineHours: 8 }, '万界之锚');
+        { capAll: 0.5, offlineHours: 8 }, { id: '万界之锚' });
     H('生命之库米罗尼', 'EX', '资源', '大崩坏烧掉的是这座城市，不是它。灰烬落尽的地方，它总能重新点一次火。',
-        { globalProd: 0.35, happiness: 200 }, '灰烬之母·万世之火');
+        { globalProd: 0.35, happiness: 200 }, { id: '灰烬之母·万世之火' });
+
+    /* ---------------- 遗迹限定：机制型英雄 ----------------
+       这一组不进传送阵卡池，只能从对应那一层遗迹带回来：
+       首次成功探索该层必得，之后若还没拿到，每次成功有 15% 再遇一次。
+       他们没有数值加成（分类「遗迹」的效果是空的），能力全写在机制上。 */
+    H('焦土向导', 'B', '遗迹', '在灰烬里来回走了几十遍的人。他知道哪条路已经被风沙埋了，哪条还能走。',
+        null, { source: 'expedition', drop: '灰烬荒原', mech: 'mastery' });
+    H('沼泽引路人', 'B', '遗迹', '脚踝以下是泥，膝盖以上是雾。他从不保证能赢，只保证不空手回来。',
+        null, { source: 'expedition', drop: '幽影沼泽', mech: 'noLoss' });
+    H('浮空技师', 'A', '遗迹', '在悬空的碎块上拆过一百座实验室。他一眼就能看出哪块符石是坏的、直接掰掉。',
+        null, { source: 'expedition', drop: '破碎浮空岛', mech: 'positiveOnly' });
+    H('裂隙测绘者', 'A', '遗迹', '他记录每一次下潜的坐标。第五次之后，裂缝里总会留下点他能带走的东西。',
+        null, { source: 'expedition', drop: '深渊裂隙', mech: 'artifactPity' });
+    H('星界领航员', 'S', '遗迹', '背对星空走路的人。别人要走一个月的路，他十四天就能到。',
+        null, { source: 'expedition', drop: '星界回廊', mech: 'fastTravel' });
+    H('门后的低语', 'SS', '遗迹', '它不跟随任何人，只是在你耳边重复两个坐标——于是你可以同时往两个方向派人。',
+        null, { source: 'expedition', drop: '虚空之门', mech: 'secondParty' });
 
     const GACHA = {
         /* 每次召唤的消耗（×10 时享受 batchDiscount 折扣） */
@@ -118,5 +163,6 @@
     window.HERO_RARITIES = RARITIES;
     window.HERO_CATEGORIES = CATEGORIES;
     window.HEROES_CONFIG = HEROES;
+    window.HERO_MECHS = MECHS;
     window.GACHA_CONFIG = GACHA;
 })();

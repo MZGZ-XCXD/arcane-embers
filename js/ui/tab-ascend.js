@@ -57,16 +57,18 @@
         },
         star: {
             title: '星辰升华', type: 'star',
-            desc: '把整座城市的存在形式升华为星光。比时空回响更彻底，同时获得大量遗物与星辉。',
+            desc: '把整座城市的存在形式升华为星光。比时空回响更彻底，同时获得大量遗物与星辉。' +
+                '需要先把文明重新推到「星辉共鸣」这一步才能再次执行。',
             gainText: s => '获得 <b>' + U.fmtInt(Actions.relicGain(s) * 2) + '</b> 奥术遗物与 <b>' + U.fmtInt(Actions.starGain(s)) + '</b> 星辉',
-            need: s => ResourcesManager.amount('奥术遗物') >= 300 ? null : '需要持有 300 枚奥术遗物（当前 ' + U.fmtNum(ResourcesManager.amount('奥术遗物')) + '）',
+            need: s => (s.techs['星辉共鸣'] && s.techs['星辉共鸣'].researched) ? null : '需要先研究「星辉共鸣」（第 4 时代 · 高塔时代）',
         },
         core: {
             title: '原初归寂', type: 'core',
-            desc: '让世界回到被书写之前的空白。最深的一层重置，产出原初之核。',
+            desc: '让世界回到被书写之前的空白。最深的一层重置，产出原初之核。' +
+                '需要先把文明重新推到「虚空撕裂」这一步才能再次执行。',
             gainText: s => '获得 <b>' + U.fmtInt(Actions.coreGain(s)) + '</b> 原初之核、<b>' + U.fmtInt(Actions.starGain(s) * 1.5) +
                 '</b> 星辉与 <b>' + U.fmtInt(Actions.relicGain(s) * 5) + '</b> 奥术遗物',
-            need: s => ResourcesManager.amount('星辉') >= 60 ? null : '需要持有 60 枚星辉（当前 ' + U.fmtNum(ResourcesManager.amount('星辉')) + '）',
+            need: s => (s.techs['虚空撕裂'] && s.techs['虚空撕裂'].researched) ? null : '需要先研究「虚空撕裂」（第 6 时代 · 虚空时代）',
         },
     };
 

@@ -1,6 +1,6 @@
 /* 游戏状态与资源管理 */
 (function () {
-    const SAVE_VERSION = 5;
+    const SAVE_VERSION = 6;
 
     /* 全局唯一状态对象（引用始终不变，便于各模块共享） */
     const GameState = {
@@ -23,7 +23,7 @@
         queue: { items: [] },
         heroes: null,
         market: { resources: {}, heat: {}, volume: 0, trades: 0 },
-        expedition: { active: null, auto: false, history: [] },
+        expedition: { active: [], auto: false, history: [], mastery: {}, dry: 0 },
         activeEffects: [],
         eventLogs: [],
         pendingEvent: null,
@@ -102,7 +102,7 @@
         s.queue = { items: [] };
         s.heroes = freshHeroes();
         s.market = { resources: {}, heat: {}, volume: 0, trades: 0 };
-        s.expedition = { active: null, auto: false, history: [] };
+        s.expedition = { active: [], auto: false, history: [], mastery: {}, dry: 0 };
         s.activeEffects = [];
         s.eventLogs = [];
         s.pendingEvent = null;

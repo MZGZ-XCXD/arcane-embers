@@ -53,10 +53,12 @@
         /* 建造队列结算 */
         if (window.QueueEngine) QueueEngine.tick(state);
 
-        /* 远征结算 */
-        if (state.expedition.active && state.gameDays >= state.expedition.active.endDay) {
-            const result = ExpeditionEngine.finish(state);
-            if (result) {
+        /* 远征结算：可能同时有多支队伍到点（「门后的低语」解锁第二支） */
+        if (Array.isArray(state.expedition.active) && state.expedition.active.length) {
+            for (const party of state.expedition.active.slice()) {
+                if (state.gameDays < party.endDay) continue;
+                const result = ExpeditionEngine.finish(state, party);
+                if (!result) continue;
                 const lootText = Object.keys(result.loot).map(k => Utils.fmtNum(result.loot[k]) + ' ' + k).join('、');
                 EventEngine.addLog(state, (result.success ? '⚔️ 远征「' + result.regionName + '」成功' : '🏳️ 远征「' + result.regionName + '」失败') +
                     '，带回：' + (lootText || '几乎没有东西'));
@@ -65,6 +67,11 @@
                     Artifacts.addToInventory(state, result.artifactObj);
                     EventEngine.addLog(state, '💠 发现秘宝「' + result.artifactObj.name + '」！');
                     if (window.UI && UI.toast) UI.toast('💠 发现秘宝：' + result.artifactObj.name, 'gold');
+                }
+                if (result.heroDrop) {
+                    EventEngine.addLog(state, '🧭 在「' + result.regionName + '」里结识了「' + result.heroDrop.hero.name + '」' +
+                        (result.heroDrop.isNew ? '，它加入了你的英雄殿堂！' : '，重复的它化作了 ' + Utils.fmtNum(result.heroDrop.relic) + ' 枚奥术遗物。'));
+                    if (window.UI && UI.toast) UI.toast('🧭 遗迹英雄：' + result.heroDrop.hero.name, 'gold');
                 }
                 ProductionEngine.computeProductionAndCaps(state);
             }

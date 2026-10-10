@@ -152,7 +152,16 @@
             if (state.heroes.dupRelics === undefined) state.heroes.dupRelics = 0;
             if (!Array.isArray(state.heroes.history)) state.heroes.history = [];
         }
-        if (!state.expedition) state.expedition = { active: null, auto: false, history: [] };
+        if (!state.expedition) state.expedition = { active: [], auto: false, history: [], mastery: {}, dry: 0 };
+        /* 远征结构改版：以前只能同时派一支队伍（active 是单个对象），现在是一组队伍。
+           旧档里正在外面的那支队伍包进数组继续跑，不会丢。 */
+        if (state.expedition.active && !Array.isArray(state.expedition.active)) {
+            state.expedition.active = [state.expedition.active];
+        }
+        if (!Array.isArray(state.expedition.active)) state.expedition.active = [];
+        if (!Array.isArray(state.expedition.history)) state.expedition.history = [];
+        if (!state.expedition.mastery || typeof state.expedition.mastery !== 'object') state.expedition.mastery = {};
+        if (typeof state.expedition.dry !== 'number') state.expedition.dry = 0;
         if (!state.stats) state.stats = { playSeconds: 0, resets: { relic: 0, star: 0, core: 0 }, expeditions: 0, expeditionsFailed: 0, artifactsFound: 0, maxChallengeStars: 0, events: 0, history: [] };
         if (!state.settings) state.settings = { theme: 'dark', autosave: true, autoBuild: true, autoExpedition: true, buyAmount: 1 };
         if (!state.market) state.market = { resources: {}, heat: {}, volume: 0, trades: 0 };

@@ -16,6 +16,52 @@
         return HEROES_CONFIG.find(h => h.id === id) || null;
     }
 
+    /* 是否已经拥有这只英雄（觉醒 0 级也算拥有） */
+    function hasHero(state, id) {
+        return !!(state.heroes && state.heroes.owned && state.heroes.owned[id] !== undefined);
+    }
+
+    /* 这只英雄提供的机制（遗迹限定英雄用），没有则返回 null */
+    function heroMech(heroOrId) {
+        const hero = typeof heroOrId === 'string' ? heroById(heroOrId) : heroOrId;
+        return hero && hero.mech ? (window.HERO_MECHS[hero.mech] || null) : null;
+    }
+
+    /* 某一层遗迹掉落的限定英雄 */
+    function expeditionHeroFor(regionName) {
+        return HEROES_CONFIG.find(h => h.source === 'expedition' && h.drop === regionName) || null;
+    }
+
+    /* 某个机制的拥有者 / 是否已经拥有该机制 */
+    function heroWithMech(key) {
+        return HEROES_CONFIG.find(h => h.mech === key) || null;
+    }
+    function hasMech(state, key) {
+        const h = heroWithMech(key);
+        return !!(h && hasHero(state, h.id));
+    }
+
+    /* 从遗迹招募一只英雄：首次获得即入收藏；重复获得直接转成奥术遗物
+       （机制型英雄没有觉醒等级，多出来的份数换成实在的资源） */
+    function recruit(state, id) {
+        const hero = heroById(id);
+        if (!hero || !state.heroes) return { ok: false };
+        const owned = state.heroes.owned;
+        state.heroes.byRarity[hero.rarity] = (state.heroes.byRarity[hero.rarity] || 0) + 1;
+        if (owned[id] === undefined) {
+            owned[id] = 0;
+            state.heroes.history.unshift({ type: 'hero', rarity: hero.rarity, name: hero.name, isNew: true, day: state.gameDays });
+            if (state.heroes.history.length > 30) state.heroes.history.pop();
+            return { ok: true, isNew: true, hero: hero };
+        }
+        const relic = HERO_RARITIES[hero.rarity].dupRelic;
+        ResourcesManager.add({ 奥术遗物: relic });
+        state.heroes.dupRelics = (state.heroes.dupRelics || 0) + relic;
+        state.heroes.history.unshift({ type: 'hero', rarity: hero.rarity, name: hero.name, dupRelic: relic, day: state.gameDays });
+        if (state.heroes.history.length > 30) state.heroes.history.pop();
+        return { ok: true, isNew: false, relic: relic, hero: hero };
+    }
+
     function scaleEffect(eff, mult) {
         const out = {};
         for (const k in eff) {
@@ -118,8 +164,9 @@
     }
 
     function pickHero(rarity) {
-        const pool = HEROES_CONFIG.filter(h => h.rarity === rarity);
-        if (!pool.length) return HEROES_CONFIG[0];
+        /* 遗迹限定英雄不进卡池——它们只能从对应那一层遗迹掉落 */
+        const pool = HEROES_CONFIG.filter(h => h.rarity === rarity && h.source !== 'expedition');
+        if (!pool.length) return HEROES_CONFIG.filter(h => h.source !== 'expedition')[0];
         return pool[Math.floor(Math.random() * pool.length)];
     }
 
@@ -257,5 +304,7 @@
         heroById, heroEffect, awakenMultiplier, ownedEffects,
         pullCost, canSummon, summon, stats, ownedCount, totalCount, pickRarity,
         luckMultiplier, effectiveDiscount, rarityChance,
+        hasHero, heroMech, expeditionHeroFor, recruit,
+        heroWithMech, hasMech, pickHero,
     };
 })();

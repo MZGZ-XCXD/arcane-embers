@@ -32,7 +32,9 @@
         tier = tier || 1;
         const quality = tier + EffectsManager.additive(state, 'artifactQuality') * 3;
         const count = Utils.clamp(1 + Math.floor(Utils.rnd(0, 2 + quality * 0.6)), 1, 6);
-        const positiveChance = Utils.clamp(0.42 + quality * 0.045, 0.3, 0.78);
+        /* 「浮空技师」在场时，带回来的秘宝只出正面词条 */
+        const positiveOnly = !!(window.Heroes && Heroes.hasMech(state, 'positiveOnly'));
+        const positiveChance = positiveOnly ? 1 : Utils.clamp(0.42 + quality * 0.045, 0.3, 0.78);
         const effects = [];
         const usedKeys = {};
 
@@ -60,7 +62,7 @@
                 key = 'global';
                 if (usedKeys[key]) continue;
                 usedKeys[key] = true;
-                const v = Math.random() < positiveChance ? scale : -scale;
+                const v = (positiveOnly || Math.random() < positiveChance) ? scale : -scale;
                 eff = { globalProd: v };
             } else if (kind === 'resource') {
                 const list = Object.keys(state.resources).filter(r => !RESOURCES_CONFIG[r].prestige && state.resources[r].visible);
@@ -69,7 +71,7 @@
                 key = 'res:' + res;
                 if (usedKeys[key]) continue;
                 usedKeys[key] = true;
-                const v = Math.random() < positiveChance ? scale * 1.2 : -scale * 1.2;
+                const v = (positiveOnly || Math.random() < positiveChance) ? scale * 1.2 : -scale * 1.2;
                 const inner = {}; inner[res] = v;
                 eff = { resourceProd: inner };
             } else {
@@ -77,7 +79,7 @@
                 if (usedKeys[key]) continue;
                 usedKeys[key] = true;
                 const v = (10 + Utils.rnd(0, 25)) * (1 + quality * 0.25);
-                eff = { happiness: Math.random() < positiveChance ? v : -v };
+                eff = { happiness: (positiveOnly || Math.random() < positiveChance) ? v : -v };
             }
             if (eff) effects.push(eff);
         }

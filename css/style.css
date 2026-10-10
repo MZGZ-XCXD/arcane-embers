@@ -642,6 +642,8 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
 .hint { font-size: .72rem; color: var(--text-dim); line-height: 1.55; }
+.exp-party { padding: 3px 0 5px; }
+.exp-party + .exp-party { border-top: 1px dashed var(--border); padding-top: 6px; }
 .center { text-align: center; }
 .mt6 { margin-top: 6px; } .mt10 { margin-top: 10px; }
 .row-between { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
