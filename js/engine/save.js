@@ -105,6 +105,8 @@
                     delete eff['元素祭坛'];
                 }
             }
+            /* 脆弱秘宝机制已移除：旧档里的标记直接去掉，词条数值保持原样（不再会碎裂） */
+            if (art.fragile) delete art.fragile;
         };
         if (Array.isArray(state.artifacts.inventory)) state.artifacts.inventory.forEach(fixBuildingKeys);
         state.artifacts.equipped.forEach(fixBuildingKeys);

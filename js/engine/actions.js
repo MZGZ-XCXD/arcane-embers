@@ -217,20 +217,11 @@
             }
         }
 
-        /* 秘宝 */
+        /* 秘宝：有「记忆水晶」才保留，否则随重置一起消失（不再有会碎裂的脆弱秘宝） */
         if (keepArtifacts) {
             state.artifacts.inventory = (oldArtifacts.inventory || []).filter(a => true);
             state.artifacts.equipped = (oldArtifacts.equipped || []).filter(Boolean);
         }
-        /* 脆弱秘宝在重置中碎裂 */
-        state.artifacts.inventory = state.artifacts.inventory.filter(a => {
-            if (a.fragile) { EventEngine.addLog(state, '💔 脆弱秘宝「' + a.name + '」在时间崩塌中碎裂了。'); return false; }
-            return true;
-        });
-        state.artifacts.equipped = state.artifacts.equipped.map(a => {
-            if (a && a.fragile) { EventEngine.addLog(state, '💔 脆弱秘宝「' + a.name + '」在时间崩塌中碎裂了。'); return null; }
-            return a;
-        });
 
         ProductionEngine.updatePrices(state);
         ProductionEngine.computeProductionAndCaps(state);

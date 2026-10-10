@@ -212,8 +212,8 @@
             const list = s.artifacts.inventory.concat(s.artifacts.equipped.filter(Boolean));
             const art = list.find(a => a.id === arg);
             if (!art) return null;
-            let html = '<h4>' + G.esc(art.name) + (art.fragile ? ' · 脆弱' : '') + '</h4>';
-            html += '<div class="dim">来自第 ' + art.tier + ' 层遗迹。' + (art.fragile ? '脆弱秘宝在重置时会碎裂。' : '') + '</div><hr>';
+            let html = '<h4>' + G.esc(art.name) + '</h4>';
+            html += '<div class="dim">来自第 ' + art.tier + ' 层遗迹。</div><hr>';
             for (const line of Artifacts.describe(art.effects)) {
                 html += '<div class="kv"><span>' + G.esc(line) + '</span><span></span></div>';
             }

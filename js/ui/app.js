@@ -332,7 +332,7 @@
             '<br><br>将获得：<b>' + gain() + '</b>' +
             '<br><br>会清空：资源、建筑、科技、升级、政策、人口。' +
             '<br>会保留：传承资源与强化、成就、试炼进度、统计数据' +
-            (EffectsManager.hasSpecial(s, 'keepArtifacts') ? '、全部秘宝' : '（脆弱秘宝会碎裂）') + '。';
+            (EffectsManager.hasSpecial(s, 'keepArtifacts') ? '、全部秘宝' : '（秘宝会在重置时失去，需要传承「记忆水晶」才能保留）') + '。';
         G.confirmBox(info[0], text, () => {
             const r = Actions.prestige(s, key);
             G.toast(r.msg, r.ok ? 'gold' : 'bad');

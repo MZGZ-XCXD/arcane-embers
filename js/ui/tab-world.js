@@ -87,8 +87,8 @@
     }
 
     function artifactCard(art, slot) {
-        let html = '<div class="artifact' + (art.fragile ? ' fragile' : '') + '" data-tip="artifact|' + G.esc(art.id) + '">';
-        html += '<div class="an"><span>' + G.esc(art.name) + '</span><span>' + (art.fragile ? '💔' : '💠') + '</span></div>';
+        let html = '<div class="artifact" data-tip="artifact|' + G.esc(art.id) + '">';
+        html += '<div class="an"><span>' + G.esc(art.name) + '</span><span>💠</span></div>';
         for (const line of Artifacts.describe(art.effects)) {
             html += '<div class="eff"><span>' + G.esc(line.split(' ')[0]) + '</span><span>' + G.esc(line.split(' ').slice(1).join(' ')) + '</span></div>';
         }
@@ -124,7 +124,7 @@
             html += art ? artifactCard(art, i) : '<div class="slot-empty">空置基座</div>';
         }
         html += '</div>';
-        html += '<div class="hint mt6">秘宝库存 ' + s.artifacts.inventory.length + ' / 12（脆弱秘宝在重置时会碎裂）</div>';
+        html += '<div class="hint mt6">秘宝库存 ' + s.artifacts.inventory.length + ' / 12（重置时会失去，除非拥有传承「记忆水晶」）</div>';
         if (s.artifacts.inventory.length) {
             html += '<div class="card-grid wide mt6">' + s.artifacts.inventory.map(a => artifactCard(a)).join('') + '</div>';
         }

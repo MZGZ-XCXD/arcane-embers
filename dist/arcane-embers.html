@@ -588,7 +588,6 @@ h1, h2, h3, .serif { font-family: "Palatino Linotype", "Songti SC", Georgia, ser
     background: var(--bg-card); border: 1px solid var(--border-card);
     border-radius: 9px; padding: 8px; font-size: .76rem;
 }
-.artifact.fragile { border-color: var(--bad); box-shadow: 0 0 10px rgba(255,107,129,.25); }
 .artifact .an { font-weight: 600; color: var(--accent-2); display: flex; justify-content: space-between; }
 .artifact .eff { display: flex; justify-content: space-between; gap: 8px; color: var(--text-secondary); }
 .slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 7px; }
@@ -2664,9 +2663,14 @@ window.CHANGELOG_DATA = {
     "source": "CHANGELOG.md",
     "overview": [
         {
+            "version": "0.5.1",
+            "date": "2026-10-10",
+            "summary": "移除「脆弱秘宝」机制，以后不会再有会碎裂的秘宝；旧档里的脆弱标记自动清除、词条数值不变"
+        },
+        {
             "version": "0.5.0",
             "date": "2026-10-10",
-            "summary": "拆分多模式建筑：元素祭坛 → 火 / 水 / 土之祭坛，观星台 → 观星台 + 预言台，可以各建各的；旧存档按原模式自动迁移"
+            "summary": "拆分多模式建筑：元素祭坛 → 火 / 水 / 土之祭坛，观星台 → 观星台 + 预言台（可各建各的，建筑 54 → 57）；旧存档按原模式自动迁移"
         },
         {
             "version": "0.4.0",
@@ -2746,13 +2750,32 @@ window.CHANGELOG_DATA = {
     ],
     "versions": [
         {
+            "version": "0.5.1",
+            "date": "2026-10-10",
+            "sections": [
+                {
+                    "title": "变更",
+                    "items": [
+                        "<b>「脆弱秘宝」机制整体移除<\/b>。原来约 7% 的秘宝是「脆弱」的：词条数值高 30%，但每次重置都会碎裂。 现在所有秘宝都不再带这个属性——远征刷出来的都是普通秘宝，重置时也不会再碎。",
+                        "界面上相关的标记一并去掉：秘宝卡片上的 💔 图标与红色描边、悬浮说明里的「脆弱」字样、 远征页「（脆弱秘宝在重置时会碎裂）」的提示，以及重置确认框里的那句说明。 现在秘宝在重置时的去留只取决于传承「记忆水晶」：有就全部保留，没有就随重置失去。"
+                    ]
+                },
+                {
+                    "title": "存档",
+                    "items": [
+                        "旧存档里已经拿到的脆弱秘宝<b>不会消失<\/b>：读档时会自动去掉「脆弱」标记，<b>词条数值保持原样<\/b> （等于白赚了那 30%），从此也不会在重置中碎裂。"
+                    ]
+                }
+            ]
+        },
+        {
             "version": "0.5.0",
             "date": "2026-10-10",
             "sections": [
                 {
                     "title": "变更",
                     "items": [
-                        "<b>把「多模式建筑」拆成了各自独立的建筑<\/b>。原来「元素祭坛」和「观星台」是靠一个模式开关切换用途的， 而这个开关是<b>整类建筑共用<\/b>的——在卡片上点一下，城里所有的祭坛（或所有观星台）会一起换， 没法做到「几座烧火、几座供水」。现在拆开： * <b>火之祭坛 / 水之祭坛 / 土之祭坛<\/b>（元素契约解锁）：数值与原三种模式完全一致，但可以各建各的； * <b>观星台<\/b>（魔法知识 + 知识上限）与 <b>预言台<\/b>（军力 + 民望）（天文学解锁）：同样是两座独立建筑。 建筑总数 54 → 58；「元素倾向」「魔力配给」两条国策、「元素骚动」事件与「元素亲和」科技都已覆盖到三种祭坛。",
+                        "<b>把「多模式建筑」拆成了各自独立的建筑<\/b>。原来「元素祭坛」和「观星台」是靠一个模式开关切换用途的， 而这个开关是<b>整类建筑共用<\/b>的——在卡片上点一下，城里所有的祭坛（或所有观星台）会一起换， 没法做到「几座烧火、几座供水」。现在拆开： * <b>火之祭坛 / 水之祭坛 / 土之祭坛<\/b>（元素契约解锁）：数值与原三种模式完全一致，但可以各建各的； * <b>观星台<\/b>（魔法知识 + 知识上限）与 <b>预言台<\/b>（军力 + 民望）（天文学解锁）：同样是两座独立建筑。 建筑总数 54 → 57（祭坛 +2、观星台 +1）；「元素倾向」「魔力配给」两条国策、「元素骚动」事件与「元素亲和」科技都已覆盖到三种祭坛。",
                         "从此没有任何建筑使用模式开关（引擎里的支持保留着，但不再有建筑使用）。"
                     ]
                 },
@@ -4308,23 +4331,12 @@ window.CHANGELOG_DATA = {
         }
         if (!effects.length) effects.push({ globalProd: 0.02 });
 
-        let fragile = Math.random() < 0.07;
-        if (fragile) {
-            for (const eff of effects) {
-                for (const k in eff) {
-                    if (typeof eff[k] === 'number') eff[k] *= 1.3;
-                    else if (typeof eff[k] === 'object') for (const k2 in eff[k]) eff[k2] *= 1.3;
-                }
-            }
-        }
-
         const roman = GLYPH[Utils.clamp(tier - 1, 0, 9)];
         const artifact = {
             id: Date.now() + '_' + Math.floor(Math.random() * 1e6),
             name: Utils.pick(PREFIX) + Utils.pick(SUFFIX) + ' ' + roman,
             tier: tier,
             effects: effects,
-            fragile: fragile,
         };
         state.stats.artifactsFound++;
         return artifact;
@@ -5564,20 +5576,11 @@ window.CHANGELOG_DATA = {
             }
         }
 
-        /* 秘宝 */
+        /* 秘宝：有「记忆水晶」才保留，否则随重置一起消失（不再有会碎裂的脆弱秘宝） */
         if (keepArtifacts) {
             state.artifacts.inventory = (oldArtifacts.inventory || []).filter(a => true);
             state.artifacts.equipped = (oldArtifacts.equipped || []).filter(Boolean);
         }
-        /* 脆弱秘宝在重置中碎裂 */
-        state.artifacts.inventory = state.artifacts.inventory.filter(a => {
-            if (a.fragile) { EventEngine.addLog(state, '💔 脆弱秘宝「' + a.name + '」在时间崩塌中碎裂了。'); return false; }
-            return true;
-        });
-        state.artifacts.equipped = state.artifacts.equipped.map(a => {
-            if (a && a.fragile) { EventEngine.addLog(state, '💔 脆弱秘宝「' + a.name + '」在时间崩塌中碎裂了。'); return null; }
-            return a;
-        });
 
         ProductionEngine.updatePrices(state);
         ProductionEngine.computeProductionAndCaps(state);
@@ -5791,6 +5794,8 @@ window.CHANGELOG_DATA = {
                     delete eff['元素祭坛'];
                 }
             }
+            /* 脆弱秘宝机制已移除：旧档里的标记直接去掉，词条数值保持原样（不再会碎裂） */
+            if (art.fragile) delete art.fragile;
         };
         if (Array.isArray(state.artifacts.inventory)) state.artifacts.inventory.forEach(fixBuildingKeys);
         state.artifacts.equipped.forEach(fixBuildingKeys);
@@ -6612,8 +6617,8 @@ window.CHANGELOG_DATA = {
             const list = s.artifacts.inventory.concat(s.artifacts.equipped.filter(Boolean));
             const art = list.find(a => a.id === arg);
             if (!art) return null;
-            let html = '<h4>' + G.esc(art.name) + (art.fragile ? ' · 脆弱' : '') + '</h4>';
-            html += '<div class="dim">来自第 ' + art.tier + ' 层遗迹。' + (art.fragile ? '脆弱秘宝在重置时会碎裂。' : '') + '</div><hr>';
+            let html = '<h4>' + G.esc(art.name) + '</h4>';
+            html += '<div class="dim">来自第 ' + art.tier + ' 层遗迹。</div><hr>';
             for (const line of Artifacts.describe(art.effects)) {
                 html += '<div class="kv"><span>' + G.esc(line) + '</span><span></span></div>';
             }
@@ -7644,8 +7649,8 @@ window.CHANGELOG_DATA = {
     }
 
     function artifactCard(art, slot) {
-        let html = '<div class="artifact' + (art.fragile ? ' fragile' : '') + '" data-tip="artifact|' + G.esc(art.id) + '">';
-        html += '<div class="an"><span>' + G.esc(art.name) + '</span><span>' + (art.fragile ? '💔' : '💠') + '</span></div>';
+        let html = '<div class="artifact" data-tip="artifact|' + G.esc(art.id) + '">';
+        html += '<div class="an"><span>' + G.esc(art.name) + '</span><span>💠</span></div>';
         for (const line of Artifacts.describe(art.effects)) {
             html += '<div class="eff"><span>' + G.esc(line.split(' ')[0]) + '</span><span>' + G.esc(line.split(' ').slice(1).join(' ')) + '</span></div>';
         }
@@ -7681,7 +7686,7 @@ window.CHANGELOG_DATA = {
             html += art ? artifactCard(art, i) : '<div class="slot-empty">空置基座</div>';
         }
         html += '</div>';
-        html += '<div class="hint mt6">秘宝库存 ' + s.artifacts.inventory.length + ' / 12（脆弱秘宝在重置时会碎裂）</div>';
+        html += '<div class="hint mt6">秘宝库存 ' + s.artifacts.inventory.length + ' / 12（重置时会失去，除非拥有传承「记忆水晶」）</div>';
         if (s.artifacts.inventory.length) {
             html += '<div class="card-grid wide mt6">' + s.artifacts.inventory.map(a => artifactCard(a)).join('') + '</div>';
         }
@@ -8351,7 +8356,7 @@ window.CHANGELOG_DATA = {
             '<br><br>将获得：<b>' + gain() + '</b>' +
             '<br><br>会清空：资源、建筑、科技、升级、政策、人口。' +
             '<br>会保留：传承资源与强化、成就、试炼进度、统计数据' +
-            (EffectsManager.hasSpecial(s, 'keepArtifacts') ? '、全部秘宝' : '（脆弱秘宝会碎裂）') + '。';
+            (EffectsManager.hasSpecial(s, 'keepArtifacts') ? '、全部秘宝' : '（秘宝会在重置时失去，需要传承「记忆水晶」才能保留）') + '。';
         G.confirmBox(info[0], text, () => {
             const r = Actions.prestige(s, key);
             G.toast(r.msg, r.ok ? 'gold' : 'bad');

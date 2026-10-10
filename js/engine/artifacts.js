@@ -83,23 +83,12 @@
         }
         if (!effects.length) effects.push({ globalProd: 0.02 });
 
-        let fragile = Math.random() < 0.07;
-        if (fragile) {
-            for (const eff of effects) {
-                for (const k in eff) {
-                    if (typeof eff[k] === 'number') eff[k] *= 1.3;
-                    else if (typeof eff[k] === 'object') for (const k2 in eff[k]) eff[k2] *= 1.3;
-                }
-            }
-        }
-
         const roman = GLYPH[Utils.clamp(tier - 1, 0, 9)];
         const artifact = {
             id: Date.now() + '_' + Math.floor(Math.random() * 1e6),
             name: Utils.pick(PREFIX) + Utils.pick(SUFFIX) + ' ' + roman,
             tier: tier,
             effects: effects,
-            fragile: fragile,
         };
         state.stats.artifactsFound++;
         return artifact;

@@ -579,7 +579,6 @@ h1, h2, h3, .serif { font-family: "Palatino Linotype", "Songti SC", Georgia, ser
     background: var(--bg-card); border: 1px solid var(--border-card);
     border-radius: 9px; padding: 8px; font-size: .76rem;
 }
-.artifact.fragile { border-color: var(--bad); box-shadow: 0 0 10px rgba(255,107,129,.25); }
 .artifact .an { font-weight: 600; color: var(--accent-2); display: flex; justify-content: space-between; }
 .artifact .eff { display: flex; justify-content: space-between; gap: 8px; color: var(--text-secondary); }
 .slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 7px; }
