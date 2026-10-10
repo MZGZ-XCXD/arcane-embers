@@ -65,9 +65,19 @@
         return soft - 100 + 200 * Math.sqrt(0.25 + 0.005 * (happiness - soft));
     }
 
+    /* 民望产出乘数：每 100 点民望 = ×1 建筑产出。
+       这里用的是「上一次结算出来的民望」——因为民望本身要看人口与食物状况，
+       而人口与食物又由产量决定，直接用当帧的值会绕成一个圈。
+       下限 0.1 只是防止民望归零时整座城市彻底停产。 */
+    function happinessMult(state) {
+        const f = state.happinessFactor === undefined ? 1 : state.happinessFactor;
+        return Utils.clamp(f, 0.1, 10);
+    }
+
     function computeProductionAndCaps(state) {
         const e = EffectsManager.refreshAllEffects(state);
         const perfectPop = !!e.specials.perfectEfficiency;
+        const happyMult = happinessMult(state);
 
         /* ---------- 1. 收集建筑理论数据 ---------- */
         const raw = {};
@@ -82,7 +92,7 @@
             const prod = {};
             const baseProd = resolve(cfg.produces, state);
             for (const r in baseProd) {
-                prod[r] = baseProd[r] * mult.prod * EffectsManager.resourceMultiplier(state, r);
+                prod[r] = baseProd[r] * mult.prod * EffectsManager.resourceMultiplier(state, r) * happyMult;
             }
             const cons = {};
             const baseCons = resolve(cfg.consumes, state);
@@ -374,11 +384,12 @@
         if (!cfg || !b) return null;
         const active = activeConfig(cfg, b);
         const mult = EffectsManager.buildingMultipliers(state, name);
+        const happyMult = happinessMult(state);
         const eff = b.active ? b.efficiency : 1;
         const prod = [], cons = [], caps = [];
         const baseProd = resolve(active.produces, state);
         for (const r in baseProd) {
-            const per = baseProd[r] * mult.prod * EffectsManager.resourceMultiplier(state, r);
+            const per = baseProd[r] * mult.prod * EffectsManager.resourceMultiplier(state, r) * happyMult;
             prod.push({ res: r, per: per, total: per * b.active * eff });
         }
         const baseCons = resolve(active.consumes, state);
@@ -432,6 +443,7 @@
     window.ProductionEngine = {
         computeProductionAndCaps,
         updatePrices,
+        happinessMult,
         buildingPrice,
         buildingPriceCount,
         upgradePrice,

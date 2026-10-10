@@ -77,6 +77,10 @@
                         U.fmtNum(p.per * st.efficiency) + '/日 每座' +
                         (b.active > 1 ? '（共 ' + U.fmtNum(p.total) + '/日）' : '') + '</span></div>';
                 }
+                const hm = ProductionEngine.happinessMult(s);
+                if (Math.abs(hm - 1) > 0.005) {
+                    html += '<div class="dim">以上产出已按当前民望 ×' + hm.toFixed(2) + ' 结算。</div>';
+                }
             }
             if (st.cons.length) {
                 for (const c of st.cons) {
@@ -157,7 +161,9 @@
 
         if (type === 'happy') {
             let html = '<h4>民望 ' + U.fmtNum(s.happiness, 0) + '</h4>';
-            html += '<div class="dim">民望是所有建筑产出的乘数：每 100 点民望 = ×1 产出。</div><hr>';
+            html += '<div class="dim">民望是所有建筑产出的乘数：每 100 点民望 = ×1 产出（当前 ×' +
+                ProductionEngine.happinessMult(s).toFixed(2) + '）。<br>' +
+                '民望极低时最低按 ×0.1 结算，所以只会拖慢生产，不会让城市彻底停摆。</div><hr>';
             const list = s.happinessList || [];
             for (const h of list.slice(0, 16)) {
                 html += '<div class="kv"><span>' + G.esc(h.source) + '</span><span class="' + G.rateClass(h.value) + '">' + G.rate(h.value) + '</span></div>';
