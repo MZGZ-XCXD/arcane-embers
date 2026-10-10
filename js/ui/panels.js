@@ -168,7 +168,8 @@
             for (const h of list.slice(0, 16)) {
                 html += '<div class="kv"><span>' + G.esc(h.source) + '</span><span class="' + G.rateClass(h.value) + '">' + G.rate(h.value) + '</span></div>';
             }
-            html += '<hr><div class="kv"><span>当前产出乘数</span><span class="pos">×' + (s.happinessFactor || 1).toFixed(2) + '</span></div>';
+            html += '<hr><div class="kv"><span>当前产出乘数</span><span class="pos">×' +
+                ProductionEngine.happinessMult(s).toFixed(2) + '</span></div>';
             return html;
         }
 
@@ -347,7 +348,7 @@
         document.getElementById('stat-speed').textContent = '×' + s.speed.toFixed(2);
         const h = document.getElementById('stat-happy');
         h.querySelector('span:last-child').textContent = U.fmtNum(s.happiness, 0);
-        const fac = s.happinessFactor || 1;
+        const fac = window.ProductionEngine ? ProductionEngine.happinessMult(s) : (s.happinessFactor || 1);
         h.querySelector('span:last-child').className = fac >= 1 ? 'ok pos' : 'neg';
         h.setAttribute('data-tip', 'happy');
         document.getElementById('btn-pause').textContent = s.paused ? '▶' : '⏸';
@@ -391,8 +392,10 @@
         popRefs['pop-bar'].className = 'bar ' + (ratio > 1 ? 'bad' : 'good');
         popRefs['pop-bar'].firstElementChild.style.width = U.clamp(ratio * 100, 0, 100).toFixed(1) + '%';
         G.setText(popRefs['pop-happy'], U.fmtNum(s.happiness, 0));
-        G.setText(popRefs['pop-mult'], '×' + s.happinessFactor.toFixed(2));
-        popRefs['pop-mult'].className = s.happinessFactor >= 1 ? 'pos' : 'neg';
+        /* 显示的乘数必须就是实际参与结算的那个（走同一个接口，避免两处口径不一致） */
+        const happyFac = ProductionEngine.happinessMult(s);
+        G.setText(popRefs['pop-mult'], '×' + happyFac.toFixed(2));
+        popRefs['pop-mult'].className = happyFac >= 1 ? 'pos' : 'neg';
         popRefs['happy-bar'].className = 'bar ' + (s.happiness >= 100 ? 'good' : 'bad');
         popRefs['happy-bar'].firstElementChild.style.width = (U.clamp(s.happiness / 600, 0, 1) * 100).toFixed(1) + '%';
         G.setText(popRefs['pop-power'], U.fmtNum(power.amount));

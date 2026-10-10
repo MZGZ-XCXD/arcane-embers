@@ -68,10 +68,11 @@
     /* 民望产出乘数：每 100 点民望 = ×1 建筑产出。
        这里用的是「上一次结算出来的民望」——因为民望本身要看人口与食物状况，
        而人口与食物又由产量决定，直接用当帧的值会绕成一个圈。
-       下限 0.1 只是防止民望归零时整座城市彻底停产。 */
+       上下限只是防呆（下限防止民望归零时彻底停产，上限防止异常数值把经济打爆）；
+       真正约束后期数值的是民望的软上限与仓库上限，不是这里。 */
     function happinessMult(state) {
         const f = state.happinessFactor === undefined ? 1 : state.happinessFactor;
-        return Utils.clamp(f, 0.1, 10);
+        return Utils.clamp(f, 0.1, 50);
     }
 
     function computeProductionAndCaps(state) {
