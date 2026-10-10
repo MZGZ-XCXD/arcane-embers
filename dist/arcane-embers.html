@@ -1020,14 +1020,21 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         cons: { 魔晶: 0.06 }, prod: { 魔力: 6 }, caps: { 魔力: 800 }, pop: 1,
         desc: '把分散的魔网碎片重新接进同一张网。魔晶会被缓慢消耗。',
     });
-    B('元素祭坛', {
+    /* 三种元素各是一座独立建筑：可以同时供奉火、水、土，各建各的 */
+    B('火之祭坛', {
         type: '魔力', era: 3, tech: '元素契约', cost: { 符文: 200, 魔晶: 150, 石料: 1500 }, g: 1.28,
-        pop: 2, caps: { 魔力: 3000 }, modes: [
-            { name: '火之祭坛', prod: { 魔力: 24 }, cons: { 木炭: 2.5 }, desc: '以燃料换取最纯粹的魔力。' },
-            { name: '水之祭坛', prod: { 魔力: 12, 食物: 1 }, cons: { 木炭: 0.5 }, desc: '兼顾灌溉与食物产出。' },
-            { name: '土之祭坛', prod: { 魔力: 12, 石料: 1.2 }, cons: { 木炭: 0.8 }, desc: '让大地自行隆起，供给建材。' },
-        ],
-        desc: '与元素缔结契约，让它们替你工作。可切换供奉的元素。',
+        pop: 2, prod: { 魔力: 24 }, cons: { 木炭: 2.5 }, caps: { 魔力: 3000 },
+        desc: '以燃料换取最纯粹的魔力。三座祭坛里它最贪吃，也最能出活。',
+    });
+    B('水之祭坛', {
+        type: '魔力', era: 3, tech: '元素契约', cost: { 符文: 200, 魔晶: 150, 石料: 1500 }, g: 1.28,
+        pop: 2, prod: { 魔力: 12, 食物: 1 }, cons: { 木炭: 0.5 }, caps: { 魔力: 3000 },
+        desc: '水流过祭坛的石槽，顺带把灌溉也做了。魔力产出偏低，但多一份食物。',
+    });
+    B('土之祭坛', {
+        type: '魔力', era: 3, tech: '元素契约', cost: { 符文: 200, 魔晶: 150, 石料: 1500 }, g: 1.28,
+        pop: 2, prod: { 魔力: 12, 石料: 1.2 }, cons: { 木炭: 0.8 }, caps: { 魔力: 3000 },
+        desc: '让大地自行隆起，把建材直接送到工地。魔力产出偏低，但多一份石料。',
     });
     B('星辰塔', {
         type: '魔力', era: 4, tech: '星辉共鸣', cost: { 星尘: 120, 奥术合金: 300, 符文: 800 }, g: 1.32,
@@ -1090,11 +1097,13 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     });
     B('观星台', {
         type: '研究', era: 3, tech: '天文学', cost: { 石料: 2500, 铁锭: 300, 魔晶: 200 }, g: 1.26,
-        pop: 2, modes: [
-            { name: '观测模式', prod: { 魔法知识: 12 }, caps: { 魔法知识: 300 }, desc: '把星图与咒式互相印证。' },
-            { name: '预言模式', prod: { 魔法知识: 1.5 }, local: { power: 60 }, happy: 8, desc: '为军队与居民占卜吉凶。' },
-        ],
-        desc: '穹顶可以开启，让星光落在巨大的铜制星盘上。可切换用途。',
+        pop: 2, prod: { 魔法知识: 12 }, caps: { 魔法知识: 300 },
+        desc: '把星图与咒式互相印证。穹顶打开时，星光会落在巨大的铜制星盘上。',
+    });
+    B('预言台', {
+        type: '研究', era: 3, tech: '天文学', cost: { 石料: 2500, 铁锭: 300, 魔晶: 200 }, g: 1.26,
+        pop: 2, prod: { 魔法知识: 1.5 }, local: { power: 60 }, happy: 8,
+        desc: '为军队与居民占卜吉凶。它算出的坏消息，通常先落到你自己头上——但你由此知道该往哪儿砌墙。',
     });
     B('奥术议院', {
         type: '研究', era: 3, tech: '议会制度', cost: { 石料: 2000, 符文: 150, 黄金: 400 }, g: 1.26,
@@ -1360,7 +1369,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     });
     T('天文学', {
         era: 3, cost: { 魔法知识: 2000, 魔晶: 300, 铁锭: 500 }, pre: ['目录学'],
-        desc: '星辰的路径就是魔网的路径。解锁「观星台」。',
+        desc: '星辰的路径就是魔网的路径。解锁「观星台」与「预言台」。',
     });
     T('矿物学', {
         era: 3, cost: { 魔法知识: 2000, 铁矿: 1500, 铁锭: 600 }, pre: ['采矿学', '目录学'],
@@ -1392,7 +1401,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     });
     T('元素契约', {
         era: 3, cost: { 魔法知识: 10000, 符文: 1200, 魔晶: 900 }, pre: ['咒法学', '秘银冶炼'],
-        desc: '与火、水、土签订契约，让它们替你工作。解锁「元素祭坛」。',
+        desc: '与火、水、土签订契约，让它们替你工作。解锁「火之祭坛」「水之祭坛」「土之祭坛」。',
     });
     T('符文典籍', {
         era: 3, cost: { 魔法知识: 800, 符文: 50 }, pre: ['目录学'],
@@ -1498,8 +1507,11 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     });
     T('元素亲和', {
         era: 5, cost: { 魔法知识: 3000000, 魔晶: 15000 }, pre: ['星界航行'],
-        eff: { resourceProd: { 魔力: 0.5 }, 元素祭坛: { prod: 0.3 }, 星辰塔: { prod: 0.2 } },
-        desc: '你对魔力的理解已经超越咒式本身。魔力产出 +50%，元素祭坛 +30%，星辰塔 +20%。',
+        eff: {
+            resourceProd: { 魔力: 0.5 }, 星辰塔: { prod: 0.2 },
+            火之祭坛: { prod: 0.3 }, 水之祭坛: { prod: 0.3 }, 土之祭坛: { prod: 0.3 },
+        },
+        desc: '你对魔力的理解已经超越咒式本身。魔力产出 +50%，三种祭坛各 +30%，星辰塔 +20%。',
     });
     T('星界工程', {
         era: 5, cost: { 魔法知识: 8000000, 奥术合金: 15000, 星尘: 20000 }, pre: ['贤者之石'],
@@ -1694,7 +1706,9 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         get: v => ({
             魔力井: { prod: v * 0.012 },
             魔网节点: { prod: v * 0.012, cons: v * 0.02 },
-            元素祭坛: { prod: v * 0.012, cons: v * 0.02 },
+            火之祭坛: { prod: v * 0.012, cons: v * 0.02 },
+            水之祭坛: { prod: v * 0.012, cons: v * 0.02 },
+            土之祭坛: { prod: v * 0.012, cons: v * 0.02 },
             星辰塔: { prod: v * 0.01, cons: v * 0.02 },
         }),
     });
@@ -1732,7 +1746,9 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         get: v => ({
             农田: { prod: -v * 0.015 },
             草药园: { prod: -v * 0.01 },
-            元素祭坛: { prod: v * 0.02 },
+            火之祭坛: { prod: v * 0.02 },
+            水之祭坛: { prod: v * 0.02 },
+            土之祭坛: { prod: v * 0.02 },
             元素熔炉核心: { prod: v * 0.02 },
             符文作坊: { prod: v * 0.012 },
             happiness: -v * 0.3,
@@ -2369,16 +2385,28 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     E({
         id: 'element_stir', weight: 8, minDay: 350, title: '元素骚动',
         text: '祭坛上的三种元素同时抗议。它们说，你最近向它们索取得太多了。',
-        require: s => s.buildings['元素祭坛'].count > 0,
+        require: s => ['火之祭坛', '水之祭坛', '土之祭坛'].some(n => s.buildings[n] && s.buildings[n].count > 0),
         choices: [
             {
                 text: '举行安抚仪式', hint: '消耗 5000 魔力，获得持续增益',
                 cost: { 魔力: 5000 },
-                run: a => { a.take({ 魔力: 5000 }); a.buff('element_calm', '元素的满意', 600, { 元素祭坛: { prod: 0.35 }, happiness: 20 }, '元素重新愿意配合'); a.log('仪式之后，祭坛的火安静地燃烧着。'); },
+                run: a => {
+                    a.take({ 魔力: 5000 });
+                    a.buff('element_calm', '元素的满意', 600, {
+                        火之祭坛: { prod: 0.35 }, 水之祭坛: { prod: 0.35 }, 土之祭坛: { prod: 0.35 }, happiness: 20,
+                    }, '元素重新愿意配合');
+                    a.log('仪式之后，祭坛的火安静地燃烧着。');
+                },
             },
             {
                 text: '用契约压制它们', hint: '祭坛产量短时下降，但获得材料',
-                run: a => { a.give({ 石料: 20000 }); a.buff('element_anger', '元素的怒气', 300, { 元素祭坛: { prod: -0.5 } }, '元素拒绝配合'); a.log('元素服从了，但土从祭坛里喷了出来——正好能当建材。'); },
+                run: a => {
+                    a.give({ 石料: 20000 });
+                    a.buff('element_anger', '元素的怒气', 300, {
+                        火之祭坛: { prod: -0.5 }, 水之祭坛: { prod: -0.5 }, 土之祭坛: { prod: -0.5 },
+                    }, '元素拒绝配合');
+                    a.log('元素服从了，但土从祭坛里喷了出来——正好能当建材。');
+                },
             },
         ],
     });
@@ -2636,6 +2664,11 @@ window.CHANGELOG_DATA = {
     "source": "CHANGELOG.md",
     "overview": [
         {
+            "version": "0.5.0",
+            "date": "2026-10-10",
+            "summary": "拆分多模式建筑：元素祭坛 → 火 / 水 / 土之祭坛，观星台 → 观星台 + 预言台，可以各建各的；旧存档按原模式自动迁移"
+        },
+        {
             "version": "0.4.0",
             "date": "2026-10-10",
             "summary": "新增最高档「EX · 跨越时间线」（原 EX 调整为 SS）：无保底、概率极低（约 0.15%）、抽到即永久保留；新增 3 位 EX 英雄与 1 项成就"
@@ -2712,6 +2745,25 @@ window.CHANGELOG_DATA = {
         }
     ],
     "versions": [
+        {
+            "version": "0.5.0",
+            "date": "2026-10-10",
+            "sections": [
+                {
+                    "title": "变更",
+                    "items": [
+                        "<b>把「多模式建筑」拆成了各自独立的建筑<\/b>。原来「元素祭坛」和「观星台」是靠一个模式开关切换用途的， 而这个开关是<b>整类建筑共用<\/b>的——在卡片上点一下，城里所有的祭坛（或所有观星台）会一起换， 没法做到「几座烧火、几座供水」。现在拆开： * <b>火之祭坛 / 水之祭坛 / 土之祭坛<\/b>（元素契约解锁）：数值与原三种模式完全一致，但可以各建各的； * <b>观星台<\/b>（魔法知识 + 知识上限）与 <b>预言台<\/b>（军力 + 民望）（天文学解锁）：同样是两座独立建筑。 建筑总数 54 → 58；「元素倾向」「魔力配给」两条国策、「元素骚动」事件与「元素亲和」科技都已覆盖到三种祭坛。",
+                        "从此没有任何建筑使用模式开关（引擎里的支持保留着，但不再有建筑使用）。"
+                    ]
+                },
+                {
+                    "title": "存档",
+                    "items": [
+                        "旧存档不需要重开：读档时会把旧的「元素祭坛」按你<b>当时选中的模式<\/b>整批搬到对应的那一座 （例如当时开着水之祭坛，那几座就变成水之祭坛）；「观星台」若当时选的是预言模式，会拆出等量的「预言台」。 旧秘宝里指向「元素祭坛」的词条会自动改指火之祭坛。迁移只会执行一次。"
+                    ]
+                }
+            ]
+        },
         {
             "version": "0.4.0",
             "date": "2026-10-10",
@@ -5692,6 +5744,37 @@ window.CHANGELOG_DATA = {
             if (!state.buildings[k]) state.buildings[k] = { count: 0, active: 0, visible: false, locked: false, price: {}, efficiency: 1, mode: 0 };
             else if (typeof state.buildings[k].mode !== 'number') state.buildings[k].mode = 0;
         }
+        /* 建筑拆分迁移（写成幂等的：迁移过的存档再迁一次不会有任何变化）：
+           旧的「元素祭坛」本来是一个建筑三种模式（模式是全体共用的），现在拆成火 / 水 / 土三座独立建筑，
+           按旧档当时选中的模式把数量搬过去；「观星台」的预言模式拆成独立的「预言台」。
+           这里刻意不做「只迁一次」的标记——标记本身也会被上一份存档残留影响，
+           而这段逻辑本身就是幂等的（旧键删除后第二次找不到东西，数量也不会重复累加）。 */
+        {
+            const legacyElement = state.buildings['元素祭坛'];
+            if (legacyElement && legacyElement.count > 0) {
+                const target = ['火之祭坛', '水之祭坛', '土之祭坛'][legacyElement.mode || 0] || '火之祭坛';
+                const t = state.buildings[target];
+                if (t) {
+                    t.count += legacyElement.count;
+                    t.active = Math.min(t.count, (t.active || 0) + Math.min(legacyElement.active || 0, legacyElement.count));
+                    t.unlocked = true;
+                    t.visible = true;
+                }
+            }
+            delete state.buildings['元素祭坛'];
+            const legacyObs = state.buildings['观星台'];
+            if (legacyObs && (legacyObs.mode || 0) === 1 && legacyObs.count > 0) {
+                const p = state.buildings['预言台'];
+                if (p) {
+                    p.count += legacyObs.count;
+                    p.active = Math.min(p.count, (p.active || 0) + Math.min(legacyObs.active || 0, legacyObs.count));
+                    p.unlocked = true;
+                    p.visible = true;
+                }
+                legacyObs.count = 0;
+                legacyObs.active = 0;
+            }
+        }
         for (const k in TECHS_CONFIG) if (!state.techs[k]) state.techs[k] = { researched: false, visible: false };
         for (const k in UPGRADES_CONFIG) if (!state.upgrades[k]) state.upgrades[k] = { level: 0, visible: false, price: {} };
         for (const k in POLICIES_CONFIG) if (!state.policies[k]) state.policies[k] = { value: POLICIES_CONFIG[k].def, visible: false };
@@ -5699,6 +5782,18 @@ window.CHANGELOG_DATA = {
         for (const c of CHALLENGES_CONFIG) if (!state.challenges[c.id]) state.challenges[c.id] = { active: false, completed: false };
         if (!state.artifacts) state.artifacts = { inventory: [], equipped: [], slots: 3 };
         if (!Array.isArray(state.artifacts.equipped)) state.artifacts.equipped = [];
+        /* 旧秘宝里指向「元素祭坛」的词条改指火之祭坛（其它建筑名没变） */
+        const fixBuildingKeys = art => {
+            if (!art || !Array.isArray(art.effects)) return;
+            for (const eff of art.effects) {
+                if (eff && eff['元素祭坛']) {
+                    eff['火之祭坛'] = eff['元素祭坛'];
+                    delete eff['元素祭坛'];
+                }
+            }
+        };
+        if (Array.isArray(state.artifacts.inventory)) state.artifacts.inventory.forEach(fixBuildingKeys);
+        state.artifacts.equipped.forEach(fixBuildingKeys);
         if (!state.queue || !Array.isArray(state.queue.items)) state.queue = { items: [] };
         /* 旧队列条目兼容：
            v1.1「先付款、后施工」与 v1.2「等资源 → 施工」两代存档里的订单，
@@ -7017,7 +7112,8 @@ window.CHANGELOG_DATA = {
             return html;
         }
 
-        /* 模式切换 */
+        /* 模式切换（cfg.modes）：注意这是「整类建筑」共用一种模式，不是每座建筑单独设置。
+           目前没有建筑使用模式——元素祭坛与观星台已经拆成了各自独立的建筑。 */
         if (cfg.modes && b.count > 0) {
             html += '<div class="btn-row mt6">';
             cfg.modes.forEach((m, i) => {

@@ -277,16 +277,28 @@
     E({
         id: 'element_stir', weight: 8, minDay: 350, title: '元素骚动',
         text: '祭坛上的三种元素同时抗议。它们说，你最近向它们索取得太多了。',
-        require: s => s.buildings['元素祭坛'].count > 0,
+        require: s => ['火之祭坛', '水之祭坛', '土之祭坛'].some(n => s.buildings[n] && s.buildings[n].count > 0),
         choices: [
             {
                 text: '举行安抚仪式', hint: '消耗 5000 魔力，获得持续增益',
                 cost: { 魔力: 5000 },
-                run: a => { a.take({ 魔力: 5000 }); a.buff('element_calm', '元素的满意', 600, { 元素祭坛: { prod: 0.35 }, happiness: 20 }, '元素重新愿意配合'); a.log('仪式之后，祭坛的火安静地燃烧着。'); },
+                run: a => {
+                    a.take({ 魔力: 5000 });
+                    a.buff('element_calm', '元素的满意', 600, {
+                        火之祭坛: { prod: 0.35 }, 水之祭坛: { prod: 0.35 }, 土之祭坛: { prod: 0.35 }, happiness: 20,
+                    }, '元素重新愿意配合');
+                    a.log('仪式之后，祭坛的火安静地燃烧着。');
+                },
             },
             {
                 text: '用契约压制它们', hint: '祭坛产量短时下降，但获得材料',
-                run: a => { a.give({ 石料: 20000 }); a.buff('element_anger', '元素的怒气', 300, { 元素祭坛: { prod: -0.5 } }, '元素拒绝配合'); a.log('元素服从了，但土从祭坛里喷了出来——正好能当建材。'); },
+                run: a => {
+                    a.give({ 石料: 20000 });
+                    a.buff('element_anger', '元素的怒气', 300, {
+                        火之祭坛: { prod: -0.5 }, 水之祭坛: { prod: -0.5 }, 土之祭坛: { prod: -0.5 },
+                    }, '元素拒绝配合');
+                    a.log('元素服从了，但土从祭坛里喷了出来——正好能当建材。');
+                },
             },
         ],
     });

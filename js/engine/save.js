@@ -58,6 +58,37 @@
             if (!state.buildings[k]) state.buildings[k] = { count: 0, active: 0, visible: false, locked: false, price: {}, efficiency: 1, mode: 0 };
             else if (typeof state.buildings[k].mode !== 'number') state.buildings[k].mode = 0;
         }
+        /* 建筑拆分迁移（写成幂等的：迁移过的存档再迁一次不会有任何变化）：
+           旧的「元素祭坛」本来是一个建筑三种模式（模式是全体共用的），现在拆成火 / 水 / 土三座独立建筑，
+           按旧档当时选中的模式把数量搬过去；「观星台」的预言模式拆成独立的「预言台」。
+           这里刻意不做「只迁一次」的标记——标记本身也会被上一份存档残留影响，
+           而这段逻辑本身就是幂等的（旧键删除后第二次找不到东西，数量也不会重复累加）。 */
+        {
+            const legacyElement = state.buildings['元素祭坛'];
+            if (legacyElement && legacyElement.count > 0) {
+                const target = ['火之祭坛', '水之祭坛', '土之祭坛'][legacyElement.mode || 0] || '火之祭坛';
+                const t = state.buildings[target];
+                if (t) {
+                    t.count += legacyElement.count;
+                    t.active = Math.min(t.count, (t.active || 0) + Math.min(legacyElement.active || 0, legacyElement.count));
+                    t.unlocked = true;
+                    t.visible = true;
+                }
+            }
+            delete state.buildings['元素祭坛'];
+            const legacyObs = state.buildings['观星台'];
+            if (legacyObs && (legacyObs.mode || 0) === 1 && legacyObs.count > 0) {
+                const p = state.buildings['预言台'];
+                if (p) {
+                    p.count += legacyObs.count;
+                    p.active = Math.min(p.count, (p.active || 0) + Math.min(legacyObs.active || 0, legacyObs.count));
+                    p.unlocked = true;
+                    p.visible = true;
+                }
+                legacyObs.count = 0;
+                legacyObs.active = 0;
+            }
+        }
         for (const k in TECHS_CONFIG) if (!state.techs[k]) state.techs[k] = { researched: false, visible: false };
         for (const k in UPGRADES_CONFIG) if (!state.upgrades[k]) state.upgrades[k] = { level: 0, visible: false, price: {} };
         for (const k in POLICIES_CONFIG) if (!state.policies[k]) state.policies[k] = { value: POLICIES_CONFIG[k].def, visible: false };
@@ -65,6 +96,18 @@
         for (const c of CHALLENGES_CONFIG) if (!state.challenges[c.id]) state.challenges[c.id] = { active: false, completed: false };
         if (!state.artifacts) state.artifacts = { inventory: [], equipped: [], slots: 3 };
         if (!Array.isArray(state.artifacts.equipped)) state.artifacts.equipped = [];
+        /* 旧秘宝里指向「元素祭坛」的词条改指火之祭坛（其它建筑名没变） */
+        const fixBuildingKeys = art => {
+            if (!art || !Array.isArray(art.effects)) return;
+            for (const eff of art.effects) {
+                if (eff && eff['元素祭坛']) {
+                    eff['火之祭坛'] = eff['元素祭坛'];
+                    delete eff['元素祭坛'];
+                }
+            }
+        };
+        if (Array.isArray(state.artifacts.inventory)) state.artifacts.inventory.forEach(fixBuildingKeys);
+        state.artifacts.equipped.forEach(fixBuildingKeys);
         if (!state.queue || !Array.isArray(state.queue.items)) state.queue = { items: [] };
         /* 旧队列条目兼容：
            v1.1「先付款、后施工」与 v1.2「等资源 → 施工」两代存档里的订单，

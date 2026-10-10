@@ -41,7 +41,8 @@
             return html;
         }
 
-        /* 模式切换 */
+        /* 模式切换（cfg.modes）：注意这是「整类建筑」共用一种模式，不是每座建筑单独设置。
+           目前没有建筑使用模式——元素祭坛与观星台已经拆成了各自独立的建筑。 */
         if (cfg.modes && b.count > 0) {
             html += '<div class="btn-row mt6">';
             cfg.modes.forEach((m, i) => {
