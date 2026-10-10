@@ -625,10 +625,13 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     border-radius: 9px; padding: 8px 10px; font-size: .75rem; line-height: 1.6;
     color: var(--text); box-shadow: var(--shadow-lg); opacity: 0; transition: opacity .12s;
     max-height: calc(100vh - 24px); overflow-y: auto; overscroll-behavior: contain;
+    /* 长词 / 长数字也要换行，别把浮窗顶宽到屏幕外 */
+    overflow-wrap: anywhere; word-break: break-word;
 }
 .tooltip.show { opacity: 1; }
 .tooltip h4 { font-size: .82rem; color: var(--accent-2); margin-bottom: 4px; }
 .tooltip .kv { display: flex; justify-content: space-between; gap: 12px; }
+.tooltip .kv span { min-width: 0; }
 .tooltip .kv span:last-child { font-variant-numeric: tabular-nums; }
 .tooltip hr { border: none; border-top: 1px solid var(--border); margin: 5px 0; }
 .tooltip .dim { color: var(--text-dim); }
@@ -2609,6 +2612,11 @@ window.CHANGELOG_DATA = {
     "source": "CHANGELOG.md",
     "overview": [
         {
+            "version": "0.3.8",
+            "date": "2026-10-10",
+            "summary": "再修手机浮窗：高度按「实际可见高度」封顶（地址栏的 100vh 比可见区域高），长词强制换行"
+        },
+        {
             "version": "0.3.7",
             "date": "2026-10-10",
             "summary": "修复资源栏偶尔只剩名字不显示数量（刷新缓存与 DOM 补丁不同步）；修复手机上的说明浮窗会跑到屏幕外"
@@ -2675,6 +2683,18 @@ window.CHANGELOG_DATA = {
         }
     ],
     "versions": [
+        {
+            "version": "0.3.8",
+            "date": "2026-10-10",
+            "sections": [
+                {
+                    "title": "修复",
+                    "items": [
+                        "<b>手机上的说明浮窗还是可能显示不全<\/b>：手机浏览器的 <code>100vh<\/code> 是「地址栏收起时」的高度，比此刻实际能看见的区域更高， 而浮窗的高度上限用的正是 <code>calc(100vh - 24px)<\/code>——于是浮窗本身就可能比屏幕还高， 这时候无论怎么调整位置都会有一截露在外面（点卡片靠上的位置时露在下方、靠下时又会翻到上面， 看起来就像是「取决于点哪儿」）。 现在定位之前先按<b>实际可见高度<\/b>给浮窗封顶，再夹紧到视口之内； 另外在样式上让长词与长数字强制换行，避免内容把浮窗顶宽到屏幕外。"
+                    ]
+                }
+            ]
+        },
         {
             "version": "0.3.7",
             "date": "2026-10-10",
@@ -5896,9 +5916,15 @@ window.CHANGELOG_DATA = {
             tipEl.innerHTML = html;
         }
         tipEl.classList.add('show');
-        const rect = tipEl.getBoundingClientRect();
-        const vw = window.innerWidth, vh = window.innerHeight;
+        /* 手机浏览器里 100vh 是「地址栏收起时」的高度，比此刻实际能看见的区域高，
+           所以先按实际可见高度给浮窗封顶——否则浮窗本身就可能比屏幕还高，
+           再怎么挪位置都会有一截露在外面。 */
+        const vv = window.visualViewport;
+        const vw = Math.round(Math.min(window.innerWidth, vv && vv.width ? vv.width : Infinity));
+        const vh = Math.round(Math.min(window.innerHeight, vv && vv.height ? vv.height : Infinity));
         const pad = 8;
+        if (vh > 0) tipEl.style.maxHeight = Math.max(140, vh - pad * 2) + 'px';
+        const rect = tipEl.getBoundingClientRect();
         let left = x + 16;
         let top = y + 16;
         if (left + rect.width > vw - pad) left = x - rect.width - 12;

@@ -616,10 +616,13 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     border-radius: 9px; padding: 8px 10px; font-size: .75rem; line-height: 1.6;
     color: var(--text); box-shadow: var(--shadow-lg); opacity: 0; transition: opacity .12s;
     max-height: calc(100vh - 24px); overflow-y: auto; overscroll-behavior: contain;
+    /* 长词 / 长数字也要换行，别把浮窗顶宽到屏幕外 */
+    overflow-wrap: anywhere; word-break: break-word;
 }
 .tooltip.show { opacity: 1; }
 .tooltip h4 { font-size: .82rem; color: var(--accent-2); margin-bottom: 4px; }
 .tooltip .kv { display: flex; justify-content: space-between; gap: 12px; }
+.tooltip .kv span { min-width: 0; }
 .tooltip .kv span:last-child { font-variant-numeric: tabular-nums; }
 .tooltip hr { border: none; border-top: 1px solid var(--border); margin: 5px 0; }
 .tooltip .dim { color: var(--text-dim); }

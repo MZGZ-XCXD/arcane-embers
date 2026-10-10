@@ -33,9 +33,15 @@
             tipEl.innerHTML = html;
         }
         tipEl.classList.add('show');
-        const rect = tipEl.getBoundingClientRect();
-        const vw = window.innerWidth, vh = window.innerHeight;
+        /* 手机浏览器里 100vh 是「地址栏收起时」的高度，比此刻实际能看见的区域高，
+           所以先按实际可见高度给浮窗封顶——否则浮窗本身就可能比屏幕还高，
+           再怎么挪位置都会有一截露在外面。 */
+        const vv = window.visualViewport;
+        const vw = Math.round(Math.min(window.innerWidth, vv && vv.width ? vv.width : Infinity));
+        const vh = Math.round(Math.min(window.innerHeight, vv && vv.height ? vv.height : Infinity));
         const pad = 8;
+        if (vh > 0) tipEl.style.maxHeight = Math.max(140, vh - pad * 2) + 'px';
+        const rect = tipEl.getBoundingClientRect();
         let left = x + 16;
         let top = y + 16;
         if (left + rect.width > vw - pad) left = x - rect.width - 12;
