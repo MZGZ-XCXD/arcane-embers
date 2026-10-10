@@ -299,6 +299,13 @@ h1, h2, h3, .serif { font-family: "Palatino Linotype", "Songti SC", Georgia, ser
 .guide-list li { margin-bottom: 3px; }
 .auto-row { font-size: .8rem; line-height: 1.6; }
 .auto-row input[type="checkbox"] { margin-right: 4px; }
+.group-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.group-label { font-size: .78rem; color: var(--text-dim); }
+.group-no {
+    font-size: 1.02rem; letter-spacing: 1px; color: var(--accent-2);
+    font-variant-numeric: tabular-nums;
+    user-select: all; -webkit-user-select: all;
+}
 .cl-overview { margin: 8px 0 4px; }
 .cl-row {
     display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
@@ -651,14 +658,58 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 @media (max-width: 900px) {
     html, body { overflow: auto; }
     #app { height: auto; min-height: 100vh; }
-    .main-layout { flex-direction: column; }
-    .sidebar, .log-panel { flex: 1 1 auto; overflow: visible; }
-    .res-list { max-height: none; }
-    .brand-sub { display: none; }
+    @supports (min-height: 100dvh) { #app { min-height: 100dvh; } }
+
     .topbar { height: auto; padding: 8px 10px; flex-wrap: wrap; gap: 8px; }
-    .topbar-stats { order: 3; width: 100%; }
-    .card-grid { grid-template-columns: 1fr; }
+    .topbar-stats { order: 3; width: 100%; gap: 12px; flex-wrap: wrap; overflow: visible; }
+    .brand-sub { display: none; }
+    .brand h1 { font-size: 1.05rem; }
+
+    /* 手机上：先把「标签 + 内容」放最前，其次队列 / 事件，最后资源面板 */
+    .main-layout { flex-direction: column; flex-wrap: nowrap; padding: 8px; gap: 8px; }
+    /* 三栏都明确取 100% 宽：否则「横向滚动的标签栏」会把整列的最小宽度顶到
+       它内容的宽度（约 590px），页面右侧就被裁掉了 */
+    .main-content { order: 1; width: 100%; min-width: 0; }
+    .log-panel { order: 2; width: 100%; min-width: 0; flex: 0 0 auto; overflow: visible; }
+    .sidebar { order: 3; width: 100%; min-width: 0; flex: 0 0 auto; overflow: visible; }
+
+    /* 标签栏横向滚动，不再折成好几行，并吸在顶部方便随时切换 */
+    .tabs {
+        position: sticky; top: 0; z-index: 30;
+        width: 100%; min-width: 0;
+        flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden;
+        padding: 6px 0; gap: 4px;
+        background: var(--bg-app);
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar { height: 0; display: none; }
+    .tab { flex: 0 0 auto; padding: 7px 10px; font-size: .78rem; }
+
+    .card-grid, .card-grid.wide, .card-grid.buildings { grid-template-columns: 1fr; }
+    .res-list { max-height: none; }
     .log-list { max-height: 220px; }
+    .queue-list { max-height: none; }
+    .cl-box { max-height: none; }
+
+    /* 手指点得动 */
+    .btn { min-height: 34px; }
+    .btn.tiny { min-height: 30px; padding: 5px 9px; }
+    .icon-btn { width: 38px; height: 38px; font-size: 1.05rem; }
+
+    .modal { max-width: 92vw; max-height: 88vh; padding: 14px; }
+    .tooltip { max-width: 88vw; font-size: .78rem; }
+    .toast-root { bottom: 10px; }
+    .toast { font-size: .76rem; padding: 6px 12px; }
+}
+
+@media (max-width: 560px) {
+    .main-layout { padding: 6px; }
+    .card-head { flex-wrap: wrap; row-gap: 2px; }
+    .policy-val { min-width: 70px; }
+    .tabs { padding: 5px 0; }
+    .tab { padding: 6px 9px; font-size: .75rem; }
+    .group-no { font-size: .95rem; }
 }
 
 </style>
@@ -2558,6 +2609,11 @@ window.CHANGELOG_DATA = {
     "source": "CHANGELOG.md",
     "overview": [
         {
+            "version": "1.3.6",
+            "date": "2026-10-10",
+            "summary": "修复贸易把黄金/魔力卡成「0 且不动」；修复秘宝说明显示成 [object Object]；手机屏幕适配（单栏布局、标签栏横向滚动、手指点按看说明）；设置页加上玩家群"
+        },
+        {
             "version": "1.3.5",
             "date": "2026-10-09",
             "summary": "试炼完成对应重置后自动关闭（限制立刻解除），奖励永久保留；传承页补上试炼状态说明"
@@ -2614,6 +2670,27 @@ window.CHANGELOG_DATA = {
         }
     ],
     "versions": [
+        {
+            "version": "1.3.6",
+            "date": "2026-10-10",
+            "sections": [
+                {
+                    "title": "修复",
+                    "items": [
+                        "<b>贸易会把黄金与魔力「卡死」<\/b>：贸易页把「魔力 / 魔法知识 / 政策点」也列成了可交易资源， 但这三种<b>没有市场价<\/b>，于是价格算出 <code>NaN<\/code>，接着把产量与存量一起污染成 <code>NaN<\/code>—— 界面上因为 <code>NaN<\/code> 会被显示成 <code>0<\/code>，看起来就是「交易之后黄金和魔力归零，而且再也不动」。 现在：这三种资源不再出现在贸易页、也不能被交易；价格函数对没有市价的资源一律返回 0； 另外主循环里加了兜底，任何非有限数值都会被清回 0。<b>已经被卡住的存档会在下一帧自动恢复正常，不需要重新开始。<\/b>",
+                        "<b>秘宝说明显示为 <code>[object Object]<\/code><\/b>：秘宝的效果本身是一个数组，而描述函数是按「单个效果对象」遍历的， 于是把数组下标 0、1 当成了词条名，输出成「0 [object Object]」。现在描述函数同时支持单个效果与效果数组， 遇到没见过的复合词条也会逐项展开，不会再出现 <code>[object Object]<\/code>。",
+                        "<b>手机屏幕适配<\/b>：窄屏下重新排版—— 标签栏改成<b>一行横向滚动<\/b>（不再折成好几行）、内容区排在最前、队列与事件面板其次、资源面板收在最后； 卡片改为单栏、按钮加大到方便手指点按、弹窗与浮窗不超过屏幕宽度。 同时修掉一个很隐蔽的横向溢出：横向滚动的标签栏会把整列的最小宽度顶到约 590px， 导致窄屏下右侧文字被裁掉，现在已经收住。"
+                    ]
+                },
+                {
+                    "title": "新增",
+                    "items": [
+                        "<b>设置页新增「玩家群」<\/b>：QQ 群 <b>1126911018<\/b>，旁边有「复制群号」按钮。",
+                        "触屏设备上<b>手指点一下卡片或资源<\/b>也会弹出说明浮窗（原来只能靠鼠标悬停），点按后 5 秒自动收起； 滚动屏幕不会误触发。"
+                    ]
+                }
+            ]
+        },
         {
             "version": "1.3.5",
             "date": "2026-10-09",
@@ -3121,6 +3198,7 @@ window.CHANGELOG_DATA = {
                 const r = GameState.resources[k];
                 if (!r) continue;
                 r.amount = Math.max(0, r.amount + map[k]);
+                if (!isFinite(r.amount)) r.amount = 0;      // 兜底：绝不让 NaN 留在存量里
                 const cfg = RESOURCES_CONFIG[k];
                 if (!cfg.prestige && r.amount > r.cap) r.amount = r.cap;
             }
@@ -3838,8 +3916,17 @@ window.CHANGELOG_DATA = {
 
     function price(state, res) {
         const cfg = RESOURCES_CONFIG[res];
+        /* 魔力 / 魔法知识 / 政策点这类资源没有市场价（value 未定义），
+           一律返回 0：否则会算出 NaN，把产量和存量污染成 NaN，看起来就是「归零且永远不动」。 */
+        if (!cfg || !(cfg.value > 0)) return 0;
         const heat = state.market.heat[res] === undefined ? 1 : state.market.heat[res];
         return cfg.value * heat;
+    }
+
+    /* 这种资源能不能交易（有正的市场价） */
+    function tradeable(res) {
+        const cfg = RESOURCES_CONFIG[res];
+        return !!(cfg && !cfg.prestige && cfg.value > 0);
     }
 
     /* 计算各资源的实际贸易流量（资源/日） */
@@ -3857,6 +3944,7 @@ window.CHANGELOG_DATA = {
             if (p <= 0) continue;
             const share = Utils.clamp(m.level, 1, 10) / 10;
             let rate = vol * share / p;
+            if (!isFinite(rate)) continue;
 
             if (m.mode === 'buy') {
                 /* 黄金不足时按比例缩减 */
@@ -3866,10 +3954,11 @@ window.CHANGELOG_DATA = {
                     if (costPerDay > available) rate = Math.max(0, available / p);
                 }
                 if (gold.amount <= 1e-6) rate = 0;
+                if (!isFinite(rate)) rate = 0;
                 if (rate > 0) out[res] = (out[res] || 0) + rate;
             } else if (m.mode === 'sell') {
                 const stock = state.resources[res].amount;
-                if (stock <= 1e-6) continue;
+                if (!(stock > 1e-6)) continue;
                 const allowed = stock / 2;
                 if (rate > allowed) rate = allowed;
                 if (rate > 0) out[res] = (out[res] || 0) - rate;
@@ -3888,6 +3977,7 @@ window.CHANGELOG_DATA = {
             if (rate > 0) flow -= rate * p;              // 买入花金
             else flow += -rate * p * SELL_RATIO;         // 卖出得金
         }
+        if (!isFinite(flow)) flow = 0;
         return flow;
     }
 
@@ -3938,7 +4028,9 @@ window.CHANGELOG_DATA = {
         const vol = volume(state);
         if (vol <= 0) return { ok: false, msg: '需要至少一座「集市」才能进行贸易。' };
         const p = price(state, res);
+        if (!(p > 0)) return { ok: false, msg: '「' + res + '」没有市场价，不能交易。' };
         const amount = vol / p;
+        if (!isFinite(amount) || amount <= 0) return { ok: false, msg: '「' + res + '」暂时无法交易。' };
         if (dir === 'buy') {
             const cost = amount * p;
             if (state.resources['黄金'].amount < cost) return { ok: false, msg: '黄金不足，无法买入 ' + res + '。' };
@@ -3959,7 +4051,7 @@ window.CHANGELOG_DATA = {
     }
 
     window.TradeEngine = {
-        volume, price, rates, goldFlow, applyToProduction, tick,
+        volume, price, tradeable, rates, goldFlow, applyToProduction, tick,
         setMode, setLevel, tradeOnce, SELL_RATIO,
     };
 })();
@@ -4110,25 +4202,50 @@ window.CHANGELOG_DATA = {
         state.artifacts.inventory.splice(idx, 1);
     }
 
-    /* 效果文字描述 */
-    function describe(eff) {
+    /* 效果文字描述
+       传入的既可能是单个效果对象，也可能是效果数组（秘宝的 art.effects 就是数组）——
+       两种都支持，否则会按数组下标遍历，输出成「0 [object Object]」。 */
+    function describe(effects) {
+        const list = Array.isArray(effects) ? effects : [effects];
         const out = [];
-        for (const key in eff) {
-            const v = eff[key];
-            if (BUILDINGS_CONFIG[key] && typeof v === 'object') {
-                if (typeof v.prod === 'number') out.push(key + ' 产出 ' + Utils.fmtPct(v.prod, 1));
-                if (typeof v.cons === 'number') out.push(key + ' 消耗 ' + Utils.fmtPct(v.cons, 1));
-                if (typeof v.cap === 'number') out.push(key + ' 上限 ' + Utils.fmtPct(v.cap, 1));
-            } else if (key === 'resourceProd') {
-                for (const r in v) out.push(r + ' 产出 ' + Utils.fmtPct(v[r], 1));
-            } else if (key === 'globalProd') {
-                out.push('所有建筑产出 ' + Utils.fmtPct(v, 1));
-            } else if (key === 'happiness') {
-                out.push('民望 ' + (v >= 0 ? '+' : '') + Utils.fmtNum(v, 0));
-            } else if (key === 'speed') {
-                out.push('世界流速 ' + Utils.fmtPct(v, 1));
-            } else {
-                out.push(key + ' ' + v);
+        for (const eff of list) {
+            if (!eff || typeof eff !== 'object') continue;
+            for (const key in eff) {
+                const v = eff[key];
+
+                if (typeof v === 'number') {
+                    if (key === 'happiness') out.push('民望 ' + (v >= 0 ? '+' : '') + Utils.fmtNum(v, 0));
+                    else if (key === 'globalProd') out.push('所有建筑产出 ' + Utils.fmtPct(v, 1));
+                    else if (key === 'globalCost') out.push('成本增长率 ' + Utils.fmtPct(v, 1));
+                    else if (key === 'speed') out.push('世界流速 ' + Utils.fmtPct(v, 1));
+                    else if (key === 'resourceProd') out.push('全局产出 ' + Utils.fmtPct(v, 1));
+                    else out.push(key + ' ' + Utils.fmtPct(v, 1));
+                    continue;
+                }
+
+                if (key === 'resourceProd') {
+                    for (const r in v) out.push(r + ' 产出 ' + Utils.fmtPct(v[r], 1));
+                    continue;
+                }
+
+                if (v && typeof v === 'object') {
+                    /* 以建筑 / 资源为目标的词条：{ 目标: { prod|cons|cap } } */
+                    const bits = [];
+                    if (typeof v.prod === 'number') bits.push('产出 ' + Utils.fmtPct(v.prod, 1));
+                    if (typeof v.cons === 'number') bits.push('消耗 ' + Utils.fmtPct(v.cons, 1));
+                    if (typeof v.cap === 'number') bits.push('上限 ' + Utils.fmtPct(v.cap, 1));
+                    if (bits.length) { out.push(key + ' ' + bits.join('，')); continue; }
+                    /* 其它没见过的复合词条：逐项展开，绝不打印 [object Object] */
+                    const inner = [];
+                    for (const k2 in v) {
+                        const v2 = v[k2];
+                        inner.push(k2 + ' ' + (typeof v2 === 'number' ? Utils.fmtPct(v2, 1) : String(v2)));
+                    }
+                    out.push(key + '：' + (inner.join('，') || '—'));
+                    continue;
+                }
+
+                out.push(key + ' ' + String(v));
             }
         }
         return out;
@@ -5627,6 +5744,10 @@ window.CHANGELOG_DATA = {
 
         for (const k in state.resources) {
             const r = state.resources[k];
+            /* 兜底自愈：历史上被 NaN 污染过的存档（例如拿没有市价的资源去交易）
+               会在这里被清回 0，玩家不必重新开始。 */
+            if (!isFinite(r.amount)) r.amount = 0;
+            if (!isFinite(r.production)) r.production = 0;
             if (Math.abs(r.production) < 1e-12) continue;
             r.amount += r.production * gdt;
             if (RESOURCES_CONFIG[k].prestige) {
@@ -5769,7 +5890,33 @@ window.CHANGELOG_DATA = {
     function hideTip() { tipEl.classList.remove('show'); }
 
     function bindTips(root) {
+        /* 触屏设备没有 hover：手指点一下就把浮窗带出来，几秒后自动收起
+           （滚动不算点击，所以要用按下与抬起的位移判断） */
+        let touchStart = null;
+        let touchTip = false;
+
+        root.addEventListener('pointerdown', e => {
+            if (e.pointerType === 'touch') touchStart = { x: e.clientX, y: e.clientY };
+        }, true);
+
+        root.addEventListener('pointerup', e => {
+            if (e.pointerType !== 'touch') return;
+            const moved = touchStart && (Math.abs(e.clientX - touchStart.x) + Math.abs(e.clientY - touchStart.y) > 12);
+            touchStart = null;
+            if (moved) return;                                   // 这是滚动，不是点击
+            const target = e.target.closest ? e.target.closest('[data-tip]') : null;
+            if (!target || !tipProvider) { hideTip(); tipEl._target = null; touchTip = false; return; }
+            const html = tipProvider(target.getAttribute('data-tip'));
+            if (!html) return;
+            tipEl._target = target;
+            touchTip = true;
+            showTip(html, e.clientX, e.clientY);
+            clearTimeout(tipEl._touchTimer);
+            tipEl._touchTimer = setTimeout(() => { hideTip(); tipEl._target = null; touchTip = false; }, 5000);
+        }, true);
+
         root.addEventListener('mouseover', e => {
+            if (touchTip) return;                                 // 别让触屏合成的 mouse 事件顶掉浮窗
             const target = e.target.closest ? e.target.closest('[data-tip]') : null;
             if (!target || !tipProvider) return;
             const html = tipProvider(target.getAttribute('data-tip'));
@@ -5778,12 +5925,14 @@ window.CHANGELOG_DATA = {
             showTip(html, e.clientX, e.clientY);
         });
         root.addEventListener('mousemove', e => {
+            if (touchTip) return;
             if (!tipEl.classList.contains('show') || !tipEl._target) return;
             const target = e.target.closest ? e.target.closest('[data-tip]') : null;
             if (target !== tipEl._target) { hideTip(); tipEl._target = null; return; }
             showTip(tipEl.innerHTML, e.clientX, e.clientY);
         });
         root.addEventListener('mouseout', e => {
+            if (touchTip) return;
             const target = e.target.closest ? e.target.closest('[data-tip]') : null;
             if (target && target === tipEl._target) { hideTip(); tipEl._target = null; }
         });
@@ -7149,7 +7298,8 @@ window.CHANGELOG_DATA = {
         const s = GameState;
         const cfg = RESOURCES_CONFIG[res];
         const m = s.market.resources[res];
-        if (!m || !s.resources[res].visible) return '';
+        /* 没有市场价的资源（魔力 / 魔法知识 / 政策点）不参与贸易，也不在这里列出 */
+        if (!m || !s.resources[res].visible || !TradeEngine.tradeable(res)) return '';
         const heat = s.market.heat[res] || 1;
         const price = cfg.value * heat;
         const rate = (s.market.lastRates || {})[res] || 0;
@@ -7194,7 +7344,9 @@ window.CHANGELOG_DATA = {
         html += '<div class="row"><span class="k">黄金结算</span><span class="v ' + G.rateClass(s.market.lastGoldFlow || 0) + '">' + G.rate(s.market.lastGoldFlow || 0) + ' / 日</span></div>';
         html += '</div>';
         if (!markets) return html + '<div class="hint">还没有集市：研究「贸易学」并建造第一座集市后即可开启贸易。</div>';
-        const rows = Object.keys(RESOURCES_CONFIG).filter(r => s.resources[r].visible && s.market.resources[r]).map(marketRow).join('');
+        const rows = Object.keys(RESOURCES_CONFIG)
+            .filter(r => s.resources[r].visible && s.market.resources[r] && TradeEngine.tradeable(r))
+            .map(marketRow).join('');
         return html + '<div class="card-grid wide">' + rows + '</div>';
     }
 
@@ -7529,6 +7681,17 @@ window.CHANGELOG_DATA = {
     }
 
     /* ---------------- 更新日志 ---------------- */
+    /* ---------------- 玩家群 ---------------- */
+    function groupSection() {
+        return '<div class="section-title">玩家群</div><div class="settings-card">' +
+            '<div class="hint">遇到 Bug、想提建议，或者只是想找人聊聊这游戏，都欢迎加群：</div>' +
+            '<div class="group-row mt6">' +
+            '<span class="group-label">QQ 群</span>' +
+            '<b class="group-no">1126911018</b>' +
+            '<button class="btn tiny" data-act="copyGroup">复制群号</button>' +
+            '</div></div>';
+    }
+
     function changelogSection() {
         const d = window.CHANGELOG_DATA;
         if (!d || !d.versions || !d.versions.length) {
@@ -7571,6 +7734,7 @@ window.CHANGELOG_DATA = {
         html += saveSection();
         html += runSection();
         html += guideSection();
+        html += groupSection();
         html += changelogSection();
         return html;
     }
@@ -7681,6 +7845,32 @@ window.CHANGELOG_DATA = {
     }
 
     window.UI.render = render;
+
+    /* ---------------- 复制到剪贴板 ---------------- */
+    function copyText(text, okMsg) {
+        const ok = () => G.toast(okMsg, 'gold');
+        const fallback = () => {
+            try {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.top = '-1000px';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                ok();
+            } catch (e) {
+                G.toast('复制失败，请手动记下：' + text, 'bad');
+            }
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(ok, fallback);
+        } else {
+            fallback();
+        }
+    }
 
     /* ---------------- 指针状态 ---------------- */
     function beginPointer() { pointerDown = true; }
@@ -7843,6 +8033,9 @@ window.CHANGELOG_DATA = {
                 if (r.ok) { applyTheme(); G.closeModal(); }
                 break;
             }
+            case 'copyGroup':
+                copyText('1126911018', '已复制 QQ 群号：1126911018');
+                break;
             case 'closemodal':
                 G.closeModal();
                 break;

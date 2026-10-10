@@ -15,8 +15,17 @@
 
     function price(state, res) {
         const cfg = RESOURCES_CONFIG[res];
+        /* 魔力 / 魔法知识 / 政策点这类资源没有市场价（value 未定义），
+           一律返回 0：否则会算出 NaN，把产量和存量污染成 NaN，看起来就是「归零且永远不动」。 */
+        if (!cfg || !(cfg.value > 0)) return 0;
         const heat = state.market.heat[res] === undefined ? 1 : state.market.heat[res];
         return cfg.value * heat;
+    }
+
+    /* 这种资源能不能交易（有正的市场价） */
+    function tradeable(res) {
+        const cfg = RESOURCES_CONFIG[res];
+        return !!(cfg && !cfg.prestige && cfg.value > 0);
     }
 
     /* 计算各资源的实际贸易流量（资源/日） */
@@ -34,6 +43,7 @@
             if (p <= 0) continue;
             const share = Utils.clamp(m.level, 1, 10) / 10;
             let rate = vol * share / p;
+            if (!isFinite(rate)) continue;
 
             if (m.mode === 'buy') {
                 /* 黄金不足时按比例缩减 */
@@ -43,10 +53,11 @@
                     if (costPerDay > available) rate = Math.max(0, available / p);
                 }
                 if (gold.amount <= 1e-6) rate = 0;
+                if (!isFinite(rate)) rate = 0;
                 if (rate > 0) out[res] = (out[res] || 0) + rate;
             } else if (m.mode === 'sell') {
                 const stock = state.resources[res].amount;
-                if (stock <= 1e-6) continue;
+                if (!(stock > 1e-6)) continue;
                 const allowed = stock / 2;
                 if (rate > allowed) rate = allowed;
                 if (rate > 0) out[res] = (out[res] || 0) - rate;
@@ -65,6 +76,7 @@
             if (rate > 0) flow -= rate * p;              // 买入花金
             else flow += -rate * p * SELL_RATIO;         // 卖出得金
         }
+        if (!isFinite(flow)) flow = 0;
         return flow;
     }
 
@@ -115,7 +127,9 @@
         const vol = volume(state);
         if (vol <= 0) return { ok: false, msg: '需要至少一座「集市」才能进行贸易。' };
         const p = price(state, res);
+        if (!(p > 0)) return { ok: false, msg: '「' + res + '」没有市场价，不能交易。' };
         const amount = vol / p;
+        if (!isFinite(amount) || amount <= 0) return { ok: false, msg: '「' + res + '」暂时无法交易。' };
         if (dir === 'buy') {
             const cost = amount * p;
             if (state.resources['黄金'].amount < cost) return { ok: false, msg: '黄金不足，无法买入 ' + res + '。' };
@@ -136,7 +150,7 @@
     }
 
     window.TradeEngine = {
-        volume, price, rates, goldFlow, applyToProduction, tick,
+        volume, price, tradeable, rates, goldFlow, applyToProduction, tick,
         setMode, setLevel, tradeOnce, SELL_RATIO,
     };
 })();

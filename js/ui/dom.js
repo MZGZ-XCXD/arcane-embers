@@ -45,7 +45,33 @@
     function hideTip() { tipEl.classList.remove('show'); }
 
     function bindTips(root) {
+        /* 触屏设备没有 hover：手指点一下就把浮窗带出来，几秒后自动收起
+           （滚动不算点击，所以要用按下与抬起的位移判断） */
+        let touchStart = null;
+        let touchTip = false;
+
+        root.addEventListener('pointerdown', e => {
+            if (e.pointerType === 'touch') touchStart = { x: e.clientX, y: e.clientY };
+        }, true);
+
+        root.addEventListener('pointerup', e => {
+            if (e.pointerType !== 'touch') return;
+            const moved = touchStart && (Math.abs(e.clientX - touchStart.x) + Math.abs(e.clientY - touchStart.y) > 12);
+            touchStart = null;
+            if (moved) return;                                   // 这是滚动，不是点击
+            const target = e.target.closest ? e.target.closest('[data-tip]') : null;
+            if (!target || !tipProvider) { hideTip(); tipEl._target = null; touchTip = false; return; }
+            const html = tipProvider(target.getAttribute('data-tip'));
+            if (!html) return;
+            tipEl._target = target;
+            touchTip = true;
+            showTip(html, e.clientX, e.clientY);
+            clearTimeout(tipEl._touchTimer);
+            tipEl._touchTimer = setTimeout(() => { hideTip(); tipEl._target = null; touchTip = false; }, 5000);
+        }, true);
+
         root.addEventListener('mouseover', e => {
+            if (touchTip) return;                                 // 别让触屏合成的 mouse 事件顶掉浮窗
             const target = e.target.closest ? e.target.closest('[data-tip]') : null;
             if (!target || !tipProvider) return;
             const html = tipProvider(target.getAttribute('data-tip'));
@@ -54,12 +80,14 @@
             showTip(html, e.clientX, e.clientY);
         });
         root.addEventListener('mousemove', e => {
+            if (touchTip) return;
             if (!tipEl.classList.contains('show') || !tipEl._target) return;
             const target = e.target.closest ? e.target.closest('[data-tip]') : null;
             if (target !== tipEl._target) { hideTip(); tipEl._target = null; return; }
             showTip(tipEl.innerHTML, e.clientX, e.clientY);
         });
         root.addEventListener('mouseout', e => {
+            if (touchTip) return;
             const target = e.target.closest ? e.target.closest('[data-tip]') : null;
             if (target && target === tipEl._target) { hideTip(); tipEl._target = null; }
         });

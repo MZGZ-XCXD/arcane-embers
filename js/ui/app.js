@@ -99,6 +99,32 @@
 
     window.UI.render = render;
 
+    /* ---------------- 复制到剪贴板 ---------------- */
+    function copyText(text, okMsg) {
+        const ok = () => G.toast(okMsg, 'gold');
+        const fallback = () => {
+            try {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.top = '-1000px';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                ok();
+            } catch (e) {
+                G.toast('复制失败，请手动记下：' + text, 'bad');
+            }
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(ok, fallback);
+        } else {
+            fallback();
+        }
+    }
+
     /* ---------------- 指针状态 ---------------- */
     function beginPointer() { pointerDown = true; }
     function endPointer() {
@@ -260,6 +286,9 @@
                 if (r.ok) { applyTheme(); G.closeModal(); }
                 break;
             }
+            case 'copyGroup':
+                copyText('1126911018', '已复制 QQ 群号：1126911018');
+                break;
             case 'closemodal':
                 G.closeModal();
                 break;

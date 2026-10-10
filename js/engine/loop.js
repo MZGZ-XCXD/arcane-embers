@@ -33,6 +33,10 @@
 
         for (const k in state.resources) {
             const r = state.resources[k];
+            /* 兜底自愈：历史上被 NaN 污染过的存档（例如拿没有市价的资源去交易）
+               会在这里被清回 0，玩家不必重新开始。 */
+            if (!isFinite(r.amount)) r.amount = 0;
+            if (!isFinite(r.production)) r.production = 0;
             if (Math.abs(r.production) < 1e-12) continue;
             r.amount += r.production * gdt;
             if (RESOURCES_CONFIG[k].prestige) {

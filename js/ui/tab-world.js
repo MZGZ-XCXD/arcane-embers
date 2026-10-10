@@ -8,7 +8,8 @@
         const s = GameState;
         const cfg = RESOURCES_CONFIG[res];
         const m = s.market.resources[res];
-        if (!m || !s.resources[res].visible) return '';
+        /* 没有市场价的资源（魔力 / 魔法知识 / 政策点）不参与贸易，也不在这里列出 */
+        if (!m || !s.resources[res].visible || !TradeEngine.tradeable(res)) return '';
         const heat = s.market.heat[res] || 1;
         const price = cfg.value * heat;
         const rate = (s.market.lastRates || {})[res] || 0;
@@ -53,7 +54,9 @@
         html += '<div class="row"><span class="k">黄金结算</span><span class="v ' + G.rateClass(s.market.lastGoldFlow || 0) + '">' + G.rate(s.market.lastGoldFlow || 0) + ' / 日</span></div>';
         html += '</div>';
         if (!markets) return html + '<div class="hint">还没有集市：研究「贸易学」并建造第一座集市后即可开启贸易。</div>';
-        const rows = Object.keys(RESOURCES_CONFIG).filter(r => s.resources[r].visible && s.market.resources[r]).map(marketRow).join('');
+        const rows = Object.keys(RESOURCES_CONFIG)
+            .filter(r => s.resources[r].visible && s.market.resources[r] && TradeEngine.tradeable(r))
+            .map(marketRow).join('');
         return html + '<div class="card-grid wide">' + rows + '</div>';
     }
 

@@ -158,6 +158,7 @@
                 const r = GameState.resources[k];
                 if (!r) continue;
                 r.amount = Math.max(0, r.amount + map[k]);
+                if (!isFinite(r.amount)) r.amount = 0;      // 兜底：绝不让 NaN 留在存量里
                 const cfg = RESOURCES_CONFIG[k];
                 if (!cfg.prestige && r.amount > r.cap) r.amount = r.cap;
             }

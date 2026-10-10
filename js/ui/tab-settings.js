@@ -81,6 +81,17 @@
     }
 
     /* ---------------- 更新日志 ---------------- */
+    /* ---------------- 玩家群 ---------------- */
+    function groupSection() {
+        return '<div class="section-title">玩家群</div><div class="settings-card">' +
+            '<div class="hint">遇到 Bug、想提建议，或者只是想找人聊聊这游戏，都欢迎加群：</div>' +
+            '<div class="group-row mt6">' +
+            '<span class="group-label">QQ 群</span>' +
+            '<b class="group-no">1126911018</b>' +
+            '<button class="btn tiny" data-act="copyGroup">复制群号</button>' +
+            '</div></div>';
+    }
+
     function changelogSection() {
         const d = window.CHANGELOG_DATA;
         if (!d || !d.versions || !d.versions.length) {
@@ -123,6 +134,7 @@
         html += saveSection();
         html += runSection();
         html += guideSection();
+        html += groupSection();
         html += changelogSection();
         return html;
     }

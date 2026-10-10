@@ -290,6 +290,13 @@ h1, h2, h3, .serif { font-family: "Palatino Linotype", "Songti SC", Georgia, ser
 .guide-list li { margin-bottom: 3px; }
 .auto-row { font-size: .8rem; line-height: 1.6; }
 .auto-row input[type="checkbox"] { margin-right: 4px; }
+.group-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.group-label { font-size: .78rem; color: var(--text-dim); }
+.group-no {
+    font-size: 1.02rem; letter-spacing: 1px; color: var(--accent-2);
+    font-variant-numeric: tabular-nums;
+    user-select: all; -webkit-user-select: all;
+}
 .cl-overview { margin: 8px 0 4px; }
 .cl-row {
     display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
@@ -642,12 +649,56 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 @media (max-width: 900px) {
     html, body { overflow: auto; }
     #app { height: auto; min-height: 100vh; }
-    .main-layout { flex-direction: column; }
-    .sidebar, .log-panel { flex: 1 1 auto; overflow: visible; }
-    .res-list { max-height: none; }
-    .brand-sub { display: none; }
+    @supports (min-height: 100dvh) { #app { min-height: 100dvh; } }
+
     .topbar { height: auto; padding: 8px 10px; flex-wrap: wrap; gap: 8px; }
-    .topbar-stats { order: 3; width: 100%; }
-    .card-grid { grid-template-columns: 1fr; }
+    .topbar-stats { order: 3; width: 100%; gap: 12px; flex-wrap: wrap; overflow: visible; }
+    .brand-sub { display: none; }
+    .brand h1 { font-size: 1.05rem; }
+
+    /* 手机上：先把「标签 + 内容」放最前，其次队列 / 事件，最后资源面板 */
+    .main-layout { flex-direction: column; flex-wrap: nowrap; padding: 8px; gap: 8px; }
+    /* 三栏都明确取 100% 宽：否则「横向滚动的标签栏」会把整列的最小宽度顶到
+       它内容的宽度（约 590px），页面右侧就被裁掉了 */
+    .main-content { order: 1; width: 100%; min-width: 0; }
+    .log-panel { order: 2; width: 100%; min-width: 0; flex: 0 0 auto; overflow: visible; }
+    .sidebar { order: 3; width: 100%; min-width: 0; flex: 0 0 auto; overflow: visible; }
+
+    /* 标签栏横向滚动，不再折成好几行，并吸在顶部方便随时切换 */
+    .tabs {
+        position: sticky; top: 0; z-index: 30;
+        width: 100%; min-width: 0;
+        flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden;
+        padding: 6px 0; gap: 4px;
+        background: var(--bg-app);
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar { height: 0; display: none; }
+    .tab { flex: 0 0 auto; padding: 7px 10px; font-size: .78rem; }
+
+    .card-grid, .card-grid.wide, .card-grid.buildings { grid-template-columns: 1fr; }
+    .res-list { max-height: none; }
     .log-list { max-height: 220px; }
+    .queue-list { max-height: none; }
+    .cl-box { max-height: none; }
+
+    /* 手指点得动 */
+    .btn { min-height: 34px; }
+    .btn.tiny { min-height: 30px; padding: 5px 9px; }
+    .icon-btn { width: 38px; height: 38px; font-size: 1.05rem; }
+
+    .modal { max-width: 92vw; max-height: 88vh; padding: 14px; }
+    .tooltip { max-width: 88vw; font-size: .78rem; }
+    .toast-root { bottom: 10px; }
+    .toast { font-size: .76rem; padding: 6px 12px; }
+}
+
+@media (max-width: 560px) {
+    .main-layout { padding: 6px; }
+    .card-head { flex-wrap: wrap; row-gap: 2px; }
+    .policy-val { min-width: 70px; }
+    .tabs { padding: 5px 0; }
+    .tab { padding: 6px 9px; font-size: .75rem; }
+    .group-no { font-size: .95rem; }
 }

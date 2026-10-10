@@ -141,25 +141,50 @@
         state.artifacts.inventory.splice(idx, 1);
     }
 
-    /* 效果文字描述 */
-    function describe(eff) {
+    /* 效果文字描述
+       传入的既可能是单个效果对象，也可能是效果数组（秘宝的 art.effects 就是数组）——
+       两种都支持，否则会按数组下标遍历，输出成「0 [object Object]」。 */
+    function describe(effects) {
+        const list = Array.isArray(effects) ? effects : [effects];
         const out = [];
-        for (const key in eff) {
-            const v = eff[key];
-            if (BUILDINGS_CONFIG[key] && typeof v === 'object') {
-                if (typeof v.prod === 'number') out.push(key + ' 产出 ' + Utils.fmtPct(v.prod, 1));
-                if (typeof v.cons === 'number') out.push(key + ' 消耗 ' + Utils.fmtPct(v.cons, 1));
-                if (typeof v.cap === 'number') out.push(key + ' 上限 ' + Utils.fmtPct(v.cap, 1));
-            } else if (key === 'resourceProd') {
-                for (const r in v) out.push(r + ' 产出 ' + Utils.fmtPct(v[r], 1));
-            } else if (key === 'globalProd') {
-                out.push('所有建筑产出 ' + Utils.fmtPct(v, 1));
-            } else if (key === 'happiness') {
-                out.push('民望 ' + (v >= 0 ? '+' : '') + Utils.fmtNum(v, 0));
-            } else if (key === 'speed') {
-                out.push('世界流速 ' + Utils.fmtPct(v, 1));
-            } else {
-                out.push(key + ' ' + v);
+        for (const eff of list) {
+            if (!eff || typeof eff !== 'object') continue;
+            for (const key in eff) {
+                const v = eff[key];
+
+                if (typeof v === 'number') {
+                    if (key === 'happiness') out.push('民望 ' + (v >= 0 ? '+' : '') + Utils.fmtNum(v, 0));
+                    else if (key === 'globalProd') out.push('所有建筑产出 ' + Utils.fmtPct(v, 1));
+                    else if (key === 'globalCost') out.push('成本增长率 ' + Utils.fmtPct(v, 1));
+                    else if (key === 'speed') out.push('世界流速 ' + Utils.fmtPct(v, 1));
+                    else if (key === 'resourceProd') out.push('全局产出 ' + Utils.fmtPct(v, 1));
+                    else out.push(key + ' ' + Utils.fmtPct(v, 1));
+                    continue;
+                }
+
+                if (key === 'resourceProd') {
+                    for (const r in v) out.push(r + ' 产出 ' + Utils.fmtPct(v[r], 1));
+                    continue;
+                }
+
+                if (v && typeof v === 'object') {
+                    /* 以建筑 / 资源为目标的词条：{ 目标: { prod|cons|cap } } */
+                    const bits = [];
+                    if (typeof v.prod === 'number') bits.push('产出 ' + Utils.fmtPct(v.prod, 1));
+                    if (typeof v.cons === 'number') bits.push('消耗 ' + Utils.fmtPct(v.cons, 1));
+                    if (typeof v.cap === 'number') bits.push('上限 ' + Utils.fmtPct(v.cap, 1));
+                    if (bits.length) { out.push(key + ' ' + bits.join('，')); continue; }
+                    /* 其它没见过的复合词条：逐项展开，绝不打印 [object Object] */
+                    const inner = [];
+                    for (const k2 in v) {
+                        const v2 = v[k2];
+                        inner.push(k2 + ' ' + (typeof v2 === 'number' ? Utils.fmtPct(v2, 1) : String(v2)));
+                    }
+                    out.push(key + '：' + (inner.join('，') || '—'));
+                    continue;
+                }
+
+                out.push(key + ' ' + String(v));
             }
         }
         return out;
