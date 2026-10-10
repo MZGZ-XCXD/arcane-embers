@@ -290,6 +290,10 @@ h1, h2, h3, .serif { font-family: "Palatino Linotype", "Songti SC", Georgia, ser
 .guide-list li { margin-bottom: 3px; }
 .auto-row { font-size: .8rem; line-height: 1.6; }
 .auto-row input[type="checkbox"] { margin-right: 4px; }
+.hero-beyond {
+    font-size: .7rem; color: var(--accent-2); margin-top: 2px;
+    border-left: 2px solid var(--accent-2); padding-left: 6px;
+}
 .group-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .group-label { font-size: .78rem; color: var(--text-dim); }
 .group-no {

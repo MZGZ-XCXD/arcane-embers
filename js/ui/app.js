@@ -50,7 +50,7 @@
         out.expedition = regions;
         if (s.techs['召唤法阵'] && s.techs['召唤法阵'].researched && s.heroes) {
             const p = s.heroes.pity;
-            const ready = (p.A >= GACHA_CONFIG.pity.A || p.S >= GACHA_CONFIG.pity.S || p.EX >= GACHA_CONFIG.pity.EX);
+            const ready = (p.A >= GACHA_CONFIG.pity.A || p.S >= GACHA_CONFIG.pity.S || p.SS >= GACHA_CONFIG.pity.SS);
             out.summon = ready ? 1 : 0;
         }
         return out;

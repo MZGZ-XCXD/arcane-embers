@@ -59,8 +59,10 @@
         s => s.heroes && s.heroes.pulls >= 1, { happiness: 10 }, '民望 +10');
     A('幸运之子', '召唤到第一位 S 级英雄。',
         s => s.heroes && (s.heroes.byRarity.S || 0) >= 1, { luck: 0.1 }, '召唤运气 +0.1');
-    A('神话降临', '召唤到第一位 EX 级英雄。',
-        s => s.heroes && (s.heroes.byRarity.EX || 0) >= 1, { heroPower: 0.15 }, '英雄效果 +15%');
+    A('神话降临', '召唤到第一位 SS 级英雄。',
+        s => s.heroes && (s.heroes.byRarity.SS || 0) >= 1, { heroPower: 0.15 }, '英雄效果 +15%');
+    A('超越时间线', '召唤到一位跨越时间线的 EX 级英雄（没有保底，全凭运气）。',
+        s => s.heroes && (s.heroes.byRarity.EX || 0) >= 1, { heroPower: 0.5, luck: 0.2 }, '英雄效果 +50%，召唤运气 +0.2');
     A('英雄殿堂', '收集 15 位不同的英雄。',
         s => s.heroes && Object.keys(s.heroes.owned).length >= 15, { heroPower: 0.1 }, '英雄效果 +10%');
     A('工坊大师', '把建造队列扩展到 8 个槽位。',

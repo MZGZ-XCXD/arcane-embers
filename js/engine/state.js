@@ -66,13 +66,18 @@
 
     /* 英雄与召唤的初始状态 */
     function freshHeroes() {
+        const pity = {};
+        for (const k in GACHA_CONFIG.pity) pity[k] = 0;      // 保底档位随配置走（EX 没有保底，所以不在里面）
+        const byRarity = {};
+        for (const k in HERO_RARITIES) byRarity[k] = 0;      // 累加统计随稀有度配置走
         return {
             owned: {},                          // 英雄 id → 觉醒等级（0~5）
-            pity: { A: 0, S: 0, EX: 0 },        // 距离上次获得该档位以上的抽数
+            pity: pity,                         // 距离上次获得该档位以上的抽数
             pulls: 0,
-            byRarity: { C: 0, B: 0, A: 0, S: 0, EX: 0 },
+            byRarity: byRarity,
             dupRelics: 0,
             history: [],
+            rarityMigrated: true,               // 新档不需要做「旧 EX → SS」的迁移
         };
     }
 

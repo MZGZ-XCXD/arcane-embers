@@ -3,7 +3,7 @@
     const U = window.Utils;
     const G = window.UI;
 
-    const RARITY_ORDER = ['EX', 'S', 'A', 'B', 'C'];
+    const RARITY_ORDER = ['EX', 'SS', 'S', 'A', 'B', 'C'];
 
     function rarityTag(rarity) {
         const r = HERO_RARITIES[rarity];
@@ -42,6 +42,7 @@
             '<span class="hero-cat">' + cat.icon + ' ' + G.esc(cat.key) + '</span>' +
             (has ? '<span class="hero-awaken">觉醒 ' + owned + '</span>' : '') + '</div>';
         html += '<div class="hero-name">' + G.esc(hero.name) + '</div>';
+        if (r.beyond) html += '<div class="hero-beyond">跨越时间线：抽到即永久保留，重置也不会失去</div>';
         html += '<div class="hero-desc">' + (has ? G.esc(hero.desc) : '尚未召唤到这位英雄。') + '</div>';
         if (has) {
             html += '<div class="hero-eff">' + effectLines(hero, owned).map(t =>
@@ -68,10 +69,12 @@
         const discount = Heroes.effectiveDiscount(s);
 
         let html = '<div class="tab-intro">传送阵把别处的「可能性」拉到这里：你召唤到的是其它时间线里活下来的英雄。' +
-            '英雄分为 <b>C / B / A / S / EX</b> 五档，档位越高效果越强、也越难遇到；' +
+            '英雄分为 <b>C / B / A / S / SS / EX</b> 六档，档位越高效果越强、也越难遇到；' +
             '重复召唤到同一位英雄会提升<b>觉醒等级</b>（每级效果 +' + Math.round(GACHA_CONFIG.awakeningStep * 100) + '%，最高 ' +
             GACHA_CONFIG.awakeningMax + ' 级），满觉后再抽到会转化为奥术遗物。<br>' +
-            '卡池里除了英雄，还有资源馈赠与<b>空</b>（什么都没抽到）。</div>';
+            '卡池里除了英雄，还有资源馈赠与<b>空</b>（什么都没抽到）。<br>' +
+            '最高一档 <b>EX</b> 是跨越时间线的存在：<b>没有保底</b>、概率极低，' +
+            '但它一旦落到你手上就属于所有时间线——永久保留，重置也不会失去。</div>';
 
         /* 传送阵本体 */
         html += '<div class="summon-panel">';
@@ -83,21 +86,23 @@
         html += '<button class="btn gold wide-action" data-act="summon|10">召唤 ×10（9 折）</button>';
         html += '</div>';
         html += '<div class="summon-cost">十连消耗：' + G.costHtml(cost10) + '</div>';
-        html += '<div class="hint">召唤运气：S / EX 权重 ×' + luckMult.toFixed(2) + '（上限 ×' +
+        html += '<div class="hint">召唤运气：S / SS 权重 ×' + luckMult.toFixed(2) + '（上限 ×' +
             (1 + GACHA_CONFIG.luckCap).toFixed(1) + '）　召唤折扣 −' + U.fmtPct(discount, 0) +
             '（上限 −' + U.fmtPct(GACHA_CONFIG.discountCap, 0) + '）　累计召唤 ' + U.fmtInt(st.pulls) + ' 次</div>';
         html += '</div></div>';
 
         /* 保底进度 */
         html += '<div class="section-title">保底进度</div><div class="pity-grid">';
-        for (const key of ['A', 'S', 'EX']) {
+        for (const key of ['A', 'S', 'SS']) {
             const need = GACHA_CONFIG.pity[key];
             const cur = Math.min(s.heroes.pity[key], need);
             html += '<div class="pity"><div class="row-between"><span>' + key + ' 级及以上保底</span>' +
                 '<span class="hint">' + cur + ' / ' + need + '</span></div>' +
-                G.bar(cur / need, key === 'EX' ? 'bad' : '') + '</div>';
+                G.bar(cur / need, key === 'SS' ? 'bad' : '') + '</div>';
         }
-        html += '</div><div class="hint">达到保底后，下一次召唤必定获得对应档位以上。</div>';
+        html += '</div><div class="hint">达到保底后，下一次召唤必定获得对应档位以上。' +
+            '<b>EX 完全没有保底</b>：它只会在普通抽取里以约 0.15% 的概率出现，' +
+            '保底与保底升级都不会给出 EX。</div>';
 
         /* 最近结果 */
         html += '<div class="section-title">最近的结果</div>';
@@ -112,7 +117,7 @@
             const got = Heroes.ownedCount(s, rarity);
             html += '<div class="hero-group"><div class="hero-group-head" style="--rar:' + HERO_RARITIES[rarity].color + '">' +
                 rarityTag(rarity) + '<span class="hint">' + got + ' / ' + list.length + '</span>' +
-                '<span class="right hint">' + HERO_RARITIES[rarity].title + '</span></div>' +
+                '<span class="right hint">' + (HERO_RARITIES[rarity].beyond ? '跨越时间线 · 无保底' : HERO_RARITIES[rarity].title) + '</span></div>' +
                 '<div class="card-grid">' + list.map(heroCard).join('') + '</div></div>';
         }
 

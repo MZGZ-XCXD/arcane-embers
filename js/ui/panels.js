@@ -308,6 +308,11 @@
             let html = '<h4>' + G.esc(hero.name) + ' · ' + r.name + '</h4>';
             html += '<div class="dim">' + cat.icon + ' ' + G.esc(cat.key) + '：' + G.esc(cat.desc) + '</div>';
             html += '<div class="dim">' + G.esc(hero.desc) + '</div><hr>';
+            html += '<div class="kv"><span>基础出现率</span><span>约 ' + U.fmtPct(Heroes.rarityChance(hero.rarity), 2) + ' / 抽</span></div>';
+            if (r.beyond) {
+                html += '<div class="kv"><span>保底</span><span class="dim">没有保底</span></div>';
+                html += '<div class="kv"><span>跨越时间线</span><span class="gold">抽到即永久保留（重置也不会失去）</span></div>';
+            }
             if (owned === undefined) {
                 html += '<div class="neg">尚未召唤到这位英雄。</div>';
                 html += '<hr><div class="dim">基础效果（' + r.name + ' × ' + r.mult + '）：' +

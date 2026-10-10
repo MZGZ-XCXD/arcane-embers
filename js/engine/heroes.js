@@ -4,6 +4,14 @@
    卡池里除了英雄，还有资源奖励与「空」结果；并有 A / S / EX 三档保底。
    ========================================================= */
 (function () {
+    /* 稀有度阶梯：按 config 里的定义顺序推导，避免两处各写一份对不上 */
+    const RARITY_RANK = (function () {
+        const m = {};
+        let i = 0;
+        for (const k in HERO_RARITIES) m[k] = i++;
+        return m;
+    })();
+
     function heroById(id) {
         return HEROES_CONFIG.find(h => h.id === id) || null;
     }
@@ -88,9 +96,10 @@
     /* ---------------- 抽取 ---------------- */
     function pickRarity(state) {
         const pity = state.heroes.pity;
-        if (pity.EX >= GACHA_CONFIG.pity.EX) return 'EX';
-        if (pity.S >= GACHA_CONFIG.pity.S) return Math.random() < 0.12 ? 'EX' : 'S';
-        if (pity.A >= GACHA_CONFIG.pity.A) return Utils.weightedPick(['A', 'S', 'EX'], k => HERO_RARITIES[k].weight);
+        /* 保底最高只到 SS：EX 没有任何保底，也不会从保底升级里冒出来，只能靠普通抽取撞上 */
+        if (pity.SS >= GACHA_CONFIG.pity.SS) return 'SS';
+        if (pity.S >= GACHA_CONFIG.pity.S) return Math.random() < 0.12 ? 'SS' : 'S';
+        if (pity.A >= GACHA_CONFIG.pity.A) return Utils.weightedPick(['A', 'S', 'SS'], k => HERO_RARITIES[k].weight);
 
         const luck = Math.min(EffectsManager.get(state).luck || 0, GACHA_CONFIG.luckCap);
         const list = [];
@@ -141,11 +150,10 @@
     function bumpPity(state, result) {
         const p = state.heroes.pity;
         const r = result.type === 'hero' ? result.rarity : null;
-        const order = { C: 0, B: 1, A: 2, S: 3, EX: 4 };
-        const rank = r ? order[r] : -1;
-        p.A = rank >= order.A ? 0 : p.A + 1;
-        p.S = rank >= order.S ? 0 : p.S + 1;
-        p.EX = rank >= order.EX ? 0 : p.EX + 1;
+        const rank = r ? RARITY_RANK[r] : -1;
+        p.A = rank >= RARITY_RANK.A ? 0 : p.A + 1;
+        p.S = rank >= RARITY_RANK.S ? 0 : p.S + 1;
+        p.SS = rank >= RARITY_RANK.SS ? 0 : p.SS + 1;
     }
 
     /* 应用一次抽取结果 */
@@ -200,8 +208,7 @@
         if (window.AchievementEngine) AchievementEngine.check(state);
         const best = results.reduce((acc, r) => {
             if (r.type !== 'hero') return acc;
-            const order = { C: 0, B: 1, A: 2, S: 3, EX: 4 };
-            return (order[r.rarity] > order[acc]) ? r.rarity : acc;
+            return (RARITY_RANK[r.rarity] > RARITY_RANK[acc]) ? r.rarity : acc;
         }, 'C');
         const heroNames = results.filter(r => r.type === 'hero').map(r => r.hero.name).join('、');
         EventEngine.addLog(state, '🔮 传送阵召唤 ×' + count + '，最高获得 ' + best + ' 级' +
@@ -237,9 +244,18 @@
         return HEROES_CONFIG.filter(h => h.rarity === rarity).length;
     }
 
+    /* 该档位的基础出现概率（不含幸运加成与保底，仅按权重算） */
+    function rarityChance(rarity) {
+        let heroWeight = 0;
+        for (const k in HERO_RARITIES) heroWeight += HERO_RARITIES[k].weight;
+        const total = heroWeight + GACHA_CONFIG.rewardWeight + GACHA_CONFIG.emptyWeight;
+        const r = HERO_RARITIES[rarity];
+        return r ? r.weight / total : 0;
+    }
+
     window.Heroes = {
         heroById, heroEffect, awakenMultiplier, ownedEffects,
-        pullCost, canSummon, summon, stats, ownedCount, totalCount,
-        luckMultiplier, effectiveDiscount,
+        pullCost, canSummon, summon, stats, ownedCount, totalCount, pickRarity,
+        luckMultiplier, effectiveDiscount, rarityChance,
     };
 })();

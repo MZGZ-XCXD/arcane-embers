@@ -86,9 +86,24 @@
         if (!state.heroes) state.heroes = freshHeroes();
         else {
             if (!state.heroes.owned) state.heroes.owned = {};
-            if (!state.heroes.pity) state.heroes.pity = { A: 0, S: 0, EX: 0 };
+            if (!state.heroes.pity) state.heroes.pity = {};
             if (state.heroes.pulls === undefined) state.heroes.pulls = 0;
-            if (!state.heroes.byRarity) state.heroes.byRarity = { C: 0, B: 0, A: 0, S: 0, EX: 0 };
+            if (!state.heroes.byRarity) state.heroes.byRarity = {};
+            /* 稀有度改版（旧档只迁移一次）：旧档里的「EX」是现在的「SS」，
+               保底计数、获得次数与历史记录都要搬过来，否则老玩家的进度会白丢。
+               新版自己的 EX 记录不会再被改写。 */
+            if (!state.heroes.rarityMigrated) {
+                state.heroes.pity.SS = state.heroes.pity.EX || state.heroes.pity.SS || 0;
+                state.heroes.byRarity.SS = (state.heroes.byRarity.SS || 0) + (state.heroes.byRarity.EX || 0);
+                state.heroes.byRarity.EX = 0;
+                if (Array.isArray(state.heroes.history)) {
+                    for (const h of state.heroes.history) if (h && h.rarity === 'EX') h.rarity = 'SS';
+                }
+                state.heroes.rarityMigrated = true;
+            }
+            delete state.heroes.pity.EX;
+            for (const k in GACHA_CONFIG.pity) if (state.heroes.pity[k] === undefined) state.heroes.pity[k] = 0;
+            for (const k in HERO_RARITIES) if (state.heroes.byRarity[k] === undefined) state.heroes.byRarity[k] = 0;
             if (state.heroes.dupRelics === undefined) state.heroes.dupRelics = 0;
             if (!Array.isArray(state.heroes.history)) state.heroes.history = [];
         }
