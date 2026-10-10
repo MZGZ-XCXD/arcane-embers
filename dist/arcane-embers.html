@@ -2541,8 +2541,10 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     };
 
     const HEROES = [];
-    function H(name, rarity, category, desc, extra) {
-        HEROES.push({ id: name, name: name, rarity: rarity, category: category, desc: desc, extra: extra || null });
+    /* id 默认就是名字；需要改名而不作废存档时，把原来的名字当作 id 传进来即可
+       （收藏、觉醒等级、历史记录都以 id 为键） */
+    function H(name, rarity, category, desc, extra, id) {
+        HEROES.push({ id: id || name, name: name, rarity: rarity, category: category, desc: desc, extra: extra || null });
     }
 
     /* ---------------- C 级：学徒 ---------------- */
@@ -2590,12 +2592,12 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     /* ---------------- EX 级：超越时间线 ----------------
        这三位不在任何保底里，权重也只有 0.15；但他们一旦落到你手上，
        就同时存在于所有时间线——重置也不会失去。 */
-    H('未生之刻', 'EX', '命运', '它来自一条从未发生的时间线。你召唤到的不是它本身，而是它在所有时间线里的总和。',
-        { relicGain: 0.5 });
-    H('万界之锚', 'EX', '仓储', '每一条时间线的城市都系在同一个锚点上，所以你扩建的其实是全部的仓库。',
-        { capAll: 0.5, offlineHours: 8 });
-    H('灰烬之母·万世之火', 'EX', '资源', '大崩坏烧掉的是这座城市，不是它。灰烬落尽的地方，它总能重新点一次火。',
-        { globalProd: 0.35, happiness: 200 });
+    H('时间之艾赫卡托尔', 'EX', '命运', '它来自一条从未发生的时间线。你召唤到的不是它本身，而是它在所有时间线里的总和。',
+        { relicGain: 0.5 }, '未生之刻');
+    H('虚空之涅斐洛斯', 'EX', '仓储', '每一条时间线的城市都系在同一个锚点上，所以你扩建的其实是全部的仓库。',
+        { capAll: 0.5, offlineHours: 8 }, '万界之锚');
+    H('生命之库米罗尼', 'EX', '资源', '大崩坏烧掉的是这座城市，不是它。灰烬落尽的地方，它总能重新点一次火。',
+        { globalProd: 0.35, happiness: 200 }, '灰烬之母·万世之火');
 
     const GACHA = {
         /* 每次召唤的消耗（×10 时享受 batchDiscount 折扣） */
