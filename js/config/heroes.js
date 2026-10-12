@@ -23,16 +23,18 @@
     };
 
     const CATEGORIES = {
-        战力: { key: '战力', icon: '⚔️', desc: '提升军力与远征战力',   effect: { powerMult: 0.15, expeditionPower: 0.1 } },
-        资源: { key: '资源', icon: '🌾', desc: '提升所有建筑的产出',   effect: { globalProd: 0.08 } },
-        仓储: { key: '仓储', icon: '📦', desc: '提升所有资源的存量上限', effect: { capAll: 0.15 } },
-        知识: { key: '知识', icon: '📖', desc: '提升魔法知识产出',     effect: { knowledgeProd: 0.2 } },
-        工程: { key: '工程', icon: '🔧', desc: '降低队列订单的材料需求', effect: { queueDiscount: 0.15 } },
-        经济: { key: '经济', icon: '🪙', desc: '提升贸易规模与黄金产出', effect: { marketVolume: 0.3, resourceProd: { 黄金: 0.25 } } },
-        民生: { key: '民生', icon: '🏡', desc: '提升民望与人口上限',   effect: { happiness: 40, populationCap: 0.08 } },
-        远征: { key: '远征', icon: '🧭', desc: '提升远征收益',        effect: { expeditionReward: 0.3, expeditionPower: 0.12 } },
-        幸运: { key: '幸运', icon: '🍀', desc: '提升抽卡运气并降低召唤消耗', effect: { luck: 0.3, summonDiscount: 0.06 } },
-        命运: { key: '命运', icon: '🌌', desc: '提升重置时获得的奥术遗物', effect: { relicGain: 0.12 } },
+        /* 单张英雄的效果 = 分类基础 × 稀有度倍率 × 觉醒加成。
+           这里的基础值整体压到原来的六成左右——之前一张高位卡就能顶掉几十级传承。 */
+        战力: { key: '战力', icon: '⚔️', desc: '提升军力与远征战力',   effect: { powerMult: 0.09, expeditionPower: 0.06 } },
+        资源: { key: '资源', icon: '🌾', desc: '提升所有建筑的产出',   effect: { globalProd: 0.05 } },
+        仓储: { key: '仓储', icon: '📦', desc: '提升所有资源的存量上限', effect: { capAll: 0.09 } },
+        知识: { key: '知识', icon: '📖', desc: '提升魔法知识产出',     effect: { knowledgeProd: 0.12 } },
+        工程: { key: '工程', icon: '🔧', desc: '降低队列订单的材料需求', effect: { queueDiscount: 0.09 } },
+        经济: { key: '经济', icon: '🪙', desc: '提升贸易规模与黄金产出', effect: { marketVolume: 0.18, resourceProd: { 黄金: 0.15 } } },
+        民生: { key: '民生', icon: '🏡', desc: '提升民望与人口上限',   effect: { happiness: 24, populationCap: 0.05 } },
+        远征: { key: '远征', icon: '🧭', desc: '提升远征收益',        effect: { expeditionReward: 0.18, expeditionPower: 0.08 } },
+        幸运: { key: '幸运', icon: '🍀', desc: '提升抽卡运气并降低召唤消耗', effect: { luck: 0.18, summonDiscount: 0.04 } },
+        命运: { key: '命运', icon: '🌌', desc: '提升重置时获得的奥术遗物', effect: { relicGain: 0.08 } },
         /* 遗迹限定英雄：没有任何数值加成，能力全写在机制上（见 mech 字段） */
         遗迹: { key: '遗迹', icon: '🗿', desc: '只在遗迹里能找到的机制型英雄', effect: {} },
     };
@@ -107,20 +109,20 @@
     H('遗物守护者', 'S', '命运', '能听见时间线崩塌时碎片落下的声音。');
 
     /* ---------------- SS 级：神话 ---------------- */
-    H('最后一位浮空城主', 'SS', '战力', '大崩坏那天他没有逃。他把整座城压成了一个人的脊梁。', { powerMult: 0.5 });
-    H('原初之龙·灰烬之翼', 'SS', '资源', '它睡在灰烬森林深处。呼吸之间，土地重新长出东西。', { globalProd: 0.25 });
+    H('最后一位浮空城主', 'SS', '战力', '大崩坏那天他没有逃。他把整座城压成了一个人的脊梁。', { powerMult: 0.3 });
+    H('原初之龙·灰烬之翼', 'SS', '资源', '它睡在灰烬森林深处。呼吸之间，土地重新长出东西。', { globalProd: 0.15 });
     H('世界意志·静默之声', 'SS', '幸运', '它不说话，只是让你想要的东西更容易来到你手里。',
-        { queueSlots: 2, queueDiscount: 0.15, luck: 0.5, summonDiscount: 0.15 });
+        { queueSlots: 2, queueDiscount: 0.1, luck: 0.3, summonDiscount: 0.1 });
 
     /* ---------------- EX 级：超越时间线 ----------------
        这三位不在任何保底里，权重也只有 0.15；但他们一旦落到你手上，
        就同时存在于所有时间线——重置也不会失去。 */
     H('时间之艾赫卡托尔', 'EX', '命运', '它来自一条从未发生的时间线。你召唤到的不是它本身，而是它在所有时间线里的总和。',
-        { relicGain: 0.5 }, { id: '未生之刻' });
+        { relicGain: 0.3 }, { id: '未生之刻' });
     H('虚空之涅斐洛斯', 'EX', '仓储', '每一条时间线的城市都系在同一个锚点上，所以你扩建的其实是全部的仓库。',
-        { capAll: 0.5, offlineHours: 8 }, { id: '万界之锚' });
+        { capAll: 0.3, offlineHours: 8 }, { id: '万界之锚' });
     H('生命之库米罗尼', 'EX', '资源', '大崩坏烧掉的是这座城市，不是它。灰烬落尽的地方，它总能重新点一次火。',
-        { globalProd: 0.35, happiness: 200 }, { id: '灰烬之母·万世之火' });
+        { globalProd: 0.2, happiness: 100 }, { id: '灰烬之母·万世之火' });
 
     /* ---------------- 遗迹限定：机制型英雄 ----------------
        这一组不进传送阵卡池，只能从对应那一层遗迹带回来：
@@ -154,7 +156,7 @@
         luckCap: 2,            // 幸运最多把 S / SS 权重提升到 3 倍（EX 不受影响）
         discountCap: 0.8,      // 召唤消耗最多减免 80%
         awakeningMax: 5,
-        awakeningStep: 0.3,
+        awakeningStep: 0.2,    // 每级觉醒 +20%（原来 +30%，满觉 ×2.5 太强）
         /* 资源奖励按玩家当前上限的比例发放 */
         rewardRes: ['木材', '石料', '铁矿', '木炭', '食物', '黄金', '铁锭', '魔晶', '符文'],
         rewardMin: 0.12,

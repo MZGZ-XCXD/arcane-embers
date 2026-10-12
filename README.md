@@ -169,7 +169,7 @@ arcane-embers/
   「传承」页与 `Actions.buyPermanent()` 都会检查，所以依赖的系统没解锁时既看不到、也买不到。
 * 事件选项的消耗写在 `choices[].cost`（军力需求写 `needPower`）：`EventEngine.eventFitsStorage()` 决定事件是否出现（比对仓储上限），
   `EventEngine.choicePayable()` 决定选项能否点击（比对现有存量），两者都不要只写在 `hint` 文案里。
-* 英雄效果 = 分类基础效果 × 稀有度倍率（C 1 / B 1.5 / A 2.5 / S 4 / SS 6 / EX 10）× 觉醒加成（+30%/级）×
+* 英雄效果 = 分类基础效果 × 稀有度倍率（C 1 / B 1.5 / A 2.5 / S 4 / SS 6 / EX 10）× 觉醒加成（+20%/级）×
   传承「英雄效果」加成；槽位这类整数效果不随觉醒缩放。抽卡权重、保底次数与资源奖励都在 `config/heroes.js` 里调整。
 * 事件选项的悬浮说明由 `EventEngine.preview()` 推演得到：它用「只记录、不生效」的假接口把 `choices[].run`
   跑两遍（`rnd` 分别返回 0 与 1）以覆盖随机分支，再把消耗 / 获得 / 民望 / 持续效果汇总出来。
