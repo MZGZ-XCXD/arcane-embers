@@ -1807,7 +1807,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     });
     P('遗物共鸣', {
         tree: 'relic', cost: 8, costG: 1.8, max: 10, eff: { capPerRelic: 0.012 },
-        desc: '每持有 1 枚奥术遗物，所有资源上限 +1.2%（每级递增）。',
+        desc: '所有资源上限随遗物数量提升，但走平方根——越往后收益越平缓，不会因为攒了几万枚遗物就把上限顶到上千倍。',
     });
     P('学识共鸣', {
         tree: 'relic', cost: 12, costG: 1.85, max: 8, eff: { knowledgeCapPerRelic: 0.15 },
@@ -2544,14 +2544,16 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
    ========================================================= */
 (function () {
     const RARITIES = {
+        /* mult 是效果倍率：越高档越强，但整体压得比较平——
+           原来的 A4.5 / S9 / SS20 让中期一两张高位卡就把经济推平了。 */
         C:  { key: 'C',  name: 'C 级',  title: '学徒', weight: 42,  mult: 1,   dupRelic: 1,  color: '#9aa4b2' },
-        B:  { key: 'B',  name: 'B 级',  title: '能手', weight: 26,  mult: 2.2, dupRelic: 3,  color: '#57d99a' },
-        A:  { key: 'A',  name: 'A 级',  title: '大师', weight: 12,  mult: 4.5, dupRelic: 8,  color: '#5aa9ff' },
-        S:  { key: 'S',  name: 'S 级',  title: '传奇', weight: 4.5, mult: 9,   dupRelic: 25, color: '#c98bff' },
-        SS: { key: 'SS', name: 'SS 级', title: '神话', weight: 0.8, mult: 20,  dupRelic: 100, color: '#ff6b6b' },
+        B:  { key: 'B',  name: 'B 级',  title: '能手', weight: 26,  mult: 1.5, dupRelic: 3,  color: '#57d99a' },
+        A:  { key: 'A',  name: 'A 级',  title: '大师', weight: 12,  mult: 2.5, dupRelic: 8,  color: '#5aa9ff' },
+        S:  { key: 'S',  name: 'S 级',  title: '传奇', weight: 4.5, mult: 4,   dupRelic: 25, color: '#c98bff' },
+        SS: { key: 'SS', name: 'SS 级', title: '神话', weight: 0.8, mult: 6,   dupRelic: 100, color: '#ff6b6b' },
         /* EX：跨越时间线的一档——没有保底、概率极低，但抽到就永远是你的 */
         EX: {
-            key: 'EX', name: 'EX 级', title: '超越', weight: 0.15, mult: 40,
+            key: 'EX', name: 'EX 级', title: '超越', weight: 0.15, mult: 10,
             dupRelic: 400, color: '#ffd166', beyond: true,
         },
     };
@@ -2711,6 +2713,11 @@ window.CHANGELOG_DATA = {
     "source": "CHANGELOG.md",
     "overview": [
         {
+            "version": "0.7.0",
+            "date": "2026-10-12",
+            "summary": "重置会带走英雄收藏（只有跨越时间线的 EX 留下）；试炼改为整轮承诺（只能在本轮开建前开关）；民望乘数下调到四分之一；召唤英雄倍率整体压平；遗物上限加成改走平方根（修掉原初归寂后数值崩坏）"
+        },
+        {
             "version": "0.6.0",
             "date": "2026-10-10",
             "summary": "新增 6 位「遗迹限定」机制型英雄（只从对应遗迹掉落）；远征支持第二支队伍、熟路减时、败不空手、秘宝鉴定与保底；三层重置的解锁条件改为对应科技（修掉可以无限重置刷资源的漏洞）"
@@ -2802,6 +2809,27 @@ window.CHANGELOG_DATA = {
         }
     ],
     "versions": [
+        {
+            "version": "0.7.0",
+            "date": "2026-10-12",
+            "sections": [
+                {
+                    "title": "变更",
+                    "items": [
+                        "<b>重置会带走英雄收藏<\/b>：以前英雄跨重置永久保留，等于「攒一次抽卡收益就能无限滚雪球」。 现在只有<b>跨越时间线<\/b>的那一档（EX）会留下来，其余英雄——抽卡抽到的与遗迹里带回的—— 都要在下一条时间线里重新拿。召唤次数、各档获得统计、保底进度与召唤记录仍然保留。",
+                        "<b>试炼改成「整轮的承诺」<\/b>：以前可以随时开关，于是可以「重置前临时打开」白拿星级加成。 现在只能在<b>本轮还没有建造任何建筑<\/b>时（也就是刚重置完的那一刻）开关，一旦开建就锁定到本轮结束； 完成时依旧会自动关闭，奖励永久保留。",
+                        "<b>民望乘数下调到四分之一<\/b>：以 100 民望为基准，改为<b>每多 400 点民望，产出再 +100%<\/b> （原来是每 100 点 +100%）。中期不再白拿两三倍产出；民望低于 100 时按同样比例反过来拖慢生产。",
+                        "<b>召唤阵的英雄倍率整体压平<\/b>：稀有度倍率由 C1 / B2.2 / A4.5 / S9 / SS20 / EX40 调整为 <b>C1 / B1.5 / A2.5 / S4 / SS6 / EX10<\/b>。中期抽到一两张高位卡不再直接把经济推平； EX 依然是最强一档（而且跨越时间线、不随重置失去）。"
+                    ]
+                },
+                {
+                    "title": "修复",
+                    "items": [
+                        "<b>原初归寂之后数值崩坏<\/b>：传承「遗物共鸣」原本写的是「每持有 1 枚奥术遗物，所有资源上限 +1.2%」—— 完全线性。可一次原初归寂就能带回上万枚遗物，上限于是被抬到<b>上千倍<\/b>，整个经济瞬间失控 （实测 12800 枚遗物 = ×1537 上限）。 现在改为按<b>遗物数量的平方根<\/b>计算：同样 12800 枚只抬到 ×10.1，而且每翻 4 倍遗物只多 1 倍加成。 传承说明与悬浮提示同步改写。"
+                    ]
+                }
+            ]
+        },
         {
             "version": "0.6.0",
             "date": "2026-10-10",
@@ -3768,14 +3796,16 @@ window.CHANGELOG_DATA = {
         return soft - 100 + 200 * Math.sqrt(0.25 + 0.005 * (happiness - soft));
     }
 
-    /* 民望产出乘数：每 100 点民望 = ×1 建筑产出。
+    /* 民望产出乘数：以 100 民望为基准，每多 400 点民望，产出再 +100%。
+       （最初写成「每 100 点就 ×1」，中期就能白拿两三倍产出，太强了。）
        这里用的是「上一次结算出来的民望」——因为民望本身要看人口与食物状况，
        而人口与食物又由产量决定，直接用当帧的值会绕成一个圈。
        上下限只是防呆（下限防止民望归零时彻底停产，上限防止异常数值把经济打爆）；
        真正约束后期数值的是民望的软上限与仓库上限，不是这里。 */
+    const HAPPINESS_PER_STEP = 400;      // 每 400 点民望 = 额外 ×1 产出
     function happinessMult(state) {
-        const f = state.happinessFactor === undefined ? 1 : state.happinessFactor;
-        return Utils.clamp(f, 0.1, 50);
+        const raw = state.happinessFactor === undefined ? 1 : state.happinessFactor;   // = 民望 / 100
+        return Utils.clamp(1 + (raw * 100 - 100) / HAPPINESS_PER_STEP, 0.1, 50);
     }
 
     function computeProductionAndCaps(state) {
@@ -3881,7 +3911,11 @@ window.CHANGELOG_DATA = {
         }
 
         const relic = ResourcesManager.amount('奥术遗物');
-        const capBoost = (1 + (e.capAll || 0)) * (1 + relic * (e.capPerRelic || 0));
+        /* 遗物带来的上限加成按「遗物数量的平方根」计算：
+           原来的线性公式在后期会把上限抬到上千倍（上万枚遗物 = 1000+ 倍上限），
+           一次原初归寂之后整个经济就直接失控了。 */
+        const relicCapBonus = Math.sqrt(Math.max(0, relic)) * (e.capPerRelic || 0);
+        const capBoost = (1 + (e.capAll || 0)) * (1 + relicCapBonus);
         const knowledgeCapBoost = capBoost *
             (1 + Math.log(1 + relic) * (e.knowledgeCapPerRelic || 0)) *
             (e.knowledgeCapMult || 1);
@@ -5661,6 +5695,13 @@ window.CHANGELOG_DATA = {
     function toggleChallenge(state, id) {
         const c = state.challenges[id];
         if (!c) return { ok: false };
+        /* 试炼是「整轮的承诺」：只能在本轮还没建过任何建筑时开关。
+           否则可以在重置前临时打开，白拿星级加成而不承担限制。 */
+        let built = 0;
+        for (const n in state.buildings) built += state.buildings[n].count || 0;
+        if (built > 0) {
+            return { ok: false, msg: '试炼只能在本轮开始、还没有建造任何建筑时调整。' };
+        }
         c.active = !c.active;
         ProductionEngine.computeProductionAndCaps(state);
         return { ok: true, msg: (c.active ? '开启' : '关闭') + '试炼「' + id + '」' };
@@ -5758,6 +5799,20 @@ window.CHANGELOG_DATA = {
         state.challenges = challenges;
         state.heroes = heroes;
         state.expedition.history = expeditionHistory;
+        /* 英雄收藏：只有「跨越时间线」的那一档（EX）会留下来，
+           其它英雄随这一轮一起结束——抽卡的与遗迹里带回的都要重新拿。
+           累计统计（召唤次数 / 各档获得次数 / 保底进度 / 召唤记录）保留。 */
+        const keptHeroes = {};
+        for (const id in state.heroes.owned) {
+            const hero = window.Heroes ? Heroes.heroById(id) : null;
+            const rar = hero ? HERO_RARITIES[hero.rarity] : null;
+            if (rar && rar.beyond) keptHeroes[id] = state.heroes.owned[id];
+        }
+        const lostHeroes = Object.keys(state.heroes.owned).length - Object.keys(keptHeroes).length;
+        state.heroes.owned = keptHeroes;
+        if (lostHeroes > 0) {
+            EventEngine.addLog(state, '🕯️ ' + lostHeroes + ' 位英雄留在了上一轮（只有跨越时间线的英雄不会失去）。');
+        }
         state.resources['奥术遗物'].amount = keepRelic + (opts.relic || 0);
         state.resources['星辉'].amount = keepStar + (opts.star || 0);
         state.resources['原初之核'].amount = keepCore + (opts.core || 0);
@@ -6586,7 +6641,7 @@ window.CHANGELOG_DATA = {
             else if (key === 'speed') out.push('世界流速 ' + U.fmtPct(v, 1));
             else if (key === 'marketVolume') out.push('贸易规模 ' + U.fmtPct(v, 1));
             else if (key === 'startResources') out.push('重置后获得启动物资');
-            else if (key === 'capPerRelic') out.push('每枚遗物提供 ' + U.fmtPct(v, 2) + ' 存量上限');
+            else if (key === 'capPerRelic') out.push('存量上限随遗物数量平方根提升（每级 ' + U.fmtPct(v, 2) + '）');
             else if (key === 'knowledgeCapPerRelic') out.push('遗物提升魔法知识上限');
             else if (key === 'offlineHours') out.push('离线结算时长 +' + v + ' 小时');
             else if (key === 'artifactSlots') out.push('秘宝装备槽 +' + v);
@@ -6784,9 +6839,9 @@ window.CHANGELOG_DATA = {
 
         if (type === 'happy') {
             let html = '<h4>民望 ' + U.fmtNum(s.happiness, 0) + '</h4>';
-            html += '<div class="dim">民望是所有建筑产出的乘数：每 100 点民望 = ×1 产出（当前 ×' +
-                ProductionEngine.happinessMult(s).toFixed(2) + '）。<br>' +
-                '民望极低时最低按 ×0.1 结算，所以只会拖慢生产，不会让城市彻底停摆。</div><hr>';
+            html += '<div class="dim">民望是所有建筑产出的乘数：以 100 民望为基准，每多 400 点，产出再 +100%' +
+                '（当前 ×' + ProductionEngine.happinessMult(s).toFixed(2) + '）。<br>' +
+                '民望低于 100 时会反过来拖慢生产，最低按 ×0.1 结算，不会让城市彻底停摆。</div><hr>';
             const list = s.happinessList || [];
             for (const h of list.slice(0, 16)) {
                 html += '<div class="kv"><span>' + G.esc(h.source) + '</span><span class="' + G.rateClass(h.value) + '">' + G.rate(h.value) + '</span></div>';
@@ -6858,6 +6913,8 @@ window.CHANGELOG_DATA = {
             const cfg = CHALLENGES_CONFIG.find(c => c.id === arg);
             if (!cfg) return null;
             const st = s.challenges[cfg.id] || {};
+            let built = 0;
+            for (const n in s.buildings) built += s.buildings[n].count || 0;
             let html = '<h4>' + G.esc(cfg.name) + ' · ' + '★'.repeat(cfg.star) + '</h4>';
             html += '<div class="dim">' + G.esc(cfg.desc) + '</div><hr>';
             html += '<div class="kv"><span>状态</span><span class="' + (st.completed ? 'pos' : (st.active ? 'neg' : '')) + '">' +
@@ -6865,6 +6922,8 @@ window.CHANGELOG_DATA = {
             html += '<div>完成条件：' + (cfg.requireReset === 'any' ? '任意重置' : (cfg.requireReset === 'star' ? '星辰升华' : '原初归寂')) + '</div>';
             html += '<div class="kv"><span>完成奖励</span><span class="pos">' + G.esc(cfg.rewardText) + '</span></div>';
             html += '<hr><div class="dim">完成后试炼会自动关闭：限制立即解除，奖励永久生效（奖励只看「已完成」，不看是否还开着）。</div>';
+            html += '<div class="dim">试炼是整轮的承诺：只能在本轮还没建造任何建筑时开关' +
+                (built > 0 ? '——本轮已经开建，要等下次重置才能调整。' : '。') + '</div>';
             return html;
         }
 
@@ -7759,6 +7818,9 @@ window.CHANGELOG_DATA = {
     function challengeRow(cfg) {
         const s = GameState;
         const st = s.challenges[cfg.id];
+        let built = 0;
+        for (const n in s.buildings) built += s.buildings[n].count || 0;
+        const locked = built > 0;
         let html = '<div class="card' + (st.active ? ' affordable' : '') + (st.completed ? ' researched' : '') + '" data-tip="challenge|' + G.esc(cfg.id) + '">';
         html += '<div class="card-head"><div class="card-name">⚔️ ' + G.esc(cfg.id) +
             '<span class="tag">' + '★'.repeat(cfg.star) + '</span></div>' +
@@ -7771,7 +7833,11 @@ window.CHANGELOG_DATA = {
         if (st.completed && !st.active) {
             html += '<div class="hint pos">奖励已永久生效，不需要保持激活。想继续吃星级加成可以重新激活。</div>';
         }
-        html += '<div class="card-actions"><button class="btn tiny' + (st.active ? ' active' : '') + '" data-act="challenge|' + G.esc(cfg.id) + '">' +
+        if (locked && !st.completed) {
+            html += '<div class="hint neg">本轮已经开建，试炼不能再调整（只能等下次重置）。</div>';
+        }
+        html += '<div class="card-actions"><button class="btn tiny' + (st.active ? ' active' : '') + '" data-act="challenge|' + G.esc(cfg.id) + '"' +
+            (locked ? ' disabled' : '') + '>' +
             (st.active ? '取消激活' : (st.completed ? '再次激活（只为星级加成）' : '激活试炼')) + '</button></div>';
         html += '</div>';
         return html;
@@ -7806,7 +7872,9 @@ window.CHANGELOG_DATA = {
         html += '<div class="section-title">试炼</div>';
         html += '<div class="hint" style="margin-bottom:8px">激活试炼会立刻施加严苛的限制，' +
             '但只要在对应的重置中坚持到底，就能永久获得奖励。<b>完成时试炼会自动关闭</b>（限制立刻解除，奖励永久保留）；' +
-            '想继续靠它拿星级加成，可以随时重新激活。当前激活星级：<b>' + Actions.activeStars(s) +
+            '<b>试炼是整轮的承诺</b>：只能在本轮<u>还没有建造任何建筑</u>时开关（也就是刚重置完的那一刻），' +
+            '一旦开建就锁定到本轮结束——否则可以在重置前临时打开白拿星级加成。' +
+            '当前激活星级：<b>' + Actions.activeStars(s) +
             '</b>（每点星级让本次重置收获 +5%）。</div>';
         html += '<div class="card-grid wide">' + CHALLENGES_CONFIG.map(challengeRow).join('') + '</div>';
         return html;
@@ -8569,7 +8637,7 @@ window.CHANGELOG_DATA = {
                 break;
             case 'challenge': {
                 const r = Actions.toggleChallenge(s, arg1);
-                G.toast(r.msg, 'gold');
+                G.toast(r.msg, r.ok ? 'gold' : 'bad');
                 break;
             }
             case 'eventchoice': {

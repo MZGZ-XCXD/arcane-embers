@@ -161,9 +161,9 @@
 
         if (type === 'happy') {
             let html = '<h4>民望 ' + U.fmtNum(s.happiness, 0) + '</h4>';
-            html += '<div class="dim">民望是所有建筑产出的乘数：每 100 点民望 = ×1 产出（当前 ×' +
-                ProductionEngine.happinessMult(s).toFixed(2) + '）。<br>' +
-                '民望极低时最低按 ×0.1 结算，所以只会拖慢生产，不会让城市彻底停摆。</div><hr>';
+            html += '<div class="dim">民望是所有建筑产出的乘数：以 100 民望为基准，每多 400 点，产出再 +100%' +
+                '（当前 ×' + ProductionEngine.happinessMult(s).toFixed(2) + '）。<br>' +
+                '民望低于 100 时会反过来拖慢生产，最低按 ×0.1 结算，不会让城市彻底停摆。</div><hr>';
             const list = s.happinessList || [];
             for (const h of list.slice(0, 16)) {
                 html += '<div class="kv"><span>' + G.esc(h.source) + '</span><span class="' + G.rateClass(h.value) + '">' + G.rate(h.value) + '</span></div>';
@@ -235,6 +235,8 @@
             const cfg = CHALLENGES_CONFIG.find(c => c.id === arg);
             if (!cfg) return null;
             const st = s.challenges[cfg.id] || {};
+            let built = 0;
+            for (const n in s.buildings) built += s.buildings[n].count || 0;
             let html = '<h4>' + G.esc(cfg.name) + ' · ' + '★'.repeat(cfg.star) + '</h4>';
             html += '<div class="dim">' + G.esc(cfg.desc) + '</div><hr>';
             html += '<div class="kv"><span>状态</span><span class="' + (st.completed ? 'pos' : (st.active ? 'neg' : '')) + '">' +
@@ -242,6 +244,8 @@
             html += '<div>完成条件：' + (cfg.requireReset === 'any' ? '任意重置' : (cfg.requireReset === 'star' ? '星辰升华' : '原初归寂')) + '</div>';
             html += '<div class="kv"><span>完成奖励</span><span class="pos">' + G.esc(cfg.rewardText) + '</span></div>';
             html += '<hr><div class="dim">完成后试炼会自动关闭：限制立即解除，奖励永久生效（奖励只看「已完成」，不看是否还开着）。</div>';
+            html += '<div class="dim">试炼是整轮的承诺：只能在本轮还没建造任何建筑时开关' +
+                (built > 0 ? '——本轮已经开建，要等下次重置才能调整。' : '。') + '</div>';
             return html;
         }
 

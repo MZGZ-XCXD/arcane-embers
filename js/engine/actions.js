@@ -105,6 +105,13 @@
     function toggleChallenge(state, id) {
         const c = state.challenges[id];
         if (!c) return { ok: false };
+        /* 试炼是「整轮的承诺」：只能在本轮还没建过任何建筑时开关。
+           否则可以在重置前临时打开，白拿星级加成而不承担限制。 */
+        let built = 0;
+        for (const n in state.buildings) built += state.buildings[n].count || 0;
+        if (built > 0) {
+            return { ok: false, msg: '试炼只能在本轮开始、还没有建造任何建筑时调整。' };
+        }
         c.active = !c.active;
         ProductionEngine.computeProductionAndCaps(state);
         return { ok: true, msg: (c.active ? '开启' : '关闭') + '试炼「' + id + '」' };
@@ -202,6 +209,20 @@
         state.challenges = challenges;
         state.heroes = heroes;
         state.expedition.history = expeditionHistory;
+        /* 英雄收藏：只有「跨越时间线」的那一档（EX）会留下来，
+           其它英雄随这一轮一起结束——抽卡的与遗迹里带回的都要重新拿。
+           累计统计（召唤次数 / 各档获得次数 / 保底进度 / 召唤记录）保留。 */
+        const keptHeroes = {};
+        for (const id in state.heroes.owned) {
+            const hero = window.Heroes ? Heroes.heroById(id) : null;
+            const rar = hero ? HERO_RARITIES[hero.rarity] : null;
+            if (rar && rar.beyond) keptHeroes[id] = state.heroes.owned[id];
+        }
+        const lostHeroes = Object.keys(state.heroes.owned).length - Object.keys(keptHeroes).length;
+        state.heroes.owned = keptHeroes;
+        if (lostHeroes > 0) {
+            EventEngine.addLog(state, '🕯️ ' + lostHeroes + ' 位英雄留在了上一轮（只有跨越时间线的英雄不会失去）。');
+        }
         state.resources['奥术遗物'].amount = keepRelic + (opts.relic || 0);
         state.resources['星辉'].amount = keepStar + (opts.star || 0);
         state.resources['原初之核'].amount = keepCore + (opts.core || 0);

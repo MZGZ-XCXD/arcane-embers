@@ -117,6 +117,9 @@
     function challengeRow(cfg) {
         const s = GameState;
         const st = s.challenges[cfg.id];
+        let built = 0;
+        for (const n in s.buildings) built += s.buildings[n].count || 0;
+        const locked = built > 0;
         let html = '<div class="card' + (st.active ? ' affordable' : '') + (st.completed ? ' researched' : '') + '" data-tip="challenge|' + G.esc(cfg.id) + '">';
         html += '<div class="card-head"><div class="card-name">⚔️ ' + G.esc(cfg.id) +
             '<span class="tag">' + '★'.repeat(cfg.star) + '</span></div>' +
@@ -129,7 +132,11 @@
         if (st.completed && !st.active) {
             html += '<div class="hint pos">奖励已永久生效，不需要保持激活。想继续吃星级加成可以重新激活。</div>';
         }
-        html += '<div class="card-actions"><button class="btn tiny' + (st.active ? ' active' : '') + '" data-act="challenge|' + G.esc(cfg.id) + '">' +
+        if (locked && !st.completed) {
+            html += '<div class="hint neg">本轮已经开建，试炼不能再调整（只能等下次重置）。</div>';
+        }
+        html += '<div class="card-actions"><button class="btn tiny' + (st.active ? ' active' : '') + '" data-act="challenge|' + G.esc(cfg.id) + '"' +
+            (locked ? ' disabled' : '') + '>' +
             (st.active ? '取消激活' : (st.completed ? '再次激活（只为星级加成）' : '激活试炼')) + '</button></div>';
         html += '</div>';
         return html;
@@ -164,7 +171,9 @@
         html += '<div class="section-title">试炼</div>';
         html += '<div class="hint" style="margin-bottom:8px">激活试炼会立刻施加严苛的限制，' +
             '但只要在对应的重置中坚持到底，就能永久获得奖励。<b>完成时试炼会自动关闭</b>（限制立刻解除，奖励永久保留）；' +
-            '想继续靠它拿星级加成，可以随时重新激活。当前激活星级：<b>' + Actions.activeStars(s) +
+            '<b>试炼是整轮的承诺</b>：只能在本轮<u>还没有建造任何建筑</u>时开关（也就是刚重置完的那一刻），' +
+            '一旦开建就锁定到本轮结束——否则可以在重置前临时打开白拿星级加成。' +
+            '当前激活星级：<b>' + Actions.activeStars(s) +
             '</b>（每点星级让本次重置收获 +5%）。</div>';
         html += '<div class="card-grid wide">' + CHALLENGES_CONFIG.map(challengeRow).join('') + '</div>';
         return html;

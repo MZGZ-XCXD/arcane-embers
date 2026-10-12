@@ -251,7 +251,7 @@
                 break;
             case 'challenge': {
                 const r = Actions.toggleChallenge(s, arg1);
-                G.toast(r.msg, 'gold');
+                G.toast(r.msg, r.ok ? 'gold' : 'bad');
                 break;
             }
             case 'eventchoice': {

@@ -280,7 +280,7 @@
             else if (key === 'speed') out.push('世界流速 ' + U.fmtPct(v, 1));
             else if (key === 'marketVolume') out.push('贸易规模 ' + U.fmtPct(v, 1));
             else if (key === 'startResources') out.push('重置后获得启动物资');
-            else if (key === 'capPerRelic') out.push('每枚遗物提供 ' + U.fmtPct(v, 2) + ' 存量上限');
+            else if (key === 'capPerRelic') out.push('存量上限随遗物数量平方根提升（每级 ' + U.fmtPct(v, 2) + '）');
             else if (key === 'knowledgeCapPerRelic') out.push('遗物提升魔法知识上限');
             else if (key === 'offlineHours') out.push('离线结算时长 +' + v + ' 小时');
             else if (key === 'artifactSlots') out.push('秘宝装备槽 +' + v);

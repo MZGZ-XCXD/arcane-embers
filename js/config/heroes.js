@@ -8,14 +8,16 @@
    ========================================================= */
 (function () {
     const RARITIES = {
+        /* mult 是效果倍率：越高档越强，但整体压得比较平——
+           原来的 A4.5 / S9 / SS20 让中期一两张高位卡就把经济推平了。 */
         C:  { key: 'C',  name: 'C 级',  title: '学徒', weight: 42,  mult: 1,   dupRelic: 1,  color: '#9aa4b2' },
-        B:  { key: 'B',  name: 'B 级',  title: '能手', weight: 26,  mult: 2.2, dupRelic: 3,  color: '#57d99a' },
-        A:  { key: 'A',  name: 'A 级',  title: '大师', weight: 12,  mult: 4.5, dupRelic: 8,  color: '#5aa9ff' },
-        S:  { key: 'S',  name: 'S 级',  title: '传奇', weight: 4.5, mult: 9,   dupRelic: 25, color: '#c98bff' },
-        SS: { key: 'SS', name: 'SS 级', title: '神话', weight: 0.8, mult: 20,  dupRelic: 100, color: '#ff6b6b' },
+        B:  { key: 'B',  name: 'B 级',  title: '能手', weight: 26,  mult: 1.5, dupRelic: 3,  color: '#57d99a' },
+        A:  { key: 'A',  name: 'A 级',  title: '大师', weight: 12,  mult: 2.5, dupRelic: 8,  color: '#5aa9ff' },
+        S:  { key: 'S',  name: 'S 级',  title: '传奇', weight: 4.5, mult: 4,   dupRelic: 25, color: '#c98bff' },
+        SS: { key: 'SS', name: 'SS 级', title: '神话', weight: 0.8, mult: 6,   dupRelic: 100, color: '#ff6b6b' },
         /* EX：跨越时间线的一档——没有保底、概率极低，但抽到就永远是你的 */
         EX: {
-            key: 'EX', name: 'EX 级', title: '超越', weight: 0.15, mult: 40,
+            key: 'EX', name: 'EX 级', title: '超越', weight: 0.15, mult: 10,
             dupRelic: 400, color: '#ffd166', beyond: true,
         },
     };

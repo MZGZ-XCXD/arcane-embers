@@ -42,7 +42,7 @@
     });
     P('遗物共鸣', {
         tree: 'relic', cost: 8, costG: 1.8, max: 10, eff: { capPerRelic: 0.012 },
-        desc: '每持有 1 枚奥术遗物，所有资源上限 +1.2%（每级递增）。',
+        desc: '所有资源上限随遗物数量提升，但走平方根——越往后收益越平缓，不会因为攒了几万枚遗物就把上限顶到上千倍。',
     });
     P('学识共鸣', {
         tree: 'relic', cost: 12, costG: 1.85, max: 8, eff: { knowledgeCapPerRelic: 0.15 },

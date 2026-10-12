@@ -65,14 +65,16 @@
         return soft - 100 + 200 * Math.sqrt(0.25 + 0.005 * (happiness - soft));
     }
 
-    /* 民望产出乘数：每 100 点民望 = ×1 建筑产出。
+    /* 民望产出乘数：以 100 民望为基准，每多 400 点民望，产出再 +100%。
+       （最初写成「每 100 点就 ×1」，中期就能白拿两三倍产出，太强了。）
        这里用的是「上一次结算出来的民望」——因为民望本身要看人口与食物状况，
        而人口与食物又由产量决定，直接用当帧的值会绕成一个圈。
        上下限只是防呆（下限防止民望归零时彻底停产，上限防止异常数值把经济打爆）；
        真正约束后期数值的是民望的软上限与仓库上限，不是这里。 */
+    const HAPPINESS_PER_STEP = 400;      // 每 400 点民望 = 额外 ×1 产出
     function happinessMult(state) {
-        const f = state.happinessFactor === undefined ? 1 : state.happinessFactor;
-        return Utils.clamp(f, 0.1, 50);
+        const raw = state.happinessFactor === undefined ? 1 : state.happinessFactor;   // = 民望 / 100
+        return Utils.clamp(1 + (raw * 100 - 100) / HAPPINESS_PER_STEP, 0.1, 50);
     }
 
     function computeProductionAndCaps(state) {
@@ -178,7 +180,11 @@
         }
 
         const relic = ResourcesManager.amount('奥术遗物');
-        const capBoost = (1 + (e.capAll || 0)) * (1 + relic * (e.capPerRelic || 0));
+        /* 遗物带来的上限加成按「遗物数量的平方根」计算：
+           原来的线性公式在后期会把上限抬到上千倍（上万枚遗物 = 1000+ 倍上限），
+           一次原初归寂之后整个经济就直接失控了。 */
+        const relicCapBonus = Math.sqrt(Math.max(0, relic)) * (e.capPerRelic || 0);
+        const capBoost = (1 + (e.capAll || 0)) * (1 + relicCapBonus);
         const knowledgeCapBoost = capBoost *
             (1 + Math.log(1 + relic) * (e.knowledgeCapPerRelic || 0)) *
             (e.knowledgeCapMult || 1);
