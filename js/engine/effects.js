@@ -9,6 +9,7 @@
         'populationCap', 'relicGain', 'resetGain', 'expeditionPower',
         'expeditionReward', 'speed', 'marketVolume', 'artifactQuality',
         'capPerRelic', 'knowledgeCapPerRelic', 'offlineHours',
+        'artifactSlots',
         /* 建造队列与英雄召唤相关 */
         'queueSlots', 'queueDiscount', 'powerMult', 'luck', 'summonDiscount', 'heroPower',
     ];
