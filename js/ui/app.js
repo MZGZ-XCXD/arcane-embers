@@ -196,11 +196,9 @@
             case 'summon': {
                 const r = Heroes.summon(s, Number(arg1) || 1);
                 if (!r.ok) { G.toast(r.msg, 'bad'); break; }
-                const heroes = r.results.filter(x => x.type === 'hero');
-                const names = heroes.map(x => x.rarity + '·' + x.hero.name);
-                G.toast('🔮 召唤 ×' + r.results.length + (names.length
-                    ? '：' + names.slice(0, 4).join('、') + (names.length > 4 ? ' 等' : '')
-                    : '（没有英雄回应）'), r.best === 'EX' ? 'gold' : '');
+                /* 结果用一个浮窗展示（英雄按等级分好组），要玩家自己按按钮才关掉 */
+                if (window.TabSummon && TabSummon.showResults) TabSummon.showResults(s, r);
+                else G.toast('🔮 召唤 ×' + r.results.length, r.best === 'EX' ? 'gold' : '');
                 break;
             }
             case 'queuecancel': {

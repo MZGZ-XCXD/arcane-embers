@@ -150,6 +150,7 @@
             for (const k in GACHA_CONFIG.pity) if (state.heroes.pity[k] === undefined) state.heroes.pity[k] = 0;
             for (const k in HERO_RARITIES) if (state.heroes.byRarity[k] === undefined) state.heroes.byRarity[k] = 0;
             if (state.heroes.dupRelics === undefined) state.heroes.dupRelics = 0;
+            if (state.heroes.dupRefunds === undefined) state.heroes.dupRefunds = 0;
             if (!Array.isArray(state.heroes.history)) state.heroes.history = [];
         }
         if (!state.expedition) state.expedition = { active: [], auto: false, history: [], mastery: {}, dry: 0 };

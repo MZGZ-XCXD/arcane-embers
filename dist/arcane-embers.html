@@ -541,6 +541,46 @@ h1, h2, h3, .serif { font-family: "Palatino Linotype", "Songti SC", Georgia, ser
 .summon-item .si-rar { font-size: .62rem; color: var(--rar); letter-spacing: 1px; }
 .summon-item .si-name { font-size: .78rem; font-weight: 600; color: var(--text); }
 .summon-item .si-sub { font-size: .68rem; color: var(--text-dim); }
+
+/* ---------------- 抽卡结果浮窗 ---------------- */
+.sh-group { margin: 10px 0; }
+.sh-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 9px; border-radius: 9px;
+    background: var(--bg-panel); border: 1px solid var(--border);
+    border-left: 3px solid var(--rar);
+}
+.sh-head .sh-title { font-size: .74rem; color: var(--text-dim); }
+.sh-head .sh-count { margin-left: auto; font-size: .72rem; color: var(--text-dim); }
+.sh-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 7px; margin-top: 7px; }
+.sh-card {
+    background: var(--bg-card); border: 1px solid var(--border-card);
+    border-left: 3px solid var(--rar); border-radius: 10px; padding: 8px 9px;
+}
+.sh-card-head { display: flex; align-items: center; gap: 5px; font-size: .66rem; color: var(--text-dim); }
+.sh-card-head .rar { white-space: nowrap; flex: 0 0 auto; }
+.sh-card-head .sh-status { margin-left: auto; white-space: nowrap; }
+.sh-status.is-new { color: var(--accent-2); }
+.sh-status.is-awaken { color: var(--accent); }
+.sh-status.is-dupe { color: var(--text-dim); }
+.sh-card-name {
+    font-size: .86rem; font-weight: 600; color: var(--text-heading); margin: 3px 0 2px;
+    display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap;
+}
+.sh-card-name .sh-cat { font-size: .66rem; font-weight: 400; color: var(--text-dim); white-space: nowrap; }
+.sh-card-eff { font-size: .7rem; color: var(--text-secondary); line-height: 1.55; }
+/* 跨越时间线（EX）：给最高的那一组一点金光 */
+.sh-group.beyond .sh-card {
+    box-shadow: 0 0 0 1px rgba(255, 209, 102, .35), 0 6px 18px rgba(255, 209, 102, .12);
+}
+.sh-other { margin-top: 12px; }
+.sh-other-title { font-size: .72rem; color: var(--text-dim); margin-bottom: 5px; }
+.chip.dim { opacity: .6; }
+/* 「收下」按钮常驻在浮窗底部，结果很长时不用滚到底 */
+.modal .modal-actions.pinned {
+    position: sticky; bottom: -18px; margin-top: 14px; padding: 10px 0 4px;
+    background: linear-gradient(180deg, transparent, var(--bg-panel) 45%);
+}
 .hero-group { margin-bottom: 12px; }
 .hero-group-head {
     display: flex; align-items: center; gap: 8px;
@@ -873,6 +913,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
      mods    对其它建筑的增幅 [{target, prod, cons, cap}]
      modes   模式切换 [{name, prod, cons, caps, local, happy, desc}]
      global  全局加成（每座启用建筑叠加）{globalProd, globalCost, happiness, speed, ...}
+     freeFirst  第一座免费（用来兜住「重置后把木材花光」的死局，例如拾荒棚）
      desc    说明
    })
    ========================================================= */
@@ -888,6 +929,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
             tech: o.tech || null,
             cost: o.cost || {},
             growth: o.g === undefined ? 1.2 : o.g,
+            freeFirst: o.freeFirst || false,
             produces: o.prod || {},
             consumes: o.cons || {},
             caps: o.caps || {},
@@ -905,10 +947,11 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     }
 
     /* ================= 采集 ================= */
+    /* 第一座免费：重置后就算把木材全花在别处，也一定能重新拿回木材来源。 */
     B('拾荒棚', {
-        type: '采集', era: 1, tech: '拾荒', cost: { 木材: 4 }, g: 1.15,
+        type: '采集', era: 1, tech: '拾荒', cost: { 木材: 4 }, g: 1.15, freeFirst: true,
         prod: { 木材: 0.25, 石料: 0.12 },
-        desc: '在废墟里翻找还能用的木料与石块，你自己动手，不需要人手。这是文明的第一口气。',
+        desc: '在废墟里翻找还能用的木料与石块，你自己动手，不需要人手。这是文明的第一口气。第一座不需要材料。',
     });
     B('伐木场', {
         type: '采集', era: 1, tech: '伐木技术', cost: { 木材: 10 }, g: 1.2,
@@ -2545,7 +2588,8 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 (function () {
     const RARITIES = {
         /* mult 是效果倍率：越高档越强，但整体压得比较平——
-           原来的 A4.5 / S9 / SS20 让中期一两张高位卡就把经济推平了。 */
+           原来的 A4.5 / S9 / SS20 让中期一两张高位卡就把经济推平了。
+           dupRelic 只用于「遗迹限定英雄」重复带回时的转化（那属于远征收益，不是传送阵卡池）。 */
         C:  { key: 'C',  name: 'C 级',  title: '学徒', weight: 42,  mult: 1,   dupRelic: 1,  color: '#9aa4b2' },
         B:  { key: 'B',  name: 'B 级',  title: '能手', weight: 26,  mult: 1.5, dupRelic: 3,  color: '#57d99a' },
         A:  { key: 'A',  name: 'A 级',  title: '大师', weight: 12,  mult: 2.5, dupRelic: 8,  color: '#5aa9ff' },
@@ -2693,7 +2737,11 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         discountCap: 0.8,      // 召唤消耗最多减免 80%
         awakeningMax: 5,
         awakeningStep: 0.2,    // 每级觉醒 +20%（原来 +30%，满觉 ×2.5 太强）
+        /* 满觉英雄重复出现时，按单次召唤消耗的比例返还材料（不退传承资源） */
+        dupRefund: 0.5,
         /* 资源奖励按玩家当前上限的比例发放 */
+        /* 注意：这里只能放普通资源。传承资源（奥术遗物 / 星辉 / 原初之核）永远不进卡池，
+           否则「重置」这条线就没有意义了——引擎里也有一道 prestige 过滤做双保险。 */
         rewardRes: ['木材', '石料', '铁矿', '木炭', '食物', '黄金', '铁锭', '魔晶', '符文'],
         rewardMin: 0.12,
         rewardMax: 0.35,
@@ -2714,6 +2762,11 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 window.CHANGELOG_DATA = {
     "source": "CHANGELOG.md",
     "overview": [
+        {
+            "version": "0.7.3",
+            "date": "2026-10-13",
+            "summary": "召唤结果改成浮窗展示（英雄按等级分组，按按钮才关闭）；传送阵不再产出传承资源（满觉重复改为返还材料）；第一座「拾荒棚」免费，修掉重置后没有木材来源的死局"
+        },
         {
             "version": "0.7.2",
             "date": "2026-10-12",
@@ -2821,6 +2874,25 @@ window.CHANGELOG_DATA = {
         }
     ],
     "versions": [
+        {
+            "version": "0.7.3",
+            "date": "2026-10-13",
+            "sections": [
+                {
+                    "title": "新增",
+                    "items": [
+                        "<b>召唤结果浮窗<\/b>：传送阵抽完之后不再只闪一行提示，而是弹出一个浮窗，把这次抽到的英雄 <b>按等级从高到低分组<\/b>排好（EX / SS / S / A / B / C 各一组，标出人数），每张卡写清 「初次获得 / 觉醒提升 → Lv.N / 已满觉」以及这只英雄当前的效果；资源馈赠与「空」的结果收在下面一行。 浮窗要玩家自己按「收下」才关掉，点外面不会消失。"
+                    ]
+                },
+                {
+                    "title": "变更",
+                    "items": [
+                        "<b>传送阵不再产出传承（重置）资源<\/b>。以前满觉英雄重复出现会转化成奥术遗物， 等于「反复抽卡也能刷传承货币」，重置这条线就变得可有可无。现在改为 <b>返还一部分召唤材料<\/b>（按单次召唤消耗的 50% 退还）。同时给资源馈赠加了一道过滤： 奥术遗物 / 星辉 / 原初之核永远不会从卡池里冒出来。",
+                        "<b>第一座「拾荒棚」免费<\/b>，第二座起恢复原价。重置之后如果把木材全花在别的建筑上 （比如直接去建采石场），就会出现「没有任何木材来源、连重新开始都做不到」的死局； 现在起步的那座拾荒棚不需要材料，随时能重新开工。"
+                    ]
+                }
+            ]
+        },
         {
             "version": "0.7.2",
             "date": "2026-10-12",
@@ -3431,7 +3503,8 @@ window.CHANGELOG_DATA = {
             pity: pity,                         // 距离上次获得该档位以上的抽数
             pulls: 0,
             byRarity: byRarity,
-            dupRelics: 0,
+            dupRelics: 0,                       // 遗迹限定英雄重复带回时转化的遗物（远征收益）
+            dupRefunds: 0,                      // 满觉英雄重复出现、返还材料的次数（传送阵）
             history: [],
             rarityMigrated: true,               // 新档不需要做「旧 EX → SS」的迁移
         };
@@ -3802,9 +3875,16 @@ window.CHANGELOG_DATA = {
         return 1 + (e.globalCost || 0);
     }
 
+    /* 首座免费的建筑（配置里写了 freeFirst）：只在「还没建过」时为 0 造价。
+       这是为了兜住「重置后把木材全花在别的建筑上、又没有木材来源」的死局。 */
+    function isFreeFirst(cfg, count) {
+        return !!(cfg && cfg.freeFirst && !count);
+    }
+
     function buildingPrice(state, name) {
         const cfg = BUILDINGS_CONFIG[name];
         const b = state.buildings[name];
+        if (isFreeFirst(cfg, b.count)) return {};
         return stdCost(cfg.cost, cfg.growth, b.count, costMultiplier(state));
     }
 
@@ -3812,6 +3892,7 @@ window.CHANGELOG_DATA = {
     function buildingPriceCount(state, name, count) {
         const cfg = BUILDINGS_CONFIG[name];
         if (!cfg) return {};
+        if (isFreeFirst(cfg, count)) return {};
         return stdCost(cfg.cost, cfg.growth, count, costMultiplier(state));
     }
 
@@ -5053,6 +5134,21 @@ window.CHANGELOG_DATA = {
         return { ok: true, cost: cost };
     }
 
+    /* 满觉英雄重复出现时返还的材料：按「单次召唤消耗」的比例退还。
+       退的是召唤材料本身（魔力 / 魔晶 / 符文），不是奥术遗物 ——
+       传送阵不产出传承（重置）资源，否则可以靠反复抽卡绕开重置。 */
+    function dupRefund(state) {
+        const rate = GACHA_CONFIG.dupRefund || 0;
+        const out = {};
+        if (rate <= 0) return out;
+        const one = pullCost(state, 1);
+        for (const k in one) {
+            const v = Math.floor(one[k] * rate);
+            if (v > 0) out[k] = v;
+        }
+        return out;
+    }
+
     /* 幸运对 S / EX 权重的实际倍率（带上限，避免稀有度权重失衡） */
     function luckMultiplier(state) {
         return 1 + Math.min(EffectsManager.get(state).luck || 0, GACHA_CONFIG.luckCap);
@@ -5095,14 +5191,17 @@ window.CHANGELOG_DATA = {
 
     function rollReward(state) {
         const cfg = GACHA_CONFIG;
-        const pool = cfg.rewardRes.filter(r => state.resources[r] && state.resources[r].visible);
+        /* 只从「玩家看得见、且不是传承资源」的池子里取；
+           传承资源（奥术遗物 / 星辉 / 原初之核）永远不该出现在召唤结果里。 */
+        const isPrestige = r => !!(RESOURCES_CONFIG[r] && RESOURCES_CONFIG[r].prestige);
+        const pool = cfg.rewardRes.filter(r => state.resources[r] && state.resources[r].visible && !isPrestige(r));
         const list = pool.length ? pool : cfg.rewardRes;
         const n = Utils.rndInt(cfg.rewardCount[0], cfg.rewardCount[1]);
         const gained = {};
         for (let i = 0; i < n; i++) {
             const res = list[Math.floor(Math.random() * list.length)];
             const r = state.resources[res];
-            if (!r) continue;
+            if (!r || isPrestige(res)) continue;      // 双保险
             const amount = Math.max(1, Math.floor(r.cap * Utils.rnd(cfg.rewardMin, cfg.rewardMax)));
             gained[res] = (gained[res] || 0) + amount;
         }
@@ -5138,10 +5237,12 @@ window.CHANGELOG_DATA = {
                 owned[id]++;
                 result.awaken = owned[id];
             } else {
-                const relic = HERO_RARITIES[result.hero.rarity].dupRelic;
-                ResourcesManager.add({ 奥术遗物: relic });
-                result.dupRelic = relic;
-                state.heroes.dupRelics = (state.heroes.dupRelics || 0) + relic;
+                /* 满觉之后的重复：返还一部分召唤材料。
+                   以前这里发的是奥术遗物，等于「抽卡也能刷传承货币」，重置就没必要了。 */
+                const refund = dupRefund(state);
+                ResourcesManager.add(refund);
+                result.refund = refund;
+                state.heroes.dupRefunds = (state.heroes.dupRefunds || 0) + 1;
             }
             state.heroes.byRarity[result.hero.rarity] = (state.heroes.byRarity[result.hero.rarity] || 0) + 1;
         } else if (result.type === 'reward') {
@@ -5155,6 +5256,7 @@ window.CHANGELOG_DATA = {
             name: result.hero ? result.hero.name : (result.type === 'reward' ? '资源馈赠' : '虚空回响'),
             isNew: !!result.isNew,
             awaken: result.awaken,
+            refund: result.refund || null,
             day: state.gameDays,
         });
         if (state.heroes.history.length > 30) state.heroes.history.pop();
@@ -5197,6 +5299,7 @@ window.CHANGELOG_DATA = {
             total: total,
             byRarity: h.byRarity,
             dupRelics: h.dupRelics || 0,
+            dupRefunds: h.dupRefunds || 0,
             pity: h.pity,
             fullCollection: owned >= total,
         };
@@ -6136,6 +6239,7 @@ window.CHANGELOG_DATA = {
             for (const k in GACHA_CONFIG.pity) if (state.heroes.pity[k] === undefined) state.heroes.pity[k] = 0;
             for (const k in HERO_RARITIES) if (state.heroes.byRarity[k] === undefined) state.heroes.byRarity[k] = 0;
             if (state.heroes.dupRelics === undefined) state.heroes.dupRelics = 0;
+            if (state.heroes.dupRefunds === undefined) state.heroes.dupRefunds = 0;
             if (!Array.isArray(state.heroes.history)) state.heroes.history = [];
         }
         if (!state.expedition) state.expedition = { active: [], auto: false, history: [], mastery: {}, dry: 0 };
@@ -8153,13 +8257,74 @@ window.CHANGELOG_DATA = {
         if (entry.type === 'hero') {
             if (entry.isNew) sub = '初次获得';
             else if (entry.awaken) sub = '觉醒 +1 → Lv.' + entry.awaken;
-            else sub = '重复（转为遗物）';
+            else sub = entry.refund ? '重复（返还材料）' : '重复（转为遗物）';
         } else if (entry.type === 'reward') sub = '资源';
         else sub = '什么也没有';
         return '<div class="summon-item" style="--rar:' + color + '" data-tip="summon|' + G.esc(entry.name) + '">' +
             '<span class="si-rar">' + G.esc(label) + '</span>' +
             '<span class="si-name">' + G.esc(entry.name) + '</span>' +
             '<span class="si-sub">' + G.esc(sub) + '</span></div>';
+    }
+
+    /* ---------- 抽卡结果浮窗 ---------- */
+
+    /* 浮窗里的一张英雄卡：档位 + 分类 + 这次的状态 + 效果 */
+    function resultHeroCard(r) {
+        const h = r.hero;
+        const hr = HERO_RARITIES[h.rarity];
+        const cat = HERO_CATEGORIES[h.category];
+        let status, statusCls;
+        if (r.isNew) { status = '初次获得'; statusCls = 'is-new'; }
+        else if (r.awaken) { status = '觉醒提升 → Lv.' + r.awaken; statusCls = 'is-awaken'; }
+        else { status = '已满觉 · 返还材料'; statusCls = 'is-dupe'; }
+        const awaken = r.isNew ? 0 : (r.awaken || GACHA_CONFIG.awakeningMax);
+        const eff = effectLines(h, awaken);
+        let html = '<div class="sh-card" style="--rar:' + hr.color + '">';
+        html += '<div class="sh-card-head">' + rarityTag(h.rarity) +
+            '<span class="sh-status ' + statusCls + '">' + G.esc(status) + '</span></div>';
+        html += '<div class="sh-card-name">' + G.esc(h.name) +
+            '<span class="sh-cat">' + cat.icon + ' ' + G.esc(cat.key) + '</span></div>';
+        html += '<div class="sh-card-eff">' + eff.map(t => '<div>✦ ' + G.esc(t) + '</div>').join('') + '</div>';
+        html += '</div>';
+        return html;
+    }
+
+    /* 抽卡结果浮窗：英雄按等级从高到低分组排好，玩家按按钮才关掉 */
+    function showResults(state, res) {
+        const results = (res && res.results) || [];
+        const heroes = results.filter(x => x.type === 'hero');
+        const rewards = results.filter(x => x.type === 'reward');
+        const empty = results.filter(x => x.type === 'empty').length;
+
+        let html = '<h2>✨ 传送阵的回应</h2>';
+        html += '<p class="hint">召唤 ' + results.length + ' 次' +
+            (heroes.length ? '，其中 ' + heroes.length + ' 位英雄回应了你' : '，没有英雄回应') +
+            (heroes.length && res.best ? '　最高档位：<b>' + G.esc(res.best) + ' 级</b>' : '') + '</p>';
+
+        for (const rarity of RARITY_ORDER) {
+            const list = heroes.filter(x => x.rarity === rarity);
+            if (!list.length) continue;
+            const hr = HERO_RARITIES[rarity];
+            html += '<div class="sh-group' + (hr.beyond ? ' beyond' : '') + '" style="--rar:' + hr.color + '">';
+            html += '<div class="sh-head">' + rarityTag(rarity) +
+                '<span class="sh-title">' + G.esc(hr.title) + '</span>' +
+                '<span class="sh-count">' + list.length + ' 位</span></div>';
+            html += '<div class="sh-grid">' + list.map(resultHeroCard).join('') + '</div></div>';
+        }
+
+        /* 非英雄结果：资源馈赠与「空」 */
+        const gained = {};
+        for (const r of rewards) for (const k in r.resources) gained[k] = (gained[k] || 0) + r.resources[k];
+        const other = [];
+        for (const k in gained) other.push('<span class="chip">' + G.esc(k) + ' +' + U.fmtNum(gained[k], 0) + '</span>');
+        if (empty) other.push('<span class="chip dim">虚空回响 ×' + empty + '</span>');
+        if (other.length) {
+            html += '<div class="sh-other"><div class="sh-other-title">此外还带回了</div>' +
+                '<div class="chip-row">' + other.join('') + '</div></div>';
+        }
+
+        html += '<div class="modal-actions pinned"><button class="btn primary wide-action" data-act="closemodal">收下</button></div>';
+        return G.openModal(html, { closable: false });
     }
 
     function heroCard(hero) {
@@ -8208,7 +8373,7 @@ window.CHANGELOG_DATA = {
         let html = '<div class="tab-intro">传送阵把别处的「可能性」拉到这里：你召唤到的是其它时间线里活下来的英雄。' +
             '英雄分为 <b>C / B / A / S / SS / EX</b> 六档，档位越高效果越强、也越难遇到；' +
             '重复召唤到同一位英雄会提升<b>觉醒等级</b>（每级效果 +' + Math.round(GACHA_CONFIG.awakeningStep * 100) + '%，最高 ' +
-            GACHA_CONFIG.awakeningMax + ' 级），满觉后再抽到会转化为奥术遗物。<br>' +
+            GACHA_CONFIG.awakeningMax + ' 级），满觉后再抽到会<b>返还一部分召唤材料</b>。<br>' +
             '卡池里除了英雄，还有资源馈赠与<b>空</b>（什么都没抽到）。<br>' +
             '最高一档 <b>EX</b> 是跨越时间线的存在：<b>没有保底</b>、概率极低，' +
             '但它一旦落到你手上就属于所有时间线——永久保留，重置也不会失去。<br>' +
@@ -8266,12 +8431,12 @@ window.CHANGELOG_DATA = {
             html += '<div class="row"><span class="k">' + HERO_RARITIES[rarity].name + ' 累计获得</span><span class="v">' +
                 U.fmtInt(s.heroes.byRarity[rarity] || 0) + ' 次</span></div>';
         }
-        html += '<div class="row"><span class="k">满觉重复转化遗物</span><span class="v gold">' + U.fmtInt(st.dupRelics) + '</span></div>';
+        html += '<div class="row"><span class="k">满觉重复返还材料</span><span class="v">' + U.fmtInt(st.dupRefunds) + ' 次</span></div>';
         html += '</div>';
         return html;
     }
 
-    window.TabSummon = { renderSummon, heroCard, rarityTag, effectLines };
+    window.TabSummon = { renderSummon, showResults, heroCard, rarityTag, effectLines };
 })();
 
 </script>
@@ -8622,11 +8787,9 @@ window.CHANGELOG_DATA = {
             case 'summon': {
                 const r = Heroes.summon(s, Number(arg1) || 1);
                 if (!r.ok) { G.toast(r.msg, 'bad'); break; }
-                const heroes = r.results.filter(x => x.type === 'hero');
-                const names = heroes.map(x => x.rarity + '·' + x.hero.name);
-                G.toast('🔮 召唤 ×' + r.results.length + (names.length
-                    ? '：' + names.slice(0, 4).join('、') + (names.length > 4 ? ' 等' : '')
-                    : '（没有英雄回应）'), r.best === 'EX' ? 'gold' : '');
+                /* 结果用一个浮窗展示（英雄按等级分好组），要玩家自己按按钮才关掉 */
+                if (window.TabSummon && TabSummon.showResults) TabSummon.showResults(s, r);
+                else G.toast('🔮 召唤 ×' + r.results.length, r.best === 'EX' ? 'gold' : '');
                 break;
             }
             case 'queuecancel': {

@@ -9,7 +9,8 @@
 (function () {
     const RARITIES = {
         /* mult 是效果倍率：越高档越强，但整体压得比较平——
-           原来的 A4.5 / S9 / SS20 让中期一两张高位卡就把经济推平了。 */
+           原来的 A4.5 / S9 / SS20 让中期一两张高位卡就把经济推平了。
+           dupRelic 只用于「遗迹限定英雄」重复带回时的转化（那属于远征收益，不是传送阵卡池）。 */
         C:  { key: 'C',  name: 'C 级',  title: '学徒', weight: 42,  mult: 1,   dupRelic: 1,  color: '#9aa4b2' },
         B:  { key: 'B',  name: 'B 级',  title: '能手', weight: 26,  mult: 1.5, dupRelic: 3,  color: '#57d99a' },
         A:  { key: 'A',  name: 'A 级',  title: '大师', weight: 12,  mult: 2.5, dupRelic: 8,  color: '#5aa9ff' },
@@ -157,7 +158,11 @@
         discountCap: 0.8,      // 召唤消耗最多减免 80%
         awakeningMax: 5,
         awakeningStep: 0.2,    // 每级觉醒 +20%（原来 +30%，满觉 ×2.5 太强）
+        /* 满觉英雄重复出现时，按单次召唤消耗的比例返还材料（不退传承资源） */
+        dupRefund: 0.5,
         /* 资源奖励按玩家当前上限的比例发放 */
+        /* 注意：这里只能放普通资源。传承资源（奥术遗物 / 星辉 / 原初之核）永远不进卡池，
+           否则「重置」这条线就没有意义了——引擎里也有一道 prestige 过滤做双保险。 */
         rewardRes: ['木材', '石料', '铁矿', '木炭', '食物', '黄金', '铁锭', '魔晶', '符文'],
         rewardMin: 0.12,
         rewardMax: 0.35,

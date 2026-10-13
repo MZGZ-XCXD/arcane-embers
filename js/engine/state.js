@@ -75,7 +75,8 @@
             pity: pity,                         // 距离上次获得该档位以上的抽数
             pulls: 0,
             byRarity: byRarity,
-            dupRelics: 0,
+            dupRelics: 0,                       // 遗迹限定英雄重复带回时转化的遗物（远征收益）
+            dupRefunds: 0,                      // 满觉英雄重复出现、返还材料的次数（传送阵）
             history: [],
             rarityMigrated: true,               // 新档不需要做「旧 EX → SS」的迁移
         };

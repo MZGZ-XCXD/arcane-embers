@@ -23,13 +23,74 @@
         if (entry.type === 'hero') {
             if (entry.isNew) sub = '初次获得';
             else if (entry.awaken) sub = '觉醒 +1 → Lv.' + entry.awaken;
-            else sub = '重复（转为遗物）';
+            else sub = entry.refund ? '重复（返还材料）' : '重复（转为遗物）';
         } else if (entry.type === 'reward') sub = '资源';
         else sub = '什么也没有';
         return '<div class="summon-item" style="--rar:' + color + '" data-tip="summon|' + G.esc(entry.name) + '">' +
             '<span class="si-rar">' + G.esc(label) + '</span>' +
             '<span class="si-name">' + G.esc(entry.name) + '</span>' +
             '<span class="si-sub">' + G.esc(sub) + '</span></div>';
+    }
+
+    /* ---------- 抽卡结果浮窗 ---------- */
+
+    /* 浮窗里的一张英雄卡：档位 + 分类 + 这次的状态 + 效果 */
+    function resultHeroCard(r) {
+        const h = r.hero;
+        const hr = HERO_RARITIES[h.rarity];
+        const cat = HERO_CATEGORIES[h.category];
+        let status, statusCls;
+        if (r.isNew) { status = '初次获得'; statusCls = 'is-new'; }
+        else if (r.awaken) { status = '觉醒提升 → Lv.' + r.awaken; statusCls = 'is-awaken'; }
+        else { status = '已满觉 · 返还材料'; statusCls = 'is-dupe'; }
+        const awaken = r.isNew ? 0 : (r.awaken || GACHA_CONFIG.awakeningMax);
+        const eff = effectLines(h, awaken);
+        let html = '<div class="sh-card" style="--rar:' + hr.color + '">';
+        html += '<div class="sh-card-head">' + rarityTag(h.rarity) +
+            '<span class="sh-status ' + statusCls + '">' + G.esc(status) + '</span></div>';
+        html += '<div class="sh-card-name">' + G.esc(h.name) +
+            '<span class="sh-cat">' + cat.icon + ' ' + G.esc(cat.key) + '</span></div>';
+        html += '<div class="sh-card-eff">' + eff.map(t => '<div>✦ ' + G.esc(t) + '</div>').join('') + '</div>';
+        html += '</div>';
+        return html;
+    }
+
+    /* 抽卡结果浮窗：英雄按等级从高到低分组排好，玩家按按钮才关掉 */
+    function showResults(state, res) {
+        const results = (res && res.results) || [];
+        const heroes = results.filter(x => x.type === 'hero');
+        const rewards = results.filter(x => x.type === 'reward');
+        const empty = results.filter(x => x.type === 'empty').length;
+
+        let html = '<h2>✨ 传送阵的回应</h2>';
+        html += '<p class="hint">召唤 ' + results.length + ' 次' +
+            (heroes.length ? '，其中 ' + heroes.length + ' 位英雄回应了你' : '，没有英雄回应') +
+            (heroes.length && res.best ? '　最高档位：<b>' + G.esc(res.best) + ' 级</b>' : '') + '</p>';
+
+        for (const rarity of RARITY_ORDER) {
+            const list = heroes.filter(x => x.rarity === rarity);
+            if (!list.length) continue;
+            const hr = HERO_RARITIES[rarity];
+            html += '<div class="sh-group' + (hr.beyond ? ' beyond' : '') + '" style="--rar:' + hr.color + '">';
+            html += '<div class="sh-head">' + rarityTag(rarity) +
+                '<span class="sh-title">' + G.esc(hr.title) + '</span>' +
+                '<span class="sh-count">' + list.length + ' 位</span></div>';
+            html += '<div class="sh-grid">' + list.map(resultHeroCard).join('') + '</div></div>';
+        }
+
+        /* 非英雄结果：资源馈赠与「空」 */
+        const gained = {};
+        for (const r of rewards) for (const k in r.resources) gained[k] = (gained[k] || 0) + r.resources[k];
+        const other = [];
+        for (const k in gained) other.push('<span class="chip">' + G.esc(k) + ' +' + U.fmtNum(gained[k], 0) + '</span>');
+        if (empty) other.push('<span class="chip dim">虚空回响 ×' + empty + '</span>');
+        if (other.length) {
+            html += '<div class="sh-other"><div class="sh-other-title">此外还带回了</div>' +
+                '<div class="chip-row">' + other.join('') + '</div></div>';
+        }
+
+        html += '<div class="modal-actions pinned"><button class="btn primary wide-action" data-act="closemodal">收下</button></div>';
+        return G.openModal(html, { closable: false });
     }
 
     function heroCard(hero) {
@@ -78,7 +139,7 @@
         let html = '<div class="tab-intro">传送阵把别处的「可能性」拉到这里：你召唤到的是其它时间线里活下来的英雄。' +
             '英雄分为 <b>C / B / A / S / SS / EX</b> 六档，档位越高效果越强、也越难遇到；' +
             '重复召唤到同一位英雄会提升<b>觉醒等级</b>（每级效果 +' + Math.round(GACHA_CONFIG.awakeningStep * 100) + '%，最高 ' +
-            GACHA_CONFIG.awakeningMax + ' 级），满觉后再抽到会转化为奥术遗物。<br>' +
+            GACHA_CONFIG.awakeningMax + ' 级），满觉后再抽到会<b>返还一部分召唤材料</b>。<br>' +
             '卡池里除了英雄，还有资源馈赠与<b>空</b>（什么都没抽到）。<br>' +
             '最高一档 <b>EX</b> 是跨越时间线的存在：<b>没有保底</b>、概率极低，' +
             '但它一旦落到你手上就属于所有时间线——永久保留，重置也不会失去。<br>' +
@@ -136,10 +197,10 @@
             html += '<div class="row"><span class="k">' + HERO_RARITIES[rarity].name + ' 累计获得</span><span class="v">' +
                 U.fmtInt(s.heroes.byRarity[rarity] || 0) + ' 次</span></div>';
         }
-        html += '<div class="row"><span class="k">满觉重复转化遗物</span><span class="v gold">' + U.fmtInt(st.dupRelics) + '</span></div>';
+        html += '<div class="row"><span class="k">满觉重复返还材料</span><span class="v">' + U.fmtInt(st.dupRefunds) + ' 次</span></div>';
         html += '</div>';
         return html;
     }
 
-    window.TabSummon = { renderSummon, heroCard, rarityTag, effectLines };
+    window.TabSummon = { renderSummon, showResults, heroCard, rarityTag, effectLines };
 })();

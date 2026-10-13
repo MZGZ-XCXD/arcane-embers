@@ -31,9 +31,16 @@
         return 1 + (e.globalCost || 0);
     }
 
+    /* 首座免费的建筑（配置里写了 freeFirst）：只在「还没建过」时为 0 造价。
+       这是为了兜住「重置后把木材全花在别的建筑上、又没有木材来源」的死局。 */
+    function isFreeFirst(cfg, count) {
+        return !!(cfg && cfg.freeFirst && !count);
+    }
+
     function buildingPrice(state, name) {
         const cfg = BUILDINGS_CONFIG[name];
         const b = state.buildings[name];
+        if (isFreeFirst(cfg, b.count)) return {};
         return stdCost(cfg.cost, cfg.growth, b.count, costMultiplier(state));
     }
 
@@ -41,6 +48,7 @@
     function buildingPriceCount(state, name, count) {
         const cfg = BUILDINGS_CONFIG[name];
         if (!cfg) return {};
+        if (isFreeFirst(cfg, count)) return {};
         return stdCost(cfg.cost, cfg.growth, count, costMultiplier(state));
     }
 

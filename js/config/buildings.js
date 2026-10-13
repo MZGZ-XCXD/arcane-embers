@@ -15,6 +15,7 @@
      mods    对其它建筑的增幅 [{target, prod, cons, cap}]
      modes   模式切换 [{name, prod, cons, caps, local, happy, desc}]
      global  全局加成（每座启用建筑叠加）{globalProd, globalCost, happiness, speed, ...}
+     freeFirst  第一座免费（用来兜住「重置后把木材花光」的死局，例如拾荒棚）
      desc    说明
    })
    ========================================================= */
@@ -30,6 +31,7 @@
             tech: o.tech || null,
             cost: o.cost || {},
             growth: o.g === undefined ? 1.2 : o.g,
+            freeFirst: o.freeFirst || false,
             produces: o.prod || {},
             consumes: o.cons || {},
             caps: o.caps || {},
@@ -47,10 +49,11 @@
     }
 
     /* ================= 采集 ================= */
+    /* 第一座免费：重置后就算把木材全花在别处，也一定能重新拿回木材来源。 */
     B('拾荒棚', {
-        type: '采集', era: 1, tech: '拾荒', cost: { 木材: 4 }, g: 1.15,
+        type: '采集', era: 1, tech: '拾荒', cost: { 木材: 4 }, g: 1.15, freeFirst: true,
         prod: { 木材: 0.25, 石料: 0.12 },
-        desc: '在废墟里翻找还能用的木料与石块，你自己动手，不需要人手。这是文明的第一口气。',
+        desc: '在废墟里翻找还能用的木料与石块，你自己动手，不需要人手。这是文明的第一口气。第一座不需要材料。',
     });
     B('伐木场', {
         type: '采集', era: 1, tech: '伐木技术', cost: { 木材: 10 }, g: 1.2,

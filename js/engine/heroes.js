@@ -130,6 +130,21 @@
         return { ok: true, cost: cost };
     }
 
+    /* 满觉英雄重复出现时返还的材料：按「单次召唤消耗」的比例退还。
+       退的是召唤材料本身（魔力 / 魔晶 / 符文），不是奥术遗物 ——
+       传送阵不产出传承（重置）资源，否则可以靠反复抽卡绕开重置。 */
+    function dupRefund(state) {
+        const rate = GACHA_CONFIG.dupRefund || 0;
+        const out = {};
+        if (rate <= 0) return out;
+        const one = pullCost(state, 1);
+        for (const k in one) {
+            const v = Math.floor(one[k] * rate);
+            if (v > 0) out[k] = v;
+        }
+        return out;
+    }
+
     /* 幸运对 S / EX 权重的实际倍率（带上限，避免稀有度权重失衡） */
     function luckMultiplier(state) {
         return 1 + Math.min(EffectsManager.get(state).luck || 0, GACHA_CONFIG.luckCap);
@@ -172,14 +187,17 @@
 
     function rollReward(state) {
         const cfg = GACHA_CONFIG;
-        const pool = cfg.rewardRes.filter(r => state.resources[r] && state.resources[r].visible);
+        /* 只从「玩家看得见、且不是传承资源」的池子里取；
+           传承资源（奥术遗物 / 星辉 / 原初之核）永远不该出现在召唤结果里。 */
+        const isPrestige = r => !!(RESOURCES_CONFIG[r] && RESOURCES_CONFIG[r].prestige);
+        const pool = cfg.rewardRes.filter(r => state.resources[r] && state.resources[r].visible && !isPrestige(r));
         const list = pool.length ? pool : cfg.rewardRes;
         const n = Utils.rndInt(cfg.rewardCount[0], cfg.rewardCount[1]);
         const gained = {};
         for (let i = 0; i < n; i++) {
             const res = list[Math.floor(Math.random() * list.length)];
             const r = state.resources[res];
-            if (!r) continue;
+            if (!r || isPrestige(res)) continue;      // 双保险
             const amount = Math.max(1, Math.floor(r.cap * Utils.rnd(cfg.rewardMin, cfg.rewardMax)));
             gained[res] = (gained[res] || 0) + amount;
         }
@@ -215,10 +233,12 @@
                 owned[id]++;
                 result.awaken = owned[id];
             } else {
-                const relic = HERO_RARITIES[result.hero.rarity].dupRelic;
-                ResourcesManager.add({ 奥术遗物: relic });
-                result.dupRelic = relic;
-                state.heroes.dupRelics = (state.heroes.dupRelics || 0) + relic;
+                /* 满觉之后的重复：返还一部分召唤材料。
+                   以前这里发的是奥术遗物，等于「抽卡也能刷传承货币」，重置就没必要了。 */
+                const refund = dupRefund(state);
+                ResourcesManager.add(refund);
+                result.refund = refund;
+                state.heroes.dupRefunds = (state.heroes.dupRefunds || 0) + 1;
             }
             state.heroes.byRarity[result.hero.rarity] = (state.heroes.byRarity[result.hero.rarity] || 0) + 1;
         } else if (result.type === 'reward') {
@@ -232,6 +252,7 @@
             name: result.hero ? result.hero.name : (result.type === 'reward' ? '资源馈赠' : '虚空回响'),
             isNew: !!result.isNew,
             awaken: result.awaken,
+            refund: result.refund || null,
             day: state.gameDays,
         });
         if (state.heroes.history.length > 30) state.heroes.history.pop();
@@ -274,6 +295,7 @@
             total: total,
             byRarity: h.byRarity,
             dupRelics: h.dupRelics || 0,
+            dupRefunds: h.dupRefunds || 0,
             pity: h.pity,
             fullCollection: owned >= total,
         };
