@@ -47,19 +47,27 @@
     }
 
     /* ---------------- 传承 ---------------- */
+    /* 试炼星级加成只作用在「重置收获」上（不是全局产出），所以直接写在三张重置卡片上 ——
+       否则玩家只能看到「当前激活星级」那行小字，会以为试炼星级根本没生效。 */
+    function starBonusNote(s) {
+        const stars = Actions.activeStars(s);
+        if (!stars) return '';
+        return '　<span class="hint">（含试炼星级 ' + stars + '★ → 收获 +' + (stars * 5) + '%）</span>';
+    }
+
     const RESET_INFO = {
         relic: {
             title: '时空回响', type: 'relic',
             desc: '把整条时间线折叠起来重新展开。清空资源、建筑、科技与升级，' +
                 '但保留传承资源、传承强化、成就、试炼进度与（在解锁后）秘宝。',
-            gainText: s => '获得 <b>' + U.fmtInt(Actions.relicGain(s)) + '</b> 奥术遗物',
+            gainText: s => '获得 <b>' + U.fmtInt(Actions.relicGain(s)) + '</b> 奥术遗物' + starBonusNote(s),
             need: s => s.resources['魔法知识'].cap >= 200 ? null : '需要魔法知识上限达到 200（当前 ' + U.fmtNum(s.resources['魔法知识'].cap) + '）',
         },
         star: {
             title: '星辰升华', type: 'star',
             desc: '把整座城市的存在形式升华为星光。比时空回响更彻底，同时获得大量遗物与星辉。' +
                 '需要先把文明重新推到「星辉共鸣」这一步才能再次执行。',
-            gainText: s => '获得 <b>' + U.fmtInt(Actions.relicGain(s) * 2) + '</b> 奥术遗物与 <b>' + U.fmtInt(Actions.starGain(s)) + '</b> 星辉',
+            gainText: s => '获得 <b>' + U.fmtInt(Actions.relicGain(s) * 2) + '</b> 奥术遗物与 <b>' + U.fmtInt(Actions.starGain(s)) + '</b> 星辉' + starBonusNote(s),
             need: s => (s.techs['星辉共鸣'] && s.techs['星辉共鸣'].researched) ? null : '需要先研究「星辉共鸣」（第 4 时代 · 高塔时代）',
         },
         core: {
@@ -67,7 +75,7 @@
             desc: '让世界回到被书写之前的空白。最深的一层重置，产出原初之核。' +
                 '需要先把文明重新推到「虚空撕裂」这一步才能再次执行。',
             gainText: s => '获得 <b>' + U.fmtInt(Actions.coreGain(s)) + '</b> 原初之核、<b>' + U.fmtInt(Actions.starGain(s) * 1.5) +
-                '</b> 星辉与 <b>' + U.fmtInt(Actions.relicGain(s) * 5) + '</b> 奥术遗物',
+                '</b> 星辉与 <b>' + U.fmtInt(Actions.relicGain(s) * 5) + '</b> 奥术遗物' + starBonusNote(s),
             need: s => (s.techs['虚空撕裂'] && s.techs['虚空撕裂'].researched) ? null : '需要先研究「虚空撕裂」（第 6 时代 · 虚空时代）',
         },
     };
@@ -149,6 +157,25 @@
 
         html += '<div class="section-title">重置方式</div>';
         html += resetCard('relic') + resetCard('star') + resetCard('core');
+
+        /* 轮回祝福：当前这条时间线选中的那一个 */
+        html += '<div class="section-title">轮回祝福</div>';
+        if (window.Blessings && Blessings.hasOffer(s)) {
+            html += '<div class="settings-card"><div class="hint">你有一个还没选的祝福 —— ' +
+                '<button class="btn tiny primary" data-act="blessingPick">现在选</button></div></div>';
+        }
+        const blessings = window.Blessings ? Blessings.current(s) : [];
+        if (!blessings.length) {
+            html += '<div class="hint">每一次重置之后，会从 3 个祝福里选 1 个，在这条时间线里一直有效。' +
+                '下一次重置重新抽 —— 所以每一轮的路线都不一样。</div>';
+        } else {
+            html += '<div class="bless-grid">' + blessings.map(b =>
+                '<div class="bless-card static"><div class="bless-head"><span class="bless-icon">' + b.icon + '</span>' +
+                '<span class="bless-name">' + G.esc(b.name) + '</span></div>' +
+                '<div class="bless-desc">' + G.esc(b.desc) + '</div>' +
+                '<div class="bless-eff">' + G.effectLines(b.effect).map(t => '✦ ' + G.esc(t)).join('<br>') + '</div>' +
+                '</div>').join('') + '</div>';
+        }
 
         html += '<div class="section-title">传承强化</div>';
         html += '<div class="perm-tabs">';

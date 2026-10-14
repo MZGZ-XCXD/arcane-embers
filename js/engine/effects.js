@@ -137,6 +137,25 @@
             for (const eff of art.effects) applyEffect(e, eff, 1, '秘宝·' + art.name);
         }
 
+        /* 秘宝套装共鸣：同一流派装备 2 件 / 3 件各触发一档 */
+        if (window.ARTIFACT_SETS) {
+            const setCount = {};
+            for (const art of state.artifacts.equipped) {
+                if (!art || !art.set) continue;
+                setCount[art.set] = (setCount[art.set] || 0) + 1;
+            }
+            for (const set of ARTIFACT_SETS) {
+                const n = setCount[set.key] || 0;
+                if (n >= 2 && set.two) applyEffect(e, set.two.eff, 1, '共鸣·' + set.name + '（2 件）');
+                if (n >= 3 && set.three) applyEffect(e, set.three.eff, 1, '共鸣·' + set.name + '（3 件）');
+            }
+        }
+
+        /* 轮回祝福：本轮选中的那个，重置时重抽 */
+        if (window.Blessings) {
+            for (const b of Blessings.current(state)) applyEffect(e, b.effect, 1, '祝福·' + b.name);
+        }
+
         /* 英雄：分类效果 × 稀有度倍率 × 觉醒加成 × 传承「英雄共鸣」加成 */
         if (state.heroes && state.heroes.owned && window.Heroes) {
             const heroMult = 1 + (e.heroPower || 0);

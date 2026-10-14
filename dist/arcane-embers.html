@@ -543,6 +543,45 @@ h1, h2, h3, .serif { font-family: "Palatino Linotype", "Songti SC", Georgia, ser
 .summon-item .si-sub { font-size: .68rem; color: var(--text-dim); }
 
 /* ---------------- 抽卡结果浮窗 ---------------- */
+.aset {
+    display: inline-block; margin: 2px 0 4px;
+    font-size: .64rem; padding: 1px 6px; border-radius: 6px;
+    color: var(--rar); border: 1px solid var(--rar);
+}
+
+/* ---------------- 轮回祝福 ---------------- */
+.bless-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin: 8px 0; }
+.bless-card {
+    background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 10px;
+    padding: 10px; display: flex; flex-direction: column; gap: 5px;
+}
+.bless-card:not(.static) { cursor: pointer; transition: border-color .12s, transform .12s; }
+.bless-card:not(.static):hover { border-color: var(--border-hover); transform: translateY(-1px); }
+.bless-head { display: flex; align-items: center; gap: 6px; }
+.bless-icon { font-size: 1.1rem; }
+.bless-name { font-size: .86rem; font-weight: 600; color: var(--text-heading); }
+.bless-desc { font-size: .72rem; color: var(--text-secondary); line-height: 1.5; }
+.bless-eff { font-size: .72rem; color: var(--accent-2); line-height: 1.6; }
+.bless-pick {
+    margin-top: 4px; text-align: center; font-size: .74rem; padding: 4px 0;
+    border-radius: 8px; background: var(--bg-sunken); color: var(--accent-2); border: 1px solid var(--border);
+}
+
+/* ---------------- 套装共鸣 ---------------- */
+.res-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 7px; margin-bottom: 6px; }
+.res-card {
+    background: var(--bg-card); border: 1px solid var(--border-card);
+    border-left: 3px solid var(--rar); border-radius: 9px; padding: 7px 9px;
+}
+.res-card.on2 { box-shadow: 0 0 0 1px rgba(255, 255, 255, .06) inset; }
+.res-card.on3 { box-shadow: 0 0 0 1px var(--rar) inset; }
+.res-head { display: flex; align-items: baseline; gap: 6px; }
+.res-name { font-size: .78rem; font-weight: 600; color: var(--text-heading); }
+.res-count { margin-left: auto; font-size: .7rem; color: var(--text-dim); }
+.res-line { font-size: .7rem; color: var(--text-dim); line-height: 1.6; }
+.res-line.on { color: var(--accent-2); }
+
+/* ---------------- 抽卡结果浮窗（续） ---------------- */
 .sh-group { margin: 10px 0; }
 .sh-head {
     display: flex; align-items: center; gap: 8px;
@@ -2757,11 +2796,117 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 
 </script>
 <script>
+/* ===== js/config/blessings.js ===== */
+/* =========================================================
+   轮回祝福
+   每次重置之后，从 3 个候选里选 1 个，本轮（这条时间线）内有效；
+   下一次重置重新抽 —— 于是每一轮都有「这轮走哪条路」的变化。
+   effect 用标准效果对象，直接参与 effects.js 的汇总（和传承、科技同一套机制）。
+   ========================================================= */
+(function () {
+    const LIST = [];
+
+    function BL(name, o) {
+        LIST.push({
+            id: o.id || name,
+            name: name,
+            icon: o.icon || '✦',
+            desc: o.desc || '',
+            effect: o.eff || {},
+        });
+    }
+
+    BL('拾荒者的火种', { icon: '🔥', eff: { globalProd: 0.2 },
+        desc: '废墟里刨出的第一把火。所有建筑产出 +20%。' });
+    BL('灰烬之种', { icon: '🏛️', eff: { relicGain: 0.5 },
+        desc: '一粒不肯熄灭的种子。重置时获得的奥术遗物 +50%。' });
+    BL('学者之烛', { icon: '📖', eff: { knowledgeProd: 0.5 },
+        desc: '图书馆里最后一根蜡烛。魔法知识产出 +50%。' });
+    BL('商队通行证', { icon: '🪙', eff: { marketVolume: 0.8 },
+        desc: '一张盖了旧章的文书。贸易规模 +80%。' });
+    BL('丰饶之壤', { icon: '🌾', eff: { resourceProd: { 食物: 0.4, 木材: 0.3 } },
+        desc: '土壤自己愿意长出东西。食物产出 +40%、木材产出 +30%。' });
+    BL('魔网回响', { icon: '✨', eff: { resourceProd: { 魔力: 0.5 } },
+        desc: '断裂的魔网还在轻轻震动。魔力产出 +50%。' });
+    BL('石匠誓言', { icon: '🪨', eff: { capAll: 0.4 },
+        desc: '工匠们把仓库又往上砌了一层。所有存量上限 +40%。' });
+    BL('远征补给', { icon: '🧭', eff: { expeditionReward: 0.5, expeditionPower: 0.15 },
+        desc: '提前把物资埋在路上了。远征收益 +50%、军力 +15%。' });
+    BL('幸运符', { icon: '🍀', eff: { luck: 0.3, summonDiscount: 0.08 },
+        desc: '不知道是谁塞给你的。抽卡运气 +0.3，召唤消耗 −8%。' });
+    BL('工匠契约', { icon: '🔧', eff: { queueSlots: 2 },
+        desc: '两队工匠愿意同时开工。建造队列 +2 个槽位。' });
+    BL('时间之隙', { icon: '⏳', eff: { speed: 0.2 },
+        desc: '某个角落的时间流得比别处快。世界流速 +20%。' });
+    BL('秘宝猎人', { icon: '💠', eff: { artifactQuality: 0.25 },
+        desc: '更懂得从废墟里挑东西。秘宝品质 +0.25。' });
+    BL('人丁兴旺', { icon: '👥', eff: { populationCap: 0.4 },
+        desc: '这一年出生的人格外多。人口上限 +40%。' });
+    BL('民心所向', { icon: '🕊️', eff: { happiness: 150 },
+        desc: '人们开始相信你真的能重建点什么。民望 +150。' });
+    BL('轮回刻度', { icon: '🌌', eff: { resetGain: 0.4 },
+        desc: '你看清了时间线折叠时的折痕。重置收益 +40%。' });
+    BL('静默工坊', { icon: '🔮', eff: { globalCost: -0.08 },
+        desc: '不用喊话工匠也知道下一步做什么。所有建筑成本增长率 −8%。' });
+    BL('守夜人的灯', { icon: '🕯️', eff: { offlineHours: 2 },
+        desc: '灯一直亮着，你不在的时候城市也在干活。离线结算时长 +2 小时。' });
+
+    window.BLESSINGS_CONFIG = LIST;
+})();
+
+</script>
+<script>
+/* ===== js/config/artifacts.js ===== */
+/* =========================================================
+   秘宝流派与套装共鸣
+   每件秘宝生成时会随机带一个流派；同时装备同一流派 2 件 / 3 件时触发共鸣。
+   共鸣效果也用标准效果对象，直接进入加成汇总，不需要另写一套引擎。
+   3 件那一档尽量做成「机制」，而不是继续堆数值。
+   ========================================================= */
+(function () {
+    const SETS = [
+        {
+            key: '炽焰', name: '炽焰', icon: '🔥', color: '#ff8f5a', desc: '炉火与焦炭之道。',
+            two:   { eff: { knowledgeProd: 0.25 },                        text: '魔法知识产出 +25%' },
+            three: { eff: { globalProd: 0.15 },                           text: '所有建筑产出 +15%' },
+        },
+        {
+            key: '星界', name: '星界', icon: '🌌', color: '#7fb4ff', desc: '从陨星与星轨里读出来的东西。',
+            two:   { eff: { offlineHours: 2 },                            text: '离线结算时长 +2 小时' },
+            three: { eff: { expeditionReward: 0.4, expeditionPower: 0.1 }, text: '远征收益 +40%、军力 +10%' },
+        },
+        {
+            key: '虚空', name: '虚空', icon: '🌀', color: '#c98bff', desc: '写在规则之外的文字。',
+            two:   { eff: { summonDiscount: 0.1 },                        text: '召唤消耗 −10%' },
+            three: { eff: { luck: 0.25 },                                 text: '抽卡运气 +0.25' },
+        },
+        {
+            key: '生灵', name: '生灵', icon: '🌿', color: '#57d99a', desc: '活下来的东西会自己照顾自己。',
+            two:   { eff: { happiness: 120 },                             text: '民望 +120' },
+            three: { eff: { populationCap: 0.25 },                        text: '人口上限 +25%' },
+        },
+        {
+            key: '金石', name: '金石', icon: '⚙️', color: '#d9c07a', desc: '不会说话，但特别结实。',
+            two:   { eff: { queueSlots: 1 },                              text: '建造队列 +1 个槽位' },
+            three: { eff: { globalCost: -0.05 },                          text: '所有建筑成本增长率 −5%' },
+        },
+    ];
+
+    window.ARTIFACT_SETS = SETS;
+})();
+
+</script>
+<script>
 /* ===== js/config/changelog.js ===== */
 /* 由 tools/gen-changelog.js 自动生成，请勿直接编辑；改动请写 CHANGELOG.md 后重新生成。 */
 window.CHANGELOG_DATA = {
     "source": "CHANGELOG.md",
     "overview": [
+        {
+            "version": "0.8.0",
+            "date": "2026-10-14",
+            "summary": "新增「轮回祝福」（每次重置三选一，本轮有效）与「秘宝套装共鸣」（同流派 2 / 3 件触发）；试炼星级加成写进重置卡片"
+        },
         {
             "version": "0.7.4",
             "date": "2026-10-14",
@@ -2879,6 +3024,25 @@ window.CHANGELOG_DATA = {
         }
     ],
     "versions": [
+        {
+            "version": "0.8.0",
+            "date": "2026-10-14",
+            "sections": [
+                {
+                    "title": "新增",
+                    "items": [
+                        "<b>轮回祝福<\/b>：每次重置之后，从 3 个祝福里选 1 个，在这条时间线里一直有效；下一次重置重新抽。 17 种祝福覆盖产出、知识、贸易、远征、抽卡、建造队列、离线上限等不同方向 —— 每轮的重心都不一样，\"这轮走哪条路\"终于成了一个要做的决定。 重置后会自动弹出三选一的浮窗（中途刷新页面也会补回来），当前祝福显示在「传承」页里。",
+                        "<b>秘宝套装共鸣<\/b>：秘宝现在带「流派」（<b>炽焰 / 星界 / 虚空 / 生灵 / 金石<\/b>，生成时随机分配）。 装备同一流派 <b>2 件<\/b>触发小共鸣、<b>3 件<\/b>触发大共鸣，3 件那一档尽量做成机制而不是继续堆数值： 星界 2 件（离线结算时长 +2 小时）/ 3 件（远征收益 +40%、军力 +10%）、 虚空 2 件（召唤消耗 −10%）/ 3 件（抽卡运气 +0.25）、 金石 2 件（建造队列 +1 槽位）/ 3 件（所有建筑成本增长率 −5%）。 远征页会显示每个流派已装备的件数与两档共鸣状态，秘宝的悬浮说明里也能看到进度。"
+                    ]
+                },
+                {
+                    "title": "变更",
+                    "items": [
+                        "<b>试炼的星级加成现在看得见了<\/b>。计算本来就没错（每 1★ 让本次重置收获 +5%）， 但界面上只有「当前激活星级」那一行小字，玩家完全看不出来 —— 三张重置卡片现在会直接写出 「（含试炼星级 5★ → 收获 +25%）」。"
+                    ]
+                }
+            ]
+        },
         {
             "version": "0.7.4",
             "date": "2026-10-14",
@@ -3446,7 +3610,7 @@ window.CHANGELOG_DATA = {
 /* ===== js/engine/state.js ===== */
 /* 游戏状态与资源管理 */
 (function () {
-    const SAVE_VERSION = 6;
+    const SAVE_VERSION = 7;
 
     /* 全局唯一状态对象（引用始终不变，便于各模块共享） */
     const GameState = {
@@ -3467,6 +3631,7 @@ window.CHANGELOG_DATA = {
         challenges: {},
         artifacts: { inventory: [], equipped: [], slots: 3 },
         queue: { items: [] },
+        run: { blessings: [], offers: [] },     // 本轮（这条时间线）的轮回祝福
         heroes: null,
         market: { resources: {}, heat: {}, volume: 0, trades: 0 },
         expedition: { active: [], auto: false, history: [], mastery: {}, dry: 0 },
@@ -3547,6 +3712,7 @@ window.CHANGELOG_DATA = {
         s.challenges = {};
         s.artifacts = { inventory: [], equipped: [], slots: 3 };
         s.queue = { items: [] };
+        s.run = { blessings: [], offers: [] };      // 轮回祝福是「本轮」的东西，重开/清档一律清空
         s.heroes = freshHeroes();
         s.market = { resources: {}, heat: {}, volume: 0, trades: 0 };
         s.expedition = { active: [], auto: false, history: [], mastery: {}, dry: 0 };
@@ -3789,6 +3955,25 @@ window.CHANGELOG_DATA = {
         for (const art of state.artifacts.equipped) {
             if (!art) continue;
             for (const eff of art.effects) applyEffect(e, eff, 1, '秘宝·' + art.name);
+        }
+
+        /* 秘宝套装共鸣：同一流派装备 2 件 / 3 件各触发一档 */
+        if (window.ARTIFACT_SETS) {
+            const setCount = {};
+            for (const art of state.artifacts.equipped) {
+                if (!art || !art.set) continue;
+                setCount[art.set] = (setCount[art.set] || 0) + 1;
+            }
+            for (const set of ARTIFACT_SETS) {
+                const n = setCount[set.key] || 0;
+                if (n >= 2 && set.two) applyEffect(e, set.two.eff, 1, '共鸣·' + set.name + '（2 件）');
+                if (n >= 3 && set.three) applyEffect(e, set.three.eff, 1, '共鸣·' + set.name + '（3 件）');
+            }
+        }
+
+        /* 轮回祝福：本轮选中的那个，重置时重抽 */
+        if (window.Blessings) {
+            for (const b of Blessings.current(state)) applyEffect(e, b.effect, 1, '祝福·' + b.name);
         }
 
         /* 英雄：分类效果 × 稀有度倍率 × 觉醒加成 × 传承「英雄共鸣」加成 */
@@ -4512,6 +4697,40 @@ window.CHANGELOG_DATA = {
         return 3 + Math.round(EffectsManager.additive(state, 'artifactSlots'));
     }
 
+    /* ---------- 流派与套装共鸣 ---------- */
+
+    function setByKey(key) {
+        if (!window.ARTIFACT_SETS) return null;
+        return ARTIFACT_SETS.find(s => s.key === key) || null;
+    }
+
+    /* 老存档里的秘宝没有流派：用 id 做一个稳定的散列来补，
+       这样同一件秘宝每次读档都落在同一个流派上，不会来回变。 */
+    function setFromId(id) {
+        const sets = window.ARTIFACT_SETS || [];
+        if (!sets.length) return null;
+        const str = String(id || '');
+        let h = 0;
+        for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) % 100000;
+        return sets[h % sets.length].key;
+    }
+
+    /* 已装备秘宝按流派计数 + 当前生效的共鸣（给界面用） */
+    function setStatus(state) {
+        const sets = window.ARTIFACT_SETS || [];
+        const count = {};
+        for (const art of state.artifacts.equipped) {
+            if (!art || !art.set) continue;
+            count[art.set] = (count[art.set] || 0) + 1;
+        }
+        return sets.map(s => ({
+            set: s,
+            count: count[s.key] || 0,
+            two: (count[s.key] || 0) >= 2,
+            three: (count[s.key] || 0) >= 3,
+        }));
+    }
+
     function candidateBuildings(state, kind) {
         const out = [];
         for (const name in state.buildings) {
@@ -4587,10 +4806,12 @@ window.CHANGELOG_DATA = {
         if (!effects.length) effects.push({ globalProd: 0.02 });
 
         const roman = GLYPH[Utils.clamp(tier - 1, 0, 9)];
+        const setName = window.ARTIFACT_SETS && ARTIFACT_SETS.length ? Utils.pick(ARTIFACT_SETS).key : null;
         const artifact = {
             id: Date.now() + '_' + Math.floor(Math.random() * 1e6),
             name: Utils.pick(PREFIX) + Utils.pick(SUFFIX) + ' ' + roman,
             tier: tier,
+            set: setName,               // 流派：装备同流派 2 / 3 件触发共鸣
             effects: effects,
         };
         state.stats.artifactsFound++;
@@ -4682,7 +4903,78 @@ window.CHANGELOG_DATA = {
         return out;
     }
 
-    window.Artifacts = { generate, addToInventory, equip, unequip, discard, describe, artifactSlots };
+    window.Artifacts = {
+        generate, addToInventory, equip, unequip, discard, describe, artifactSlots,
+        setByKey, setFromId, setStatus,
+    };
+})();
+
+</script>
+<script>
+/* ===== js/engine/blessings.js ===== */
+/* =========================================================
+   轮回祝福（引擎）
+   流程：重置完成 → beginRun() 清掉上一轮的祝福并抽出 3 个候选
+        → 玩家在浮窗里选 1 个 → take() 生效到本轮结束。
+   ========================================================= */
+(function () {
+    const OFFER_COUNT = 3;
+
+    function byId(id) {
+        return BLESSINGS_CONFIG.find(b => b.id === id) || null;
+    }
+
+    /* 本轮已经拿到的祝福（配置对象数组） */
+    function current(state) {
+        if (!state.run || !Array.isArray(state.run.blessings)) return [];
+        return state.run.blessings.map(byId).filter(Boolean);
+    }
+
+    /* 抽 n 个不重复的候选，返回 id 数组 */
+    function roll(state, n) {
+        const pool = BLESSINGS_CONFIG.slice();
+        const out = [];
+        const want = Math.min(n || OFFER_COUNT, pool.length);
+        for (let i = 0; i < want; i++) {
+            out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0].id);
+        }
+        return out;
+    }
+
+    /* 新一轮开始：祝福清空，候选备好（等玩家在浮窗里选） */
+    function beginRun(state) {
+        state.run = state.run || {};
+        state.run.blessings = [];
+        state.run.offers = roll(state, OFFER_COUNT);
+        return state.run.offers;
+    }
+
+    /* 玩家选定一个：本轮生效，候选清空 */
+    function take(state, id) {
+        if (!state.run || !Array.isArray(state.run.offers) || state.run.offers.indexOf(id) < 0) {
+            return { ok: false, msg: '这个祝福已经不在候选里了。' };
+        }
+        const cfg = byId(id);
+        if (!cfg) return { ok: false, msg: '找不到这个祝福。' };
+        state.run.offers = [];
+        state.run.blessings = [id];
+        ProductionEngine.computeProductionAndCaps(state);
+        return { ok: true, blessing: cfg, msg: '获得轮回祝福「' + cfg.name + '」' };
+    }
+
+    /* 放弃本次祝福（候选清空，本轮就没有祝福了） */
+    function skip(state) {
+        if (!state.run) return { ok: true };
+        state.run.offers = [];
+        ProductionEngine.computeProductionAndCaps(state);
+        return { ok: true, msg: '这一轮不选祝福。' };
+    }
+
+    function hasOffer(state) {
+        return !!(state.run && Array.isArray(state.run.offers) && state.run.offers.length);
+    }
+
+    window.Blessings = { OFFER_COUNT, byId, current, roll, beginRun, take, skip, hasOffer };
 })();
 
 </script>
@@ -6003,6 +6295,8 @@ window.CHANGELOG_DATA = {
         ProductionEngine.updatePrices(state);
         ProductionEngine.computeProductionAndCaps(state);
         EventEngine.addLog(state, '🕯️ ' + (opts.label || '重置') + '完成，文明在废墟上重新开始。');
+        /* 轮回祝福：上一轮的祝福随重置消失，这里抽出本轮的三选一候选（界面会弹浮窗） */
+        if (window.Blessings) Blessings.beginRun(state);
         return true;
     }
 
@@ -6214,10 +6508,19 @@ window.CHANGELOG_DATA = {
             }
             /* 脆弱秘宝机制已移除：旧档里的标记直接去掉，词条数值保持原样（不再会碎裂） */
             if (art.fragile) delete art.fragile;
+            /* 秘境套装：旧秘宝没有流派，用 id 稳定地补一个（同一件每次都落在同一个流派） */
+            if (!art.set && window.Artifacts && Artifacts.setFromId) art.set = Artifacts.setFromId(art.id);
         };
         if (Array.isArray(state.artifacts.inventory)) state.artifacts.inventory.forEach(fixBuildingKeys);
         state.artifacts.equipped.forEach(fixBuildingKeys);
         if (!state.queue || !Array.isArray(state.queue.items)) state.queue = { items: [] };
+        /* 轮回祝福：旧档没有这个字段（本轮视为未选祝福，下一次重置才会有候选） */
+        state.run = state.run || {};
+        if (!Array.isArray(state.run.blessings)) state.run.blessings = [];
+        if (!Array.isArray(state.run.offers)) state.run.offers = [];
+        const blessingOk = id => !window.Blessings || !!Blessings.byId(id);
+        state.run.blessings = state.run.blessings.filter(blessingOk);
+        state.run.offers = state.run.offers.filter(blessingOk);
         /* 旧队列条目兼容：
            v1.1「先付款、后施工」与 v1.2「等资源 → 施工」两代存档里的订单，
            统一转成 v1.3 的「等材料的订单」；已经付过款的把材料退回，避免重复扣费。 */
@@ -7068,6 +7371,15 @@ window.CHANGELOG_DATA = {
             for (const line of Artifacts.describe(art.effects)) {
                 html += '<div class="kv"><span>' + G.esc(line) + '</span><span></span></div>';
             }
+            /* 流派与套装共鸣：同流派装备 2 件 / 3 件触发 */
+            const set = window.Artifacts.setByKey ? Artifacts.setByKey(art.set) : null;
+            if (set) {
+                const cur = art.set ? (Artifacts.setStatus(s).find(x => x.set.key === art.set) || { count: 0 }) : { count: 0 };
+                html += '<hr><div class="kv"><span>流派</span><span class="pos">' + set.icon + ' ' + G.esc(set.name) +
+                    '（已装备 ' + cur.count + ' 件）</span></div>';
+                html += '<div class="kv"><span>2 件共鸣</span><span class="' + (cur.count >= 2 ? 'pos' : 'dim') + '">' + G.esc(set.two.text) + '</span></div>';
+                html += '<div class="kv"><span>3 件共鸣</span><span class="' + (cur.count >= 3 ? 'pos' : 'dim') + '">' + G.esc(set.three.text) + '</span></div>';
+            }
             return html;
         }
 
@@ -7910,19 +8222,27 @@ window.CHANGELOG_DATA = {
     }
 
     /* ---------------- 传承 ---------------- */
+    /* 试炼星级加成只作用在「重置收获」上（不是全局产出），所以直接写在三张重置卡片上 ——
+       否则玩家只能看到「当前激活星级」那行小字，会以为试炼星级根本没生效。 */
+    function starBonusNote(s) {
+        const stars = Actions.activeStars(s);
+        if (!stars) return '';
+        return '　<span class="hint">（含试炼星级 ' + stars + '★ → 收获 +' + (stars * 5) + '%）</span>';
+    }
+
     const RESET_INFO = {
         relic: {
             title: '时空回响', type: 'relic',
             desc: '把整条时间线折叠起来重新展开。清空资源、建筑、科技与升级，' +
                 '但保留传承资源、传承强化、成就、试炼进度与（在解锁后）秘宝。',
-            gainText: s => '获得 <b>' + U.fmtInt(Actions.relicGain(s)) + '</b> 奥术遗物',
+            gainText: s => '获得 <b>' + U.fmtInt(Actions.relicGain(s)) + '</b> 奥术遗物' + starBonusNote(s),
             need: s => s.resources['魔法知识'].cap >= 200 ? null : '需要魔法知识上限达到 200（当前 ' + U.fmtNum(s.resources['魔法知识'].cap) + '）',
         },
         star: {
             title: '星辰升华', type: 'star',
             desc: '把整座城市的存在形式升华为星光。比时空回响更彻底，同时获得大量遗物与星辉。' +
                 '需要先把文明重新推到「星辉共鸣」这一步才能再次执行。',
-            gainText: s => '获得 <b>' + U.fmtInt(Actions.relicGain(s) * 2) + '</b> 奥术遗物与 <b>' + U.fmtInt(Actions.starGain(s)) + '</b> 星辉',
+            gainText: s => '获得 <b>' + U.fmtInt(Actions.relicGain(s) * 2) + '</b> 奥术遗物与 <b>' + U.fmtInt(Actions.starGain(s)) + '</b> 星辉' + starBonusNote(s),
             need: s => (s.techs['星辉共鸣'] && s.techs['星辉共鸣'].researched) ? null : '需要先研究「星辉共鸣」（第 4 时代 · 高塔时代）',
         },
         core: {
@@ -7930,7 +8250,7 @@ window.CHANGELOG_DATA = {
             desc: '让世界回到被书写之前的空白。最深的一层重置，产出原初之核。' +
                 '需要先把文明重新推到「虚空撕裂」这一步才能再次执行。',
             gainText: s => '获得 <b>' + U.fmtInt(Actions.coreGain(s)) + '</b> 原初之核、<b>' + U.fmtInt(Actions.starGain(s) * 1.5) +
-                '</b> 星辉与 <b>' + U.fmtInt(Actions.relicGain(s) * 5) + '</b> 奥术遗物',
+                '</b> 星辉与 <b>' + U.fmtInt(Actions.relicGain(s) * 5) + '</b> 奥术遗物' + starBonusNote(s),
             need: s => (s.techs['虚空撕裂'] && s.techs['虚空撕裂'].researched) ? null : '需要先研究「虚空撕裂」（第 6 时代 · 虚空时代）',
         },
     };
@@ -8012,6 +8332,25 @@ window.CHANGELOG_DATA = {
 
         html += '<div class="section-title">重置方式</div>';
         html += resetCard('relic') + resetCard('star') + resetCard('core');
+
+        /* 轮回祝福：当前这条时间线选中的那一个 */
+        html += '<div class="section-title">轮回祝福</div>';
+        if (window.Blessings && Blessings.hasOffer(s)) {
+            html += '<div class="settings-card"><div class="hint">你有一个还没选的祝福 —— ' +
+                '<button class="btn tiny primary" data-act="blessingPick">现在选</button></div></div>';
+        }
+        const blessings = window.Blessings ? Blessings.current(s) : [];
+        if (!blessings.length) {
+            html += '<div class="hint">每一次重置之后，会从 3 个祝福里选 1 个，在这条时间线里一直有效。' +
+                '下一次重置重新抽 —— 所以每一轮的路线都不一样。</div>';
+        } else {
+            html += '<div class="bless-grid">' + blessings.map(b =>
+                '<div class="bless-card static"><div class="bless-head"><span class="bless-icon">' + b.icon + '</span>' +
+                '<span class="bless-name">' + G.esc(b.name) + '</span></div>' +
+                '<div class="bless-desc">' + G.esc(b.desc) + '</div>' +
+                '<div class="bless-eff">' + G.effectLines(b.effect).map(t => '✦ ' + G.esc(t)).join('<br>') + '</div>' +
+                '</div>').join('') + '</div>';
+        }
 
         html += '<div class="section-title">传承强化</div>';
         html += '<div class="perm-tabs">';
@@ -8151,6 +8490,8 @@ window.CHANGELOG_DATA = {
     function artifactCard(art, slot) {
         let html = '<div class="artifact" data-tip="artifact|' + G.esc(art.id) + '">';
         html += '<div class="an"><span>' + G.esc(art.name) + '</span><span>💠</span></div>';
+        const set = window.Artifacts.setByKey ? Artifacts.setByKey(art.set) : null;
+        if (set) html += '<div class="aset" style="--rar:' + set.color + '">' + set.icon + ' ' + G.esc(set.name) + '</div>';
         for (const line of Artifacts.describe(art.effects)) {
             html += '<div class="eff"><span>' + G.esc(line.split(' ')[0]) + '</span><span>' + G.esc(line.split(' ').slice(1).join(' ')) + '</span></div>';
         }
@@ -8202,6 +8543,24 @@ window.CHANGELOG_DATA = {
         }
         html += '</div>';
         html += '<div class="hint mt6">秘宝库存 ' + s.artifacts.inventory.length + ' / 12（重置时会失去，除非拥有传承「记忆水晶」）</div>';
+
+        /* 套装共鸣：装备同一流派 2 件 / 3 件触发，凑套装本身就是一个取舍 */
+        if (window.ARTIFACT_SETS && window.Artifacts.setStatus) {
+            const status = Artifacts.setStatus(s);
+            if (status.some(x => x.count > 0)) {
+                html += '<div class="section-title">套装共鸣</div><div class="res-grid">';
+                for (const st of status) {
+                    const set = st.set;
+                    html += '<div class="res-card' + (st.three ? ' on3' : (st.two ? ' on2' : '')) + '" style="--rar:' + set.color + '">';
+                    html += '<div class="res-head"><span class="res-name">' + set.icon + ' ' + G.esc(set.name) + '</span>' +
+                        '<span class="res-count">' + st.count + ' / 3</span></div>';
+                    html += '<div class="res-line' + (st.two ? ' on' : '') + '">2 件：' + G.esc(set.two.text) + '</div>';
+                    html += '<div class="res-line' + (st.three ? ' on' : '') + '">3 件：' + G.esc(set.three.text) + '</div>';
+                    html += '</div>';
+                }
+                html += '</div>';
+            }
+        }
         if (s.artifacts.inventory.length) {
             html += '<div class="card-grid wide mt6">' + s.artifacts.inventory.map(a => artifactCard(a)).join('') + '</div>';
         }
@@ -8717,6 +9076,9 @@ window.CHANGELOG_DATA = {
         const tab = tabs.find(t => t.id === activeTab) || tabs[0];
         if (tab.id !== activeTab) activeTab = tab.id;      // 当前标签被隐藏时自动切回第一个
         G.setHTML(tabBody, tab.render());
+
+        /* 重置后还没选轮回祝福（比如中途刷新了页面）就把浮窗补回来 */
+        maybeBlessingPick();
     }
 
     window.UI.render = render;
@@ -8874,6 +9236,21 @@ window.CHANGELOG_DATA = {
                 G.toast(r.msg, r.ok ? 'gold' : 'bad');
                 break;
             }
+            case 'blessing': {
+                const r = Blessings.take(s, arg1);
+                G.closeModal();
+                if (r.msg) G.toast(r.msg, r.ok ? 'gold' : 'bad');
+                break;
+            }
+            case 'blessingSkip': {
+                Blessings.skip(s);
+                G.closeModal();
+                G.toast('这一轮不选祝福。', 'gold');
+                break;
+            }
+            case 'blessingPick':
+                showBlessingPick();
+                break;
             case 'eventchoice': {
                 const choice = EventEngine.resolve(s, Number(arg1));
                 if (choice && choice.ok === false) G.toast(choice.msg, 'bad');
@@ -8959,6 +9336,37 @@ window.CHANGELOG_DATA = {
             activeTab = 'buildings';
             computeRefresh();
         }, '确认执行');
+    }
+
+    /* ---------------- 轮回祝福（重置后的三选一） ---------------- */
+    function showBlessingPick() {
+        const s = GameState;
+        const offers = (s.run && s.run.offers) || [];
+        if (!offers.length) return;
+        let html = '<h2>✦ 轮回祝福</h2>';
+        html += '<p>新的时间线开始了。选一个祝福 —— 它在这条时间线里一直有效，下一次重置会重新抽。</p>';
+        html += '<div class="bless-grid">';
+        for (const id of offers) {
+            const b = Blessings.byId(id);
+            if (!b) continue;
+            html += '<div class="bless-card" data-act="blessing|' + G.esc(b.id) + '">' +
+                '<div class="bless-head"><span class="bless-icon">' + b.icon + '</span>' +
+                '<span class="bless-name">' + G.esc(b.name) + '</span></div>' +
+                '<div class="bless-desc">' + G.esc(b.desc) + '</div>' +
+                '<div class="bless-eff">' + G.effectLines(b.effect).map(t => '✦ ' + G.esc(t)).join('<br>') + '</div>' +
+                '<div class="bless-pick">选择这个</div></div>';
+        }
+        html += '</div>';
+        html += '<div class="modal-actions"><button class="btn tiny" data-act="blessingSkip">都不要（本轮不选祝福）</button></div>';
+        return G.openModal(html, { closable: false });
+    }
+
+    /* 有候选但还没选的时候，自动把浮窗弹出来（只在这一帧没有别的弹窗时） */
+    function maybeBlessingPick() {
+        if (!window.Blessings || !Blessings.hasOffer(GameState)) return;
+        const root = document.getElementById('modal-root');
+        if (root && root.classList.contains('open')) return;
+        showBlessingPick();
     }
 
     /* ---------------- 事件委托 ---------------- */

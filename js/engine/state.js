@@ -1,6 +1,6 @@
 /* 游戏状态与资源管理 */
 (function () {
-    const SAVE_VERSION = 6;
+    const SAVE_VERSION = 7;
 
     /* 全局唯一状态对象（引用始终不变，便于各模块共享） */
     const GameState = {
@@ -21,6 +21,7 @@
         challenges: {},
         artifacts: { inventory: [], equipped: [], slots: 3 },
         queue: { items: [] },
+        run: { blessings: [], offers: [] },     // 本轮（这条时间线）的轮回祝福
         heroes: null,
         market: { resources: {}, heat: {}, volume: 0, trades: 0 },
         expedition: { active: [], auto: false, history: [], mastery: {}, dry: 0 },
@@ -101,6 +102,7 @@
         s.challenges = {};
         s.artifacts = { inventory: [], equipped: [], slots: 3 };
         s.queue = { items: [] };
+        s.run = { blessings: [], offers: [] };      // 轮回祝福是「本轮」的东西，重开/清档一律清空
         s.heroes = freshHeroes();
         s.market = { resources: {}, heat: {}, volume: 0, trades: 0 };
         s.expedition = { active: [], auto: false, history: [], mastery: {}, dry: 0 };

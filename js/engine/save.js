@@ -107,10 +107,19 @@
             }
             /* 脆弱秘宝机制已移除：旧档里的标记直接去掉，词条数值保持原样（不再会碎裂） */
             if (art.fragile) delete art.fragile;
+            /* 秘境套装：旧秘宝没有流派，用 id 稳定地补一个（同一件每次都落在同一个流派） */
+            if (!art.set && window.Artifacts && Artifacts.setFromId) art.set = Artifacts.setFromId(art.id);
         };
         if (Array.isArray(state.artifacts.inventory)) state.artifacts.inventory.forEach(fixBuildingKeys);
         state.artifacts.equipped.forEach(fixBuildingKeys);
         if (!state.queue || !Array.isArray(state.queue.items)) state.queue = { items: [] };
+        /* 轮回祝福：旧档没有这个字段（本轮视为未选祝福，下一次重置才会有候选） */
+        state.run = state.run || {};
+        if (!Array.isArray(state.run.blessings)) state.run.blessings = [];
+        if (!Array.isArray(state.run.offers)) state.run.offers = [];
+        const blessingOk = id => !window.Blessings || !!Blessings.byId(id);
+        state.run.blessings = state.run.blessings.filter(blessingOk);
+        state.run.offers = state.run.offers.filter(blessingOk);
         /* 旧队列条目兼容：
            v1.1「先付款、后施工」与 v1.2「等资源 → 施工」两代存档里的订单，
            统一转成 v1.3 的「等材料的订单」；已经付过款的把材料退回，避免重复扣费。 */

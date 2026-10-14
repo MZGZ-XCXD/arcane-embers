@@ -11,6 +11,40 @@
         return 3 + Math.round(EffectsManager.additive(state, 'artifactSlots'));
     }
 
+    /* ---------- 流派与套装共鸣 ---------- */
+
+    function setByKey(key) {
+        if (!window.ARTIFACT_SETS) return null;
+        return ARTIFACT_SETS.find(s => s.key === key) || null;
+    }
+
+    /* 老存档里的秘宝没有流派：用 id 做一个稳定的散列来补，
+       这样同一件秘宝每次读档都落在同一个流派上，不会来回变。 */
+    function setFromId(id) {
+        const sets = window.ARTIFACT_SETS || [];
+        if (!sets.length) return null;
+        const str = String(id || '');
+        let h = 0;
+        for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) % 100000;
+        return sets[h % sets.length].key;
+    }
+
+    /* 已装备秘宝按流派计数 + 当前生效的共鸣（给界面用） */
+    function setStatus(state) {
+        const sets = window.ARTIFACT_SETS || [];
+        const count = {};
+        for (const art of state.artifacts.equipped) {
+            if (!art || !art.set) continue;
+            count[art.set] = (count[art.set] || 0) + 1;
+        }
+        return sets.map(s => ({
+            set: s,
+            count: count[s.key] || 0,
+            two: (count[s.key] || 0) >= 2,
+            three: (count[s.key] || 0) >= 3,
+        }));
+    }
+
     function candidateBuildings(state, kind) {
         const out = [];
         for (const name in state.buildings) {
@@ -86,10 +120,12 @@
         if (!effects.length) effects.push({ globalProd: 0.02 });
 
         const roman = GLYPH[Utils.clamp(tier - 1, 0, 9)];
+        const setName = window.ARTIFACT_SETS && ARTIFACT_SETS.length ? Utils.pick(ARTIFACT_SETS).key : null;
         const artifact = {
             id: Date.now() + '_' + Math.floor(Math.random() * 1e6),
             name: Utils.pick(PREFIX) + Utils.pick(SUFFIX) + ' ' + roman,
             tier: tier,
+            set: setName,               // 流派：装备同流派 2 / 3 件触发共鸣
             effects: effects,
         };
         state.stats.artifactsFound++;
@@ -181,5 +217,8 @@
         return out;
     }
 
-    window.Artifacts = { generate, addToInventory, equip, unequip, discard, describe, artifactSlots };
+    window.Artifacts = {
+        generate, addToInventory, equip, unequip, discard, describe, artifactSlots,
+        setByKey, setFromId, setStatus,
+    };
 })();

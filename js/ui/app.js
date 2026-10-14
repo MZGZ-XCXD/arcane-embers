@@ -95,6 +95,9 @@
         const tab = tabs.find(t => t.id === activeTab) || tabs[0];
         if (tab.id !== activeTab) activeTab = tab.id;      // 当前标签被隐藏时自动切回第一个
         G.setHTML(tabBody, tab.render());
+
+        /* 重置后还没选轮回祝福（比如中途刷新了页面）就把浮窗补回来 */
+        maybeBlessingPick();
     }
 
     window.UI.render = render;
@@ -252,6 +255,21 @@
                 G.toast(r.msg, r.ok ? 'gold' : 'bad');
                 break;
             }
+            case 'blessing': {
+                const r = Blessings.take(s, arg1);
+                G.closeModal();
+                if (r.msg) G.toast(r.msg, r.ok ? 'gold' : 'bad');
+                break;
+            }
+            case 'blessingSkip': {
+                Blessings.skip(s);
+                G.closeModal();
+                G.toast('这一轮不选祝福。', 'gold');
+                break;
+            }
+            case 'blessingPick':
+                showBlessingPick();
+                break;
             case 'eventchoice': {
                 const choice = EventEngine.resolve(s, Number(arg1));
                 if (choice && choice.ok === false) G.toast(choice.msg, 'bad');
@@ -337,6 +355,37 @@
             activeTab = 'buildings';
             computeRefresh();
         }, '确认执行');
+    }
+
+    /* ---------------- 轮回祝福（重置后的三选一） ---------------- */
+    function showBlessingPick() {
+        const s = GameState;
+        const offers = (s.run && s.run.offers) || [];
+        if (!offers.length) return;
+        let html = '<h2>✦ 轮回祝福</h2>';
+        html += '<p>新的时间线开始了。选一个祝福 —— 它在这条时间线里一直有效，下一次重置会重新抽。</p>';
+        html += '<div class="bless-grid">';
+        for (const id of offers) {
+            const b = Blessings.byId(id);
+            if (!b) continue;
+            html += '<div class="bless-card" data-act="blessing|' + G.esc(b.id) + '">' +
+                '<div class="bless-head"><span class="bless-icon">' + b.icon + '</span>' +
+                '<span class="bless-name">' + G.esc(b.name) + '</span></div>' +
+                '<div class="bless-desc">' + G.esc(b.desc) + '</div>' +
+                '<div class="bless-eff">' + G.effectLines(b.effect).map(t => '✦ ' + G.esc(t)).join('<br>') + '</div>' +
+                '<div class="bless-pick">选择这个</div></div>';
+        }
+        html += '</div>';
+        html += '<div class="modal-actions"><button class="btn tiny" data-act="blessingSkip">都不要（本轮不选祝福）</button></div>';
+        return G.openModal(html, { closable: false });
+    }
+
+    /* 有候选但还没选的时候，自动把浮窗弹出来（只在这一帧没有别的弹窗时） */
+    function maybeBlessingPick() {
+        if (!window.Blessings || !Blessings.hasOffer(GameState)) return;
+        const root = document.getElementById('modal-root');
+        if (root && root.classList.contains('open')) return;
+        showBlessingPick();
     }
 
     /* ---------------- 事件委托 ---------------- */

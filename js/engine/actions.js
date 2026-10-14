@@ -252,6 +252,8 @@
         ProductionEngine.updatePrices(state);
         ProductionEngine.computeProductionAndCaps(state);
         EventEngine.addLog(state, '🕯️ ' + (opts.label || '重置') + '完成，文明在废墟上重新开始。');
+        /* 轮回祝福：上一轮的祝福随重置消失，这里抽出本轮的三选一候选（界面会弹浮窗） */
+        if (window.Blessings) Blessings.beginRun(state);
         return true;
     }
 

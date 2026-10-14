@@ -534,6 +534,45 @@ h1, h2, h3, .serif { font-family: "Palatino Linotype", "Songti SC", Georgia, ser
 .summon-item .si-sub { font-size: .68rem; color: var(--text-dim); }
 
 /* ---------------- 抽卡结果浮窗 ---------------- */
+.aset {
+    display: inline-block; margin: 2px 0 4px;
+    font-size: .64rem; padding: 1px 6px; border-radius: 6px;
+    color: var(--rar); border: 1px solid var(--rar);
+}
+
+/* ---------------- 轮回祝福 ---------------- */
+.bless-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin: 8px 0; }
+.bless-card {
+    background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 10px;
+    padding: 10px; display: flex; flex-direction: column; gap: 5px;
+}
+.bless-card:not(.static) { cursor: pointer; transition: border-color .12s, transform .12s; }
+.bless-card:not(.static):hover { border-color: var(--border-hover); transform: translateY(-1px); }
+.bless-head { display: flex; align-items: center; gap: 6px; }
+.bless-icon { font-size: 1.1rem; }
+.bless-name { font-size: .86rem; font-weight: 600; color: var(--text-heading); }
+.bless-desc { font-size: .72rem; color: var(--text-secondary); line-height: 1.5; }
+.bless-eff { font-size: .72rem; color: var(--accent-2); line-height: 1.6; }
+.bless-pick {
+    margin-top: 4px; text-align: center; font-size: .74rem; padding: 4px 0;
+    border-radius: 8px; background: var(--bg-sunken); color: var(--accent-2); border: 1px solid var(--border);
+}
+
+/* ---------------- 套装共鸣 ---------------- */
+.res-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 7px; margin-bottom: 6px; }
+.res-card {
+    background: var(--bg-card); border: 1px solid var(--border-card);
+    border-left: 3px solid var(--rar); border-radius: 9px; padding: 7px 9px;
+}
+.res-card.on2 { box-shadow: 0 0 0 1px rgba(255, 255, 255, .06) inset; }
+.res-card.on3 { box-shadow: 0 0 0 1px var(--rar) inset; }
+.res-head { display: flex; align-items: baseline; gap: 6px; }
+.res-name { font-size: .78rem; font-weight: 600; color: var(--text-heading); }
+.res-count { margin-left: auto; font-size: .7rem; color: var(--text-dim); }
+.res-line { font-size: .7rem; color: var(--text-dim); line-height: 1.6; }
+.res-line.on { color: var(--accent-2); }
+
+/* ---------------- 抽卡结果浮窗（续） ---------------- */
 .sh-group { margin: 10px 0; }
 .sh-head {
     display: flex; align-items: center; gap: 8px;

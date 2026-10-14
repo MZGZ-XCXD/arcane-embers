@@ -98,6 +98,8 @@
     function artifactCard(art, slot) {
         let html = '<div class="artifact" data-tip="artifact|' + G.esc(art.id) + '">';
         html += '<div class="an"><span>' + G.esc(art.name) + '</span><span>💠</span></div>';
+        const set = window.Artifacts.setByKey ? Artifacts.setByKey(art.set) : null;
+        if (set) html += '<div class="aset" style="--rar:' + set.color + '">' + set.icon + ' ' + G.esc(set.name) + '</div>';
         for (const line of Artifacts.describe(art.effects)) {
             html += '<div class="eff"><span>' + G.esc(line.split(' ')[0]) + '</span><span>' + G.esc(line.split(' ').slice(1).join(' ')) + '</span></div>';
         }
@@ -149,6 +151,24 @@
         }
         html += '</div>';
         html += '<div class="hint mt6">秘宝库存 ' + s.artifacts.inventory.length + ' / 12（重置时会失去，除非拥有传承「记忆水晶」）</div>';
+
+        /* 套装共鸣：装备同一流派 2 件 / 3 件触发，凑套装本身就是一个取舍 */
+        if (window.ARTIFACT_SETS && window.Artifacts.setStatus) {
+            const status = Artifacts.setStatus(s);
+            if (status.some(x => x.count > 0)) {
+                html += '<div class="section-title">套装共鸣</div><div class="res-grid">';
+                for (const st of status) {
+                    const set = st.set;
+                    html += '<div class="res-card' + (st.three ? ' on3' : (st.two ? ' on2' : '')) + '" style="--rar:' + set.color + '">';
+                    html += '<div class="res-head"><span class="res-name">' + set.icon + ' ' + G.esc(set.name) + '</span>' +
+                        '<span class="res-count">' + st.count + ' / 3</span></div>';
+                    html += '<div class="res-line' + (st.two ? ' on' : '') + '">2 件：' + G.esc(set.two.text) + '</div>';
+                    html += '<div class="res-line' + (st.three ? ' on' : '') + '">3 件：' + G.esc(set.three.text) + '</div>';
+                    html += '</div>';
+                }
+                html += '</div>';
+            }
+        }
         if (s.artifacts.inventory.length) {
             html += '<div class="card-grid wide mt6">' + s.artifacts.inventory.map(a => artifactCard(a)).join('') + '</div>';
         }

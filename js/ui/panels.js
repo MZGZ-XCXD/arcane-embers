@@ -228,6 +228,15 @@
             for (const line of Artifacts.describe(art.effects)) {
                 html += '<div class="kv"><span>' + G.esc(line) + '</span><span></span></div>';
             }
+            /* 流派与套装共鸣：同流派装备 2 件 / 3 件触发 */
+            const set = window.Artifacts.setByKey ? Artifacts.setByKey(art.set) : null;
+            if (set) {
+                const cur = art.set ? (Artifacts.setStatus(s).find(x => x.set.key === art.set) || { count: 0 }) : { count: 0 };
+                html += '<hr><div class="kv"><span>流派</span><span class="pos">' + set.icon + ' ' + G.esc(set.name) +
+                    '（已装备 ' + cur.count + ' 件）</span></div>';
+                html += '<div class="kv"><span>2 件共鸣</span><span class="' + (cur.count >= 2 ? 'pos' : 'dim') + '">' + G.esc(set.two.text) + '</span></div>';
+                html += '<div class="kv"><span>3 件共鸣</span><span class="' + (cur.count >= 3 ? 'pos' : 'dim') + '">' + G.esc(set.three.text) + '</span></div>';
+            }
             return html;
         }
 
