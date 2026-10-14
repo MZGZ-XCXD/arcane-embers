@@ -92,6 +92,18 @@
             '</div></div>';
     }
 
+    /* 当前版本号（取更新日志里最新的一条）。
+       页面文件会被浏览器缓存，所以这里也说明一句：比仓库里的版本旧就说明是旧缓存。 */
+    function versionLine() {
+        const d = window.CHANGELOG_DATA;
+        const v = (d && d.overview && d.overview.length) ? d.overview[0] : null;
+        if (!v) return '';
+        return '<div class="settings-card" style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap">' +
+            '<span class="hint">当前版本</span><span class="cl-ver">' + G.esc(v.version) + '</span>' +
+            '<span class="hint">（' + G.esc(v.date) + '）　比仓库里的最新版本旧，就说明这个页面是旧缓存：关掉标签页重新打开即可。</span>' +
+            '</div>';
+    }
+
     function changelogSection() {
         const d = window.CHANGELOG_DATA;
         if (!d || !d.versions || !d.versions.length) {
@@ -131,6 +143,7 @@
     function render() {
         let html = '<div class="tab-intro">这一页是存档、运行选项与更新日志。游戏内的说明与快捷入口都收在这里，' +
             '顶栏右侧的 ⚙ 也会直接跳到本页。</div>';
+        html += versionLine();
         html += saveSection();
         html += runSection();
         html += guideSection();

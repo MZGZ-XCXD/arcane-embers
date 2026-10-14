@@ -195,6 +195,20 @@ node tools/build-single-file.js
 脚本读取 `index.html`，把 `css/style.css` 与全部 `js/**/*.js` 内联进一个 HTML，
 输出到 `dist/arcane-embers.html`。只需要 Node，无需任何依赖；改了源码后重新执行一次即可。
 
+### 发版：给网页引用打版本号
+
+```bash
+node tools/stamp-version.js
+```
+
+它会把 `index.html` 里所有 `css` / `js` 引用改写成 `?v=最新版本号`（版本号从 `CHANGELOG.md` 取）。
+浏览器是按「地址」缓存的，地址不变就会一直用旧文件 —— 曾经有玩家因此卡在几个版本之前的代码上，
+修好的东西怎么也显示不出来。**每次改完 `CHANGELOG.md` 并更新版本号后，都跑一次这个脚本**，
+玩家的浏览器下次打开就必定拿到新版，不用再教他们清缓存。
+
+完整的发版顺序：改代码 → 写 `CHANGELOG.md` → `node tools/gen-changelog.js` →
+`node tools/stamp-version.js` → `node tools/build-single-file.js` → 提交并推送。
+
 ## 兼容性
 
 桌面与移动端浏览器（Chrome / Edge / Firefox / Safari 近两年版本）。

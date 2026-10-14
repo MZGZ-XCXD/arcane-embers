@@ -18,12 +18,13 @@ const OUT = path.join(ROOT, 'dist', 'arcane-embers.html');
 let html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 const inlined = [];
 
-html = html.replace(/<link rel="stylesheet" href="([^"]+)">/g, (match, file) => {
+/* 引用可能带版本号（js/ui/app.js?v=0.7.4，见 tools/stamp-version.js）：取路径时要把它去掉 */
+html = html.replace(/<link rel="stylesheet" href="([^"?]+)(?:\?[^"]*)?">/g, (match, file) => {
     inlined.push(file);
     return '<style>\n' + fs.readFileSync(path.join(ROOT, file), 'utf8') + '\n</style>';
 });
 
-html = html.replace(/<script src="([^"]+)"><\/script>/g, (match, file) => {
+html = html.replace(/<script src="([^"?]+)(?:\?[^"]*)?"><\/script>/g, (match, file) => {
     inlined.push(file);
     const code = fs.readFileSync(path.join(ROOT, file), 'utf8');
     return '<script>\n/* ===== ' + file + ' ===== */\n' + code + '\n</script>';
