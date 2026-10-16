@@ -294,6 +294,7 @@
             else if (key === 'ashGain') out.push('归墟之烬获取 ' + U.fmtPct(v, 1));
             else if (key === 'resonancePower') out.push('套装共鸣效果 ' + U.fmtPct(v, 1));
             else if (key === 'blessingOffers') out.push('轮回祝福候选 +' + v);
+            else if (key === 'knowledgeCapMult') out.push('魔法知识上限 ×' + v + '（每级）');
             else if (key === 'special') {
                 const names = {
                     autoBuild: '解锁自动建造', autoExpedition: '解锁自动远征',

@@ -193,8 +193,10 @@
         desc: '人口永远充足：所有建筑不再因人手不足而降低效率。',
     });
     P('无尽知识', {
-        tree: 'core', cost: 2, costG: 2.4, max: 5, special: 'knowledgeCapMult',
-        desc: '魔法知识上限 ×3（每级再 ×3）。研究不再被人为的上限拦下。',
+        /* 以前这里写的是 special: 'knowledgeCapMult'，而引擎只把它当成一个「有/没有」的标记，
+           knowledgeCapMult 那个乘数从来没人读 —— 等于白买了 5 级。改用真正的效果键。 */
+        tree: 'core', cost: 2, costG: 2.4, max: 5, eff: { knowledgeCapMult: 3 },
+        desc: '魔法知识上限 ×3（每级再 ×3，满级 ×243）。研究不再被人为的上限拦下。',
     });
     P('轮回加速', {
         tree: 'core', cost: 3, costG: 2.2, max: 5, eff: { resetGain: 0.5 },
