@@ -27,7 +27,7 @@
             return html;
         }
         if (claimed) {
-            html += '<div class="card-tip"><span>加成已永久生效</span><span></span></div></div>';
+            html += '<div class="card-tip"><span>加成生效中（重置后会失去，需要重新开拓）</span><span></span></div></div>';
             return html;
         }
         html += '<div class="card-actions">';
@@ -46,9 +46,9 @@
                 '就可以在城墙之外开拓地块。</div>';
         }
         const claimed = Plots.claimedCount(s);
-        let html = '<div class="tab-intro">用资源开拓城墙之外的地块：<b>开拓一次永久保留</b>，' +
-            '重置也不会失去，加成一直计入汇总。每块地都需要先研究对应科技，成本固定不涨 —— ' +
-            '所以它是一条很长、但看得见尽头的路。</div>';
+        let html = '<div class="tab-intro">用资源开拓城墙之外的地块：每块地都要先研究对应科技，' +
+            '成本固定不涨。领地<b>不跨重置保留</b> —— 每一次重建都要重新把它们开拓一遍，' +
+            '所以这一层是「每轮中期的一段扩张」，而不是一次性的永久加成。</div>';
 
         html += '<div class="card-stats" style="margin-bottom:10px">';
         html += '<div class="row"><span class="k">已开拓</span><span class="v pos">' + claimed + ' / ' + PLOTS_CONFIG.length + '</span></div>';

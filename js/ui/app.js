@@ -356,7 +356,8 @@
         const text = '<b>' + info[0] + '</b><br>' + info[1] +
             '<br><br>将获得：<b>' + gain() + '</b>' +
             '<br><br>会清空：资源、建筑、科技、升级、政策、人口。' +
-            '<br>会保留：传承资源与强化、成就、试炼进度、已开拓的领地、统计数据' +
+            '<br>会保留：传承资源与强化、成就、试炼进度、统计数据' +
+            '（领地会在重置时清空，需要重新开拓）' +
             (EffectsManager.hasSpecial(s, 'keepArtifacts') ? '、全部秘宝' : '（秘宝会在重置时失去，需要传承「记忆水晶」才能保留）') + '。';
         G.confirmBox(info[0], text, () => {
             const r = Actions.prestige(s, key);

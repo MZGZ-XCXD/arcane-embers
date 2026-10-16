@@ -3001,9 +3001,9 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 /* ===== js/config/plots.js ===== */
 /* =========================================================
    领地（地块）
-   用普通资源开拓，开拓之后**永久保留**（重置也不会失去），效果一直计入汇总。
-   每块地要先研究对应科技；成本固定不涨 —— 所以它是一条「有限、但很长」的成长线，
-   而不是又一圈无限叠加的乘数。
+   用普通资源开拓，效果计入汇总。**不跨重置保留**：每次重建都要重新开拓一遍，
+   所以它是「每一轮中期的一段扩张路线」，而不是一次性的永久加成。
+   每块地要先研究对应科技；成本固定不涨（数量有限，不会无限叠加）。
    ========================================================= */
 (function () {
     const LIST = [];
@@ -3290,7 +3290,7 @@ window.CHANGELOG_DATA = {
                 {
                     "title": "新增",
                     "items": [
-                        "<b>领地（新标签页）<\/b>：用资源开拓城墙之外的地块，<b>开拓一次永久保留<\/b>，重置也不会失去， 加成一直计入汇总。8 块地从「灰烬前哨」一路到「归墟遗址」，每块都要先研究对应科技， 效果覆盖产出、存量上限、建造队列、秘宝品质、离线时长与重置收益。 成本固定不涨 —— 它是一条很长、但看得见尽头的路，而不是又一层无限叠加的乘数； 传承「领地工程」可以把这个成本一路压到四折。",
+                        "<b>领地（新标签页）<\/b>：用资源开拓城墙之外的地块。8 块地从「灰烬前哨」一路到「归墟遗址」， 每块都要先研究对应科技，加成计入汇总，效果覆盖产出、存量上限、建造队列、秘宝品质、 离线时长与重置收益。领地<b>不跨重置保留<\/b> —— 每次重建都要重新开拓一遍， 所以它是「每一轮中期的一段扩张路线」；成本固定不涨（数量有限，不会无限叠加）， 传承「领地工程」可以把成本一路压到四折，重玩次数越多这一段越快。",
                         "<b>时代 7「星渊」与时代 8「归墟」<\/b>：12 项新科技、11 座新建筑（星渊采掘场、星穹回廊、 意识图书馆、相位熔炉、星渊要塞、万相矩阵、湮灭工坊、万象灯塔、永寂祭坛、归墟之门……）， 把 星尘 / 以太 / 贤者之石 这一段的产业链补齐。",
                         "<b>第四层重置「万象归墟」<\/b>：研究完第 8 时代的「永寂仪式」后开启，产出新的传承资源 <b>归墟之烬<\/b>（依旧遵守「上一层货币的平方根」的公式，不会让数值再崩一次）， 同时把 奥术遗物 ×10、星辉 ×2、原初之核 ×2 一起带回来。",
                         "<b>12 项新传承<\/b>：遗物树加「领地工程」「勘探队」，星辉树加「归墟预演」「祝福之心」， 原初之核树加「烬火之约」「星渊共振」，另新增「归墟之烬」树 6 项 （恒星之心、无垠仓储、虚空回廊、烬火余温、命运抉择、万象时钟）。 其中「祝福之心 / 命运抉择」让每次重置的轮回祝福候选 +1，「星渊共振」把秘宝套装共鸣整体放大。",
@@ -5297,7 +5297,7 @@ window.CHANGELOG_DATA = {
 /* ===== js/engine/plots.js ===== */
 /* =========================================================
    领地（引擎）
-   开拓一次永久保留；成本固定，受传承「领地工程」影响（最多 −60%）。
+   每轮重新开拓（重置会清空）；成本固定，受传承「领地工程」影响（最多 −60%）。
    ========================================================= */
 (function () {
     function byId(id) {
@@ -6642,7 +6642,6 @@ window.CHANGELOG_DATA = {
         const settings = state.settings;
         const permanent = state.permanent;
         const challenges = state.challenges;
-        const plots = state.plots;                // 领地开拓一次永久保留
         const heroes = state.heroes;              // 英雄收藏跨重置保留
         const expeditionHistory = state.expedition.history;
 
@@ -6653,7 +6652,6 @@ window.CHANGELOG_DATA = {
         state.settings = settings;
         state.permanent = permanent;
         state.challenges = challenges;
-        state.plots = plots;
         state.heroes = heroes;
         state.expedition.history = expeditionHistory;
         /* 英雄收藏：只有「跨越时间线」的那一档（EX）会留下来，
@@ -8451,7 +8449,7 @@ window.CHANGELOG_DATA = {
             return html;
         }
         if (claimed) {
-            html += '<div class="card-tip"><span>加成已永久生效</span><span></span></div></div>';
+            html += '<div class="card-tip"><span>加成生效中（重置后会失去，需要重新开拓）</span><span></span></div></div>';
             return html;
         }
         html += '<div class="card-actions">';
@@ -8470,9 +8468,9 @@ window.CHANGELOG_DATA = {
                 '就可以在城墙之外开拓地块。</div>';
         }
         const claimed = Plots.claimedCount(s);
-        let html = '<div class="tab-intro">用资源开拓城墙之外的地块：<b>开拓一次永久保留</b>，' +
-            '重置也不会失去，加成一直计入汇总。每块地都需要先研究对应科技，成本固定不涨 —— ' +
-            '所以它是一条很长、但看得见尽头的路。</div>';
+        let html = '<div class="tab-intro">用资源开拓城墙之外的地块：每块地都要先研究对应科技，' +
+            '成本固定不涨。领地<b>不跨重置保留</b> —— 每一次重建都要重新把它们开拓一遍，' +
+            '所以这一层是「每轮中期的一段扩张」，而不是一次性的永久加成。</div>';
 
         html += '<div class="card-stats" style="margin-bottom:10px">';
         html += '<div class="row"><span class="k">已开拓</span><span class="v pos">' + claimed + ' / ' + PLOTS_CONFIG.length + '</span></div>';
@@ -9874,7 +9872,8 @@ window.CHANGELOG_DATA = {
         const text = '<b>' + info[0] + '</b><br>' + info[1] +
             '<br><br>将获得：<b>' + gain() + '</b>' +
             '<br><br>会清空：资源、建筑、科技、升级、政策、人口。' +
-            '<br>会保留：传承资源与强化、成就、试炼进度、已开拓的领地、统计数据' +
+            '<br>会保留：传承资源与强化、成就、试炼进度、统计数据' +
+            '（领地会在重置时清空，需要重新开拓）' +
             (EffectsManager.hasSpecial(s, 'keepArtifacts') ? '、全部秘宝' : '（秘宝会在重置时失去，需要传承「记忆水晶」才能保留）') + '。';
         G.confirmBox(info[0], text, () => {
             const r = Actions.prestige(s, key);

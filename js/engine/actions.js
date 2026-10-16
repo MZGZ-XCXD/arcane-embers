@@ -214,7 +214,6 @@
         const settings = state.settings;
         const permanent = state.permanent;
         const challenges = state.challenges;
-        const plots = state.plots;                // 领地开拓一次永久保留
         const heroes = state.heroes;              // 英雄收藏跨重置保留
         const expeditionHistory = state.expedition.history;
 
@@ -225,7 +224,6 @@
         state.settings = settings;
         state.permanent = permanent;
         state.challenges = challenges;
-        state.plots = plots;
         state.heroes = heroes;
         state.expedition.history = expeditionHistory;
         /* 英雄收藏：只有「跨越时间线」的那一档（EX）会留下来，
