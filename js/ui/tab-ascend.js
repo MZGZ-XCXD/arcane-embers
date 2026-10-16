@@ -78,6 +78,15 @@
                 '</b> 星辉与 <b>' + U.fmtInt(Actions.relicGain(s) * 5) + '</b> 奥术遗物' + starBonusNote(s),
             need: s => (s.techs['虚空撕裂'] && s.techs['虚空撕裂'].researched) ? null : '需要先研究「虚空撕裂」（第 6 时代 · 虚空时代）',
         },
+        ash: {
+            title: '万象归墟', type: 'ash',
+            desc: '连「重置」这个词也一起归零，最后只剩下余烬。最深的一层重置，产出归墟之烬。' +
+                '需要先把文明重新推到「永寂仪式」这一步才能再次执行。',
+            gainText: s => '获得 <b>' + U.fmtInt(Actions.ashGain(s)) + '</b> 归墟之烬、<b>' + U.fmtInt(Actions.coreGain(s) * 2) +
+                '</b> 原初之核、<b>' + U.fmtInt(Actions.starGain(s) * 2) + '</b> 星辉与 <b>' +
+                U.fmtInt(Actions.relicGain(s) * 10) + '</b> 奥术遗物' + starBonusNote(s),
+            need: s => (s.techs['永寂仪式'] && s.techs['永寂仪式'].researched) ? null : '需要先研究「永寂仪式」（第 8 时代 · 归墟时代）',
+        },
     };
 
     function resetCard(key) {
@@ -153,10 +162,10 @@
     function renderAscend() {
         const s = GameState;
         let html = '<div class="tab-intro">重置会清空这一轮的所有建设，但把进度压缩成 <b>传承资源</b>：' +
-            '奥术遗物、星辉与原初之核。用它们购买永久强化，下一轮会快得多。</div>';
+            '奥术遗物、星辉、原初之核与归墟之烬。用它们购买永久强化，下一轮会快得多。</div>';
 
         html += '<div class="section-title">重置方式</div>';
-        html += resetCard('relic') + resetCard('star') + resetCard('core');
+        html += resetCard('relic') + resetCard('star') + resetCard('core') + resetCard('ash');
 
         /* 轮回祝福：当前这条时间线选中的那一个 */
         html += '<div class="section-title">轮回祝福</div>';
@@ -179,7 +188,8 @@
 
         html += '<div class="section-title">传承强化</div>';
         html += '<div class="perm-tabs">';
-        const trees = [['relic', '🏛️ 奥术遗物', '奥术遗物'], ['star', '⭐ 星辉', '星辉'], ['core', '🌑 原初之核', '原初之核']];
+        const trees = [['relic', '🏛️ 奥术遗物', '奥术遗物'], ['star', '⭐ 星辉', '星辉'],
+            ['core', '🌑 原初之核', '原初之核'], ['ash', '🌘 归墟之烬', '归墟之烬']];
         for (const [key, label, res] of trees) {
             html += '<button class="btn tiny' + (permTree.current === key ? ' active' : '') + '" data-act="permtree|' + key + '">' +
                 label + '（' + U.fmtNum(ResourcesManager.amount(res)) + '）</button>';

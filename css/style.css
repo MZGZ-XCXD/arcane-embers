@@ -541,6 +541,9 @@ h1, h2, h3, .serif { font-family: "Palatino Linotype", "Songti SC", Georgia, ser
 }
 
 /* ---------------- 轮回祝福 ---------------- */
+.plot-cost { font-size: .72rem; color: var(--text-dim); margin-top: 5px; text-align: center; }
+.plot-cost .lack { color: var(--neg); }
+
 .bless-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin: 8px 0; }
 .bless-card {
     background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 10px;

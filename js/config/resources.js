@@ -39,6 +39,7 @@
         奥术遗物: { icon: '🏛️', cap: 1e9, prestige: true, group: '传承', desc: '从崩塌的时间线里打捞出的文明残片。重置后永久保留。' },
         星辉: { icon: '⭐', cap: 1e9, prestige: true, group: '传承', desc: '星辰升华时凝出的辉光，能改写世界规则。' },
         原初之核: { icon: '🌑', cap: 1e9, prestige: true, group: '传承', desc: '大崩坏之前的原初之力，沉眠于虚空深处。' },
+        归墟之烬: { icon: '🌘', cap: 1e9, prestige: true, group: '传承', desc: '世界被写回空白之后剩下的余烬。最深一层重置的产物。' },
     };
 
     /* 局部资源：不参与贸易与上限计算，由建筑提供与消耗 */

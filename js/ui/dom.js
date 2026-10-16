@@ -290,6 +290,10 @@
             else if (key === 'luck') out.push('召唤运气 +' + v.toFixed(2));
             else if (key === 'summonDiscount') out.push('召唤消耗 ' + U.fmtPct(-v, 1));
             else if (key === 'heroPower') out.push('英雄效果 ' + U.fmtPct(v, 1));
+            else if (key === 'plotCost') out.push('领地开拓成本 ' + U.fmtPct(v, 1));
+            else if (key === 'ashGain') out.push('归墟之烬获取 ' + U.fmtPct(v, 1));
+            else if (key === 'resonancePower') out.push('套装共鸣效果 ' + U.fmtPct(v, 1));
+            else if (key === 'blessingOffers') out.push('轮回祝福候选 +' + v);
             else if (key === 'special') {
                 const names = {
                     autoBuild: '解锁自动建造', autoExpedition: '解锁自动远征',

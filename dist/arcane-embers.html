@@ -550,6 +550,9 @@ h1, h2, h3, .serif { font-family: "Palatino Linotype", "Songti SC", Georgia, ser
 }
 
 /* ---------------- 轮回祝福 ---------------- */
+.plot-cost { font-size: .72rem; color: var(--text-dim); margin-top: 5px; text-align: center; }
+.plot-cost .lack { color: var(--neg); }
+
 .bless-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin: 8px 0; }
 .bless-card {
     background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 10px;
@@ -892,6 +895,7 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         奥术遗物: { icon: '🏛️', cap: 1e9, prestige: true, group: '传承', desc: '从崩塌的时间线里打捞出的文明残片。重置后永久保留。' },
         星辉: { icon: '⭐', cap: 1e9, prestige: true, group: '传承', desc: '星辰升华时凝出的辉光，能改写世界规则。' },
         原初之核: { icon: '🌑', cap: 1e9, prestige: true, group: '传承', desc: '大崩坏之前的原初之力，沉眠于虚空深处。' },
+        归墟之烬: { icon: '🌘', cap: 1e9, prestige: true, group: '传承', desc: '世界被写回空白之后剩下的余烬。最深一层重置的产物。' },
     };
 
     /* 局部资源：不参与贸易与上限计算，由建筑提供与消耗 */
@@ -922,6 +926,8 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         { id: 4, name: '高塔时代', motto: '我们把城市举向天空，为了离星辰更近。', test: s => s.techs['浮空石'] && s.techs['浮空石'].researched },
         { id: 5, name: '星界时代', motto: '星图另一端，也许还有别的废墟。', test: s => s.techs['星界航行'] && s.techs['星界航行'].researched },
         { id: 6, name: '虚空时代', motto: '当规则也能被书写，重建便成了创世。', test: s => s.techs['虚空撕裂'] && s.techs['虚空撕裂'].researched },
+        { id: 7, name: '星渊时代', motto: '城市把手伸进星渊，边界从此只是选项。', test: s => s.techs['相位工学'] && s.techs['相位工学'].researched },
+        { id: 8, name: '归墟时代', motto: '当世界本身成为材料，重建就是在复述自己。', test: s => s.techs['归墟之门'] && s.techs['归墟之门'].researched },
     ];
 
     window.ERAS = ERAS;
@@ -1303,6 +1309,68 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         desc: '一颗来自旧世界的种子。幼枝舒展的每一片叶子都在低声重复：这里可以重新开始。',
     });
 
+    /* ================= 第七时代 · 星渊 ================= */
+    B('星渊采掘场', {
+        type: '采集', era: 7, tech: '星渊采掘', cost: { 奥术合金: 1500, 星尘: 600, 以太: 40 }, g: 1.34,
+        prod: { 星尘: 2.5, 以太: 0.8 }, cons: { 魔力: 40, 铁锭: 5 }, caps: { 星尘: 120, 以太: 60 }, pop: 4,
+        desc: '采掘阵的钻头伸进裂缝里，把星渊那一侧的物质一点点拖过来。每座吃掉不少铁锭与魔力。',
+    });
+    B('星渊仓库', {
+        type: '储存', era: 7, tech: '星渊采掘', cost: { 奥术合金: 800, 星尘: 200 }, g: 1.3,
+        caps: { 星尘: 200, 以太: 120, 贤者之石: 60, 奥术合金: 200, 秘银: 200 },
+        desc: '架子搭在相位夹层里，比看起来能装得多。',
+    });
+    B('星穹回廊', {
+        type: '魔力', era: 7, tech: '星穹回廊', cost: { 奥术合金: 1200, 秘银: 400, 星尘: 300 }, g: 1.33,
+        prod: { 魔力: 120 }, caps: { 魔力: 3000 }, cons: { 以太: 1.5 }, pop: 3,
+        desc: '一条绕着星穹走的引魔长廊，把高处稀薄的魔力导回城里。',
+    });
+    B('意识图书馆', {
+        type: '研究', era: 7, tech: '星穹回廊', cost: { 符文: 6000, 秘银: 500, 星尘: 400 }, g: 1.33,
+        prod: { 魔法知识: 60 }, caps: { 魔法知识: 6000 }, cons: { 魔力: 60 }, pop: 4,
+        desc: '同一本书可以被几百个投影同时读完。',
+    });
+    B('相位熔炉', {
+        type: '加工', era: 7, tech: '相位工学', cost: { 奥术合金: 2500, 秘银: 800, 星尘: 900 }, g: 1.34,
+        prod: { 奥术合金: 6, 秘银: 3 }, cons: { 铁锭: 8, 魔晶: 6, 魔力: 50 }, pop: 5,
+        desc: '炉膛在相位之间来回跳，同一块金属被反复提纯。',
+    });
+    B('星渊要塞', {
+        type: '军备', era: 7, tech: '星渊要塞', cost: { 秘银: 1200, 奥术合金: 2000, 以太: 80 }, g: 1.35,
+        cons: { 食物: 10, 铁锭: 5 }, local: { power: 40000 },
+        desc: '要塞贴着裂缝的内壁，敌人从哪一侧来都一样。',
+    });
+    B('万相矩阵', {
+        type: '奇观', era: 7, tech: '万相矩阵', cost: { 贤者之石: 60, 星尘: 12000, 以太: 900 }, g: 1.45,
+        cons: { 魔力: 500, 以太: 8 }, pop: 8,
+        global: { globalProd: 0.35, happiness: 300, speed: 0.05 },
+        desc: '无数条细线把城市里每一样东西连起来 —— 你终于能同时看见它们的全部。',
+    });
+
+    /* ================= 第八时代 · 归墟 ================= */
+    B('湮灭工坊', {
+        type: '加工', era: 8, tech: '湮灭法则', cost: { 贤者之石: 40, 奥术合金: 4000, 以太: 500 }, g: 1.36,
+        prod: { 贤者之石: 0.5 }, caps: { 贤者之石: 80 }, cons: { 以太: 6, 星尘: 20 }, pop: 6,
+        desc: '把原料里多余的部分删掉，剩下的就是贤者之石。',
+    });
+    B('万象灯塔', {
+        type: '研究', era: 8, tech: '逆向创世', cost: { 贤者之石: 80, 星尘: 20000, 以太: 1200 }, g: 1.38,
+        prod: { 魔法知识: 200 }, caps: { 魔法知识: 20000 }, cons: { 魔力: 800 }, pop: 8,
+        desc: '灯亮一次，所有还没被写下的知识就自己排好了队。',
+    });
+    B('永寂祭坛', {
+        type: '魔力', era: 8, tech: '永寂仪式', cost: { 贤者之石: 120, 以太: 2000 }, g: 1.4,
+        cons: { 贤者之石: 0.6 },
+        global: { resetGain: 0.12, ashGain: 0.15 },
+        desc: '祭坛上什么都不需要放。它只是提醒世界：这一轮也会结束。重置收益与归墟之烬 +12% ~ +15%。',
+    });
+    B('归墟之门', {
+        type: '奇观', era: 8, tech: '归墟之门', cost: { 贤者之石: 300, 星尘: 60000, 以太: 8000 }, g: 1.5,
+        cons: { 魔力: 2500, 贤者之石: 2 }, pop: 12,
+        global: { globalProd: 0.6, globalCost: -0.06, happiness: 500, speed: 0.08 },
+        desc: '一道立在城外的门，门框里没有风景，只有「本来可以什么都没有」。',
+    });
+
     window.BUILDINGS_CONFIG = REG;
     window.BUILDINGS_ORDER = ORDER;
 })();
@@ -1352,6 +1420,10 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     T('采石技术', {
         era: 1, cost: { 石料: 5 }, pre: ['伐木技术'],
         desc: '分辨哪些塌落的石块还能用。解锁「采石场」。',
+    });
+    T('领地开拓', {
+        era: 2, cost: { 魔法知识: 80 }, pre: ['抄写术'],
+        desc: '第一批人愿意在城墙之外住下来。开启「领地」——用资源开拓地块，永久获得加成。',
     });
     T('基础储存', {
         era: 1, cost: { 木材: 60 }, pre: ['采石技术'],
@@ -1621,6 +1693,67 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         era: 6, cost: { 魔法知识: 20000000, 贤者之石: 400, 以太: 60000 }, pre: ['虚空撕裂'],
         eff: { relicGain: 0.5, globalProd: 0.25 },
         desc: '你开始能看清世界的外壳。奥术遗物获取 +50%，所有建筑产出 +25%。',
+    });
+
+    /* ---------------- 第七时代 · 星渊 ---------------- */
+    T('星渊采掘', {
+        era: 7, cost: { 魔法知识: 50000000, 奥术合金: 8000, 以太: 1500 }, pre: ['虚空撕裂'],
+        desc: '把采掘阵伸进星渊的裂缝。解锁「星渊采掘场」与「星渊仓库」。',
+    });
+    T('星穹回廊', {
+        era: 7, cost: { 魔法知识: 60000000, 秘银: 4000, 星尘: 12000 }, pre: ['原初观测'],
+        eff: { knowledgeProd: 0.3 },
+        desc: '魔力的通路一路铺到星穹之上。魔法知识产出 +30%，解锁「星穹回廊」与「意识图书馆」。',
+    });
+    T('相位工学', {
+        era: 7, cost: { 魔法知识: 90000000, 奥术合金: 15000, 星尘: 20000 }, pre: ['星渊采掘', '星穹回廊'],
+        eff: { globalProd: 0.15 },
+        desc: '让物质在相位之间搬运，距离不再是成本。所有建筑产出 +15%，解锁「相位熔炉」。',
+    });
+    T('意识投影', {
+        era: 7, cost: { 魔法知识: 120000000, 秘银: 9000, 以太: 4000 }, pre: ['相位工学'],
+        eff: { queueSlots: 2, knowledgeProd: 0.4 },
+        desc: '工匠的意识可以同时出现在两处工地。建造队列 +2 槽位，魔法知识产出 +40%。',
+    });
+    T('星渊要塞', {
+        era: 7, cost: { 魔法知识: 80000000, 奥术合金: 20000, 以太: 3000 }, pre: ['相位工学'],
+        desc: '把要塞直接建在裂缝的内壁上。解锁「星渊要塞」。',
+    });
+    T('万相矩阵', {
+        era: 7, cost: { 魔法知识: 200000000, 贤者之石: 150, 星尘: 40000, 以太: 9000 }, pre: ['意识投影'],
+        eff: { capAll: 0.5 },
+        desc: '城市本身成了一台巨大的机器。所有存量上限 +50%，解锁奇观「万相矩阵」。',
+    });
+
+    /* ---------------- 第八时代 · 归墟 ---------------- */
+    T('归墟之门', {
+        era: 8, cost: { 魔法知识: 400000000, 贤者之石: 400, 星尘: 80000, 以太: 15000 }, pre: ['万相矩阵'],
+        desc: '门后面是「没有世界」这件事本身。解锁奇观「归墟之门」。',
+    });
+    T('湮灭法则', {
+        era: 8, cost: { 魔法知识: 600000000, 贤者之石: 600, 以太: 25000 }, pre: ['归墟之门'],
+        eff: { globalCost: -0.08 },
+        desc: '把多余的部分从法则里直接删掉。所有建筑成本增长率 −8%，解锁「湮灭工坊」。',
+    });
+    T('逆向创世', {
+        era: 8, cost: { 魔法知识: 1000000000, 贤者之石: 900, 星尘: 150000 }, pre: ['湮灭法则'],
+        eff: { globalProd: 0.4 },
+        desc: '从结果倒着写出原因。所有建筑产出 +40%，解锁「万象灯塔」。',
+    });
+    T('永寂工程', {
+        era: 8, cost: { 魔法知识: 2000000000, 贤者之石: 1500, 以太: 60000 }, pre: ['逆向创世'],
+        eff: { capAll: 0.8, knowledgeProd: 0.5 },
+        desc: '为一件不会结束的工程做规划。所有存量上限 +80%，魔法知识产出 +50%。',
+    });
+    T('永寂仪式', {
+        era: 8, cost: { 魔法知识: 4000000000, 贤者之石: 2500, 原初之核: 120 }, pre: ['永寂工程'],
+        desc: '让世界回到被书写之前，连「重置」这个词也一起归零。' +
+            '解锁第四层重置「万象归墟」与「永寂祭坛」。',
+    });
+    T('万象归一', {
+        era: 8, cost: { 魔法知识: 8000000000, 贤者之石: 4000, 星尘: 400000 }, pre: ['永寂仪式'],
+        eff: { globalProd: 0.5, speed: 0.1, happiness: 300 },
+        desc: '所有的可能性被折成一条线。所有建筑产出 +50%，世界流速 +10%，民望 +300。',
     });
 
     window.TECHS_CONFIG = REG;
@@ -1949,6 +2082,16 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         eff: { luck: 0.2, summonDiscount: 0.05 },
         desc: '在传送阵边缘点上一圈微光。召唤运气每级 +0.2，消耗每级 −5%。',
     });
+    P('领地工程', {
+        tree: 'relic', cost: 20, costG: 1.8, max: 5, techReq: '领地开拓',
+        eff: { plotCost: -0.12 },
+        desc: '把开拓流程写成一本手册发给每个人。领地开拓成本每级 −12%（最多 −60%）。',
+    });
+    P('勘探队', {
+        tree: 'relic', cost: 25, costG: 1.85, max: 5, techReq: '城防',
+        eff: { artifactQuality: 0.15 },
+        desc: '一支专门翻废墟的队伍，知道哪块石头下面藏着东西。秘宝品质每级 +0.15。',
+    });
 
     /* ---------------- 星辉 ---------------- */
     P('星辉灌注', {
@@ -2009,6 +2152,16 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         eff: { luck: 0.5, summonDiscount: 0.08 },
         desc: '亲手编一段更好的运气。召唤运气每级 +0.5，召唤消耗每级 −8%。',
     });
+    P('归墟预演', {
+        tree: 'star', cost: 15, costG: 2.2, max: 3, techReq: '虚空撕裂',
+        eff: { ashGain: 0.5 },
+        desc: '在星辉里把最后那一步先演一遍。归墟之烬的获取每级 +50%。',
+    });
+    P('祝福之心', {
+        tree: 'star', cost: 10, costG: 2.0, max: 2,
+        eff: { blessingOffers: 1 },
+        desc: '看得见更多的岔路。每次重置的轮回祝福候选 +1（每级）。',
+    });
 
     /* ---------------- 原初之核 ---------------- */
     P('原初之力', {
@@ -2039,6 +2192,42 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         tree: 'core', cost: 2, costG: 2.5, max: 3, techReq: '召唤法阵',
         eff: { heroPower: 1.0, queueSlots: 2 },
         desc: '让所有时间线的英雄同时回应你：英雄效果每级 +100%，建造队列每级 +2 槽位。',
+    });
+    P('烬火之约', {
+        tree: 'core', cost: 6, costG: 2.3, max: 5,
+        eff: { ashGain: 0.6 },
+        desc: '与世界约好：结束之后总要剩下一点什么。归墟之烬的获取每级 +60%。',
+    });
+    P('星渊共振', {
+        tree: 'core', cost: 8, costG: 2.3, max: 3, techReq: '城防',
+        eff: { resonancePower: 0.25 },
+        desc: '让秘宝之间的共鸣更响亮。秘宝套装共鸣的效果每级 +25%。',
+    });
+
+    /* ---------------- 归墟之烬 ---------------- */
+    P('恒星之心', {
+        tree: 'ash', cost: 2, costG: 1.9, max: 5, eff: { globalProd: 0.5 },
+        desc: '一颗还在缓慢燃烧的恒星被塞进了地基。所有建筑产出每级 +50%。',
+    });
+    P('无垠仓储', {
+        tree: 'ash', cost: 3, costG: 2.0, max: 5, eff: { capAll: 1.0 },
+        desc: '仓库的墙壁不再需要"外面"这个概念。所有存量上限每级 +100%。',
+    });
+    P('虚空回廊', {
+        tree: 'ash', cost: 4, costG: 2.2, max: 3, eff: { queueSlots: 3 },
+        desc: '工地把门开在虚空里，几处能同时开工。建造队列每级 +3 槽位。',
+    });
+    P('烬火余温', {
+        tree: 'ash', cost: 5, costG: 2.1, max: 5, eff: { resetGain: 0.4 },
+        desc: '每一次归零都留下一点温度。重置收益每级 +40%。',
+    });
+    P('命运抉择', {
+        tree: 'ash', cost: 6, costG: 2.4, max: 2, eff: { blessingOffers: 1 },
+        desc: '岔路在你面前显形。每次重置的轮回祝福候选 +1（每级）。',
+    });
+    P('万象时钟', {
+        tree: 'ash', cost: 10, costG: 2.2, max: 3, eff: { speed: 0.15 },
+        desc: '一只指针指向所有方向。世界流速每级 +15%。',
     });
 
     window.PERMANENT_CONFIG = REG;
@@ -2119,6 +2308,14 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
         s => window.QueueEngine && QueueEngine.slots(s) >= 8, { queueDiscount: 0.03 }, '队列订单材料 −3%');
     A('城建大师', '累计建成 300 座建筑。',
         s => (s.stats.totalBuildingBuilt || 0) >= 300, { queueDiscount: 0.02 }, '队列订单材料 −2%');
+    A('星渊来客', '进入星渊时代。',
+        s => s.techs['相位工学'].researched, { globalProd: 0.15 }, '所有建筑产出 +15%');
+    A('归墟之门', '进入归墟时代。',
+        s => s.techs['归墟之门'].researched, { globalProd: 0.3 }, '所有建筑产出 +30%');
+    A('开拓者', '开拓全部领地。',
+        s => window.Plots ? Plots.claimedCount(s) >= PLOTS_CONFIG.length : false, { plotCost: -0.1 }, '领地开拓成本 −10%');
+    A('万象归墟', '完成一次「万象归墟」。',
+        s => (s.stats.resets.ash || 0) >= 1, { ashGain: 0.3 }, '归墟之烬获取 +30%');
 
     window.ACHIEVEMENTS_CONFIG = LIST;
 })();
@@ -2796,6 +2993,58 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 
 </script>
 <script>
+/* ===== js/config/plots.js ===== */
+/* =========================================================
+   领地（地块）
+   用普通资源开拓，开拓之后**永久保留**（重置也不会失去），效果一直计入汇总。
+   每块地要先研究对应科技；成本固定不涨 —— 所以它是一条「有限、但很长」的成长线，
+   而不是又一圈无限叠加的乘数。
+   ========================================================= */
+(function () {
+    const LIST = [];
+
+    function PL(name, o) {
+        LIST.push({
+            id: o.id || name,
+            name: name,
+            icon: o.icon || '🏕️',
+            tech: o.tech || null,
+            cost: o.cost || {},
+            effect: o.eff || {},
+            desc: o.desc || '',
+        });
+    }
+
+    PL('灰烬前哨', { icon: '🏕️', tech: '领地开拓', cost: { 木材: 400, 石料: 300 },
+        eff: { globalProd: 0.05 },
+        desc: '城墙之外的第一片地。有人愿意先住过去，就有人愿意跟着搬。所有建筑产出 +5%。' });
+    PL('河湾水车', { icon: '💧', tech: '农耕术', cost: { 木材: 3000, 石料: 2000, 食物: 1500 },
+        eff: { resourceProd: { 食物: 0.2, 木材: 0.15 } },
+        desc: '把河湾的水引上来，灌溉和运输一起解决。食物产出 +20%、木材产出 +15%。' });
+    PL('旧城墙街区', { icon: '🧱', tech: '石造建筑', cost: { 石料: 30000, 铁锭: 8000, 符文: 2000 },
+        eff: { capAll: 0.2 },
+        desc: '把塌掉的城墙修回来，墙里墙外都成了城区。所有存量上限 +20%。' });
+    PL('矿脉深处', { icon: '⛏️', tech: '矿物学', cost: { 铁锭: 20000, 魔晶: 10000, 木炭: 12000 },
+        eff: { resourceProd: { 铁矿: 0.3, 魔晶: 0.25 } },
+        desc: '主矿脉下面还有一条更深的。铁矿产出 +30%、魔晶产出 +25%。' });
+    PL('浮空残骸', { icon: '🪂', tech: '浮空石', cost: { 奥术合金: 3000, 符文: 20000, 星尘: 800 },
+        eff: { queueSlots: 2, globalCost: -0.03 },
+        desc: '坠落时卡在半空的工坊区，结构居然还是完整的。建造队列 +2 槽位，成本增长率 −3%。' });
+    PL('星辉高地', { icon: '⭐', tech: '星辉共鸣', cost: { 星尘: 5000, 以太: 400, 奥术合金: 6000 },
+        eff: { knowledgeProd: 0.4, capAll: 0.3 },
+        desc: '离星空最近的一片坡地，学者们连夜往上搬。魔法知识产出 +40%，所有上限 +30%。' });
+    PL('星渊裂口', { icon: '🕳️', tech: '星渊采掘', cost: { 以太: 3000, 星尘: 30000, 贤者之石: 40 },
+        eff: { expeditionReward: 0.6, artifactQuality: 0.2 },
+        desc: '裂缝在地表咧开一道口子，往下的路比任何遗迹都深。远征收益 +60%，秘宝品质 +0.2。' });
+    PL('归墟遗址', { icon: '🌘', tech: '归墟之门', cost: { 贤者之石: 250, 星尘: 80000, 以太: 12000 },
+        eff: { offlineHours: 4, resetGain: 0.5, globalProd: 0.3 },
+        desc: '门外的土地已经"不完全是土地"了。离线结算时长 +4 小时，重置收益 +50%，所有建筑产出 +30%。' });
+
+    window.PLOTS_CONFIG = LIST;
+})();
+
+</script>
+<script>
 /* ===== js/config/blessings.js ===== */
 /* =========================================================
    轮回祝福
@@ -2902,6 +3151,11 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 window.CHANGELOG_DATA = {
     "source": "CHANGELOG.md",
     "overview": [
+        {
+            "version": "0.9.0",
+            "date": "2026-10-16",
+            "summary": "新系统「领地」（开拓后永久保留）；时代 7 星渊 / 时代 8 归墟（12 科技 + 11 建筑）；第四层重置「万象归墟」与新传承资源归墟之烬；12 项新传承；成本增长率整体上调"
+        },
         {
             "version": "0.8.0",
             "date": "2026-10-14",
@@ -3024,6 +3278,28 @@ window.CHANGELOG_DATA = {
         }
     ],
     "versions": [
+        {
+            "version": "0.9.0",
+            "date": "2026-10-16",
+            "sections": [
+                {
+                    "title": "新增",
+                    "items": [
+                        "<b>领地（新标签页）<\/b>：用资源开拓城墙之外的地块，<b>开拓一次永久保留<\/b>，重置也不会失去， 加成一直计入汇总。8 块地从「灰烬前哨」一路到「归墟遗址」，每块都要先研究对应科技， 效果覆盖产出、存量上限、建造队列、秘宝品质、离线时长与重置收益。 成本固定不涨 —— 它是一条很长、但看得见尽头的路，而不是又一层无限叠加的乘数； 传承「领地工程」可以把这个成本一路压到四折。",
+                        "<b>时代 7「星渊」与时代 8「归墟」<\/b>：12 项新科技、11 座新建筑（星渊采掘场、星穹回廊、 意识图书馆、相位熔炉、星渊要塞、万相矩阵、湮灭工坊、万象灯塔、永寂祭坛、归墟之门……）， 把 星尘 / 以太 / 贤者之石 这一段的产业链补齐。",
+                        "<b>第四层重置「万象归墟」<\/b>：研究完第 8 时代的「永寂仪式」后开启，产出新的传承资源 <b>归墟之烬<\/b>（依旧遵守「上一层货币的平方根」的公式，不会让数值再崩一次）， 同时把 奥术遗物 ×10、星辉 ×2、原初之核 ×2 一起带回来。",
+                        "<b>12 项新传承<\/b>：遗物树加「领地工程」「勘探队」，星辉树加「归墟预演」「祝福之心」， 原初之核树加「烬火之约」「星渊共振」，另新增「归墟之烬」树 6 项 （恒星之心、无垠仓储、虚空回廊、烬火余温、命运抉择、万象时钟）。 其中「祝福之心 / 命运抉择」让每次重置的轮回祝福候选 +1，「星渊共振」把秘宝套装共鸣整体放大。",
+                        "4 项新成就：星渊来客、归墟之门、开拓者、万象归墟（开拓全部领地给「领地开拓成本 −10%」）。"
+                    ]
+                },
+                {
+                    "title": "变更",
+                    "items": [
+                        "<b>成本增长率整体上调<\/b>：中后期扩张原来太轻松（一轮能铺上千座建筑）。 现在建筑与升级的「每多一座就涨一点价」统一 +0.02，传承的价格增长率统一 +0.10。 想调回去只改 <code>js/engine/production.js<\/code> 顶部的两个常量（<code>GROWTH_BUMP<\/code> / <code>PERM_GROWTH_BUMP<\/code>）。"
+                    ]
+                }
+            ]
+        },
         {
             "version": "0.8.0",
             "date": "2026-10-14",
@@ -3610,7 +3886,7 @@ window.CHANGELOG_DATA = {
 /* ===== js/engine/state.js ===== */
 /* 游戏状态与资源管理 */
 (function () {
-    const SAVE_VERSION = 7;
+    const SAVE_VERSION = 8;
 
     /* 全局唯一状态对象（引用始终不变，便于各模块共享） */
     const GameState = {
@@ -3632,6 +3908,7 @@ window.CHANGELOG_DATA = {
         artifacts: { inventory: [], equipped: [], slots: 3 },
         queue: { items: [] },
         run: { blessings: [], offers: [] },     // 本轮（这条时间线）的轮回祝福
+        plots: { claimed: [] },                 // 已开拓的领地（永久保留）
         heroes: null,
         market: { resources: {}, heat: {}, volume: 0, trades: 0 },
         expedition: { active: [], auto: false, history: [], mastery: {}, dry: 0 },
@@ -3651,7 +3928,7 @@ window.CHANGELOG_DATA = {
         return {
             playSeconds: 0,
             startedAt: Date.now(),
-            resets: { relic: 0, star: 0, core: 0 },
+            resets: { relic: 0, star: 0, core: 0, ash: 0 },
             expeditions: 0,
             expeditionsFailed: 0,
             artifactsFound: 0,
@@ -3713,6 +3990,7 @@ window.CHANGELOG_DATA = {
         s.artifacts = { inventory: [], equipped: [], slots: 3 };
         s.queue = { items: [] };
         s.run = { blessings: [], offers: [] };      // 轮回祝福是「本轮」的东西，重开/清档一律清空
+        s.plots = { claimed: [] };                  // 领地是永久的，但「新档」从零开始（重置时由 performReset 保留）
         s.heroes = freshHeroes();
         s.market = { resources: {}, heat: {}, volume: 0, trades: 0 };
         s.expedition = { active: [], auto: false, history: [], mastery: {}, dry: 0 };
@@ -3832,6 +4110,8 @@ window.CHANGELOG_DATA = {
         'artifactSlots',
         /* 建造队列与英雄召唤相关 */
         'queueSlots', 'queueDiscount', 'powerMult', 'luck', 'summonDiscount', 'heroPower',
+        /* 领地 / 第四层重置 / 套装共鸣 / 轮回祝福 */
+        'plotCost', 'ashGain', 'resonancePower', 'blessingOffers',
     ];
 
     function emptyEffects() {
@@ -3964,11 +4244,19 @@ window.CHANGELOG_DATA = {
                 if (!art || !art.set) continue;
                 setCount[art.set] = (setCount[art.set] || 0) + 1;
             }
+            /* 传承「星渊共振」会放大共鸣效果。
+               注意读的是同一轮汇总里的 resonancePower —— 传承在上面已经算过了。 */
+            const resoScale = 1 + (e.resonancePower || 0);
             for (const set of ARTIFACT_SETS) {
                 const n = setCount[set.key] || 0;
-                if (n >= 2 && set.two) applyEffect(e, set.two.eff, 1, '共鸣·' + set.name + '（2 件）');
-                if (n >= 3 && set.three) applyEffect(e, set.three.eff, 1, '共鸣·' + set.name + '（3 件）');
+                if (n >= 2 && set.two) applyEffect(e, set.two.eff, resoScale, '共鸣·' + set.name + '（2 件）');
+                if (n >= 3 && set.three) applyEffect(e, set.three.eff, resoScale, '共鸣·' + set.name + '（3 件）');
             }
+        }
+
+        /* 领地：开拓过的地块永久提供加成 */
+        if (window.Plots) {
+            for (const p of Plots.effects(state)) applyEffect(e, p.effect, 1, '领地·' + p.name);
         }
 
         /* 轮回祝福：本轮选中的那个，重置时重抽 */
@@ -4055,6 +4343,13 @@ window.CHANGELOG_DATA = {
     const ITERATIONS = 3;
     const DT = 0.25;
 
+    /* 成本增长率整体上调（v0.9.0 起）：
+       中后期扩张原来太轻松（一轮能铺上千座建筑），这里把「每多建一座就涨一点价」的幅度
+       统一抬高一点。建筑与升级用 GROWTH_BUMP，传承用 PERM_GROWTH_BUMP。
+       想回到旧手感就把这两个数设成 0 —— 全项目只有这一处需要改。 */
+    const GROWTH_BUMP = 0.02;
+    const PERM_GROWTH_BUMP = 0.10;
+
     function resolve(v, state) { return typeof v === 'function' ? v(state) : (v || {}); }
 
     /* 取建筑当前模式（未设置模式时就是自身） */
@@ -4067,7 +4362,7 @@ window.CHANGELOG_DATA = {
     }
 
     function stdCost(baseCost, growth, count, costMult) {
-        const g = 1 + (growth - 1) * Math.max(0.05, costMult);
+        const g = 1 + (growth + GROWTH_BUMP - 1) * Math.max(0.05, costMult);
         const price = {};
         for (const r in baseCost) price[r] = Math.floor(baseCost[r] * Math.pow(g, count));
         return price;
@@ -4503,6 +4798,7 @@ window.CHANGELOG_DATA = {
     }
 
     window.ProductionEngine = {
+        GROWTH_BUMP, PERM_GROWTH_BUMP,
         computeProductionAndCaps,
         updatePrices,
         happinessMult,
@@ -4931,10 +5227,16 @@ window.CHANGELOG_DATA = {
     }
 
     /* 抽 n 个不重复的候选，返回 id 数组 */
+    /* 候选数量：基础 3 个，传承「祝福之心 / 命运抉择」每级 +1 */
+    function offerCount(state) {
+        const extra = window.EffectsManager ? EffectsManager.additive(state, 'blessingOffers') : 0;
+        return Utils.clamp(OFFER_COUNT + Math.round(extra), 2, BLESSINGS_CONFIG.length);
+    }
+
     function roll(state, n) {
         const pool = BLESSINGS_CONFIG.slice();
         const out = [];
-        const want = Math.min(n || OFFER_COUNT, pool.length);
+        const want = Math.min(n || offerCount(state), pool.length);
         for (let i = 0; i < want; i++) {
             out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0].id);
         }
@@ -4945,7 +5247,7 @@ window.CHANGELOG_DATA = {
     function beginRun(state) {
         state.run = state.run || {};
         state.run.blessings = [];
-        state.run.offers = roll(state, OFFER_COUNT);
+        state.run.offers = roll(state);
         return state.run.offers;
     }
 
@@ -4974,7 +5276,77 @@ window.CHANGELOG_DATA = {
         return !!(state.run && Array.isArray(state.run.offers) && state.run.offers.length);
     }
 
-    window.Blessings = { OFFER_COUNT, byId, current, roll, beginRun, take, skip, hasOffer };
+    window.Blessings = { OFFER_COUNT, offerCount, byId, current, roll, beginRun, take, skip, hasOffer };
+})();
+
+</script>
+<script>
+/* ===== js/engine/plots.js ===== */
+/* =========================================================
+   领地（引擎）
+   开拓一次永久保留；成本固定，受传承「领地工程」影响（最多 −60%）。
+   ========================================================= */
+(function () {
+    function byId(id) {
+        return PLOTS_CONFIG.find(p => p.id === id) || null;
+    }
+
+    function claimed(state) {
+        return (state.plots && Array.isArray(state.plots.claimed)) ? state.plots.claimed : [];
+    }
+
+    function isClaimed(state, id) {
+        return claimed(state).indexOf(id) >= 0;
+    }
+
+    /* 科技没研究完就不显示为「可开拓」 */
+    function unlocked(state, id) {
+        const cfg = byId(id);
+        if (!cfg) return false;
+        if (!cfg.tech) return true;
+        const t = state.techs[cfg.tech];
+        return !!(t && t.researched);
+    }
+
+    /* 当前开拓成本（领地工程最多打 4 折） */
+    function cost(state, id) {
+        const cfg = byId(id);
+        if (!cfg) return {};
+        const disc = Utils.clamp(EffectsManager.additive(state, 'plotCost'), -0.6, 0);
+        const out = {};
+        for (const r in cfg.cost) out[r] = Math.ceil(cfg.cost[r] * (1 + disc));
+        return out;
+    }
+
+    function affordability(state, id) {
+        const c = cost(state, id);
+        return { cost: c, affordable: ResourcesManager.canAfford(c) };
+    }
+
+    function claim(state, id) {
+        const cfg = byId(id);
+        if (!cfg) return { ok: false, msg: '没有这块地。' };
+        if (isClaimed(state, id)) return { ok: false, msg: '这块地已经开拓过了。' };
+        if (!unlocked(state, id)) return { ok: false, msg: '需要先研究「' + cfg.tech + '」。' };
+        const c = cost(state, id);
+        if (!ResourcesManager.canAfford(c)) return { ok: false, msg: '资源不足。' };
+        ResourcesManager.spend(c);
+        state.plots.claimed.push(id);
+        ProductionEngine.computeProductionAndCaps(state);
+        EventEngine.addLog(state, '🏕️ 开拓领地「' + cfg.name + '」完成，它的加成永久生效。');
+        return { ok: true, msg: '开拓完成：' + cfg.name };
+    }
+
+    /* 已开拓领地的配置（给效果汇总用） */
+    function effects(state) {
+        return claimed(state).map(byId).filter(Boolean);
+    }
+
+    function claimedCount(state) {
+        return claimed(state).length;
+    }
+
+    window.Plots = { byId, claimed, isClaimed, unlocked, cost, affordability, claim, effects, claimedCount };
 })();
 
 </script>
@@ -6105,11 +6477,16 @@ window.CHANGELOG_DATA = {
     }
 
     /* ---------------- 传承（永久强化） ---------------- */
+    /* 传承树 → 对应货币。加新树时只改这里 */
+    const TREE_RES = { relic: '奥术遗物', star: '星辉', core: '原初之核', ash: '归墟之烬' };
+
     function permanentCost(state, name) {
         const cfg = PERMANENT_CONFIG[name];
         const lvl = state.permanent[name].level;
-        const res = cfg.tree === 'relic' ? '奥术遗物' : (cfg.tree === 'star' ? '星辉' : '原初之核');
-        return { res: res, amount: Math.ceil(cfg.cost * Math.pow(cfg.costG, lvl)) };
+        const res = TREE_RES[cfg.tree] || '奥术遗物';
+        /* 传承的成本增长率同样整体上调（PERM_GROWTH_BUMP，见 production.js） */
+        const growth = cfg.costG + (window.ProductionEngine ? ProductionEngine.PERM_GROWTH_BUMP : 0);
+        return { res: res, amount: Math.ceil(cfg.cost * Math.pow(growth, lvl)) };
     }
 
     function buyPermanent(state, name) {
@@ -6195,6 +6572,16 @@ window.CHANGELOG_DATA = {
         return Math.max(1, Math.floor(Math.sqrt(Math.max(1, stars)) / 4 * eMult * starMult));
     }
 
+    /* 第四层重置的产出：照旧是「上一层货币的平方根」，
+       再乘上传承「归墟预演 / 烬火之约」的 ashGain 加成。 */
+    function ashGain(state) {
+        const cores = ResourcesManager.amount('原初之核');
+        const eMult = (1 + EffectsManager.additive(state, 'resetGain')) *
+            (1 + EffectsManager.additive(state, 'ashGain'));
+        const starMult = 1 + activeStars(state) * 0.05;
+        return Math.max(1, Math.floor(Math.sqrt(Math.max(1, cores)) * 0.8 * eMult * starMult));
+    }
+
     function resetAvailability(state) {
         const researched = name => !!(state.techs[name] && state.techs[name].researched);
         return {
@@ -6205,6 +6592,7 @@ window.CHANGELOG_DATA = {
             relic: state.resources['魔法知识'].cap >= 200,
             star: researched('星辉共鸣'),      // 第 4 时代 · 高塔时代
             core: researched('虚空撕裂'),      // 第 6 时代 · 虚空时代
+            ash: researched('永寂仪式'),       // 第 8 时代 · 归墟时代（第四层重置）
         };
     }
 
@@ -6235,11 +6623,13 @@ window.CHANGELOG_DATA = {
         const keepRelic = ResourcesManager.amount('奥术遗物');
         const keepStar = ResourcesManager.amount('星辉');
         const keepCore = ResourcesManager.amount('原初之核');
+        const keepAsh = ResourcesManager.amount('归墟之烬');
         const achievements = state.achievements;
         const stats = state.stats;
         const settings = state.settings;
         const permanent = state.permanent;
         const challenges = state.challenges;
+        const plots = state.plots;                // 领地开拓一次永久保留
         const heroes = state.heroes;              // 英雄收藏跨重置保留
         const expeditionHistory = state.expedition.history;
 
@@ -6250,6 +6640,7 @@ window.CHANGELOG_DATA = {
         state.settings = settings;
         state.permanent = permanent;
         state.challenges = challenges;
+        state.plots = plots;
         state.heroes = heroes;
         state.expedition.history = expeditionHistory;
         /* 英雄收藏：只有「跨越时间线」的那一档（EX）会留下来，
@@ -6269,6 +6660,7 @@ window.CHANGELOG_DATA = {
         state.resources['奥术遗物'].amount = keepRelic + (opts.relic || 0);
         state.resources['星辉'].amount = keepStar + (opts.star || 0);
         state.resources['原初之核'].amount = keepCore + (opts.core || 0);
+        state.resources['归墟之烬'].amount = keepAsh + (opts.ash || 0);
         state.stats.resets[opts.type] = (state.stats.resets[opts.type] || 0) + 1;
         state.stats.history.unshift({ day: state.stats.playSeconds, type: opts.type });
         if (state.stats.history.length > 50) state.stats.history.pop();
@@ -6342,6 +6734,16 @@ window.CHANGELOG_DATA = {
             performReset(state, { type: 'core', relic: relics, star: stars, core: cores, label: '原初归寂' });
             return { ok: true, msg: '原初归寂！获得 ' + Utils.fmtInt(cores) + ' 原初之核、' + Utils.fmtInt(stars) + ' 星辉与 ' + Utils.fmtInt(relics) + ' 奥术遗物。' };
         }
+        if (type === 'ash') {
+            if (!avail.ash) return { ok: false, msg: '需要先研究「永寂仪式」（第 8 时代 · 归墟时代）。' };
+            const relics = relicGain(state) * 10;
+            const stars = starGain(state) * 2;
+            const cores = coreGain(state) * 2;
+            const ash = ashGain(state);
+            performReset(state, { type: 'ash', relic: relics, star: stars, core: cores, ash: ash, label: '万象归墟' });
+            return { ok: true, msg: '万象归墟！获得 ' + Utils.fmtInt(ash) + ' 归墟之烬、' + Utils.fmtInt(cores) +
+                ' 原初之核、' + Utils.fmtInt(stars) + ' 星辉与 ' + Utils.fmtInt(relics) + ' 奥术遗物。' };
+        }
         return { ok: false };
     }
 
@@ -6392,6 +6794,7 @@ window.CHANGELOG_DATA = {
         buyBuilding, setBuildingActive, setBuildingMode,
         research, buyUpgrade, setPolicy, buyPermanent, permanentCost, permVisible,
         toggleChallenge, activeStars, relicGain, starGain, coreGain, resetAvailability,
+        ashGain,
         prestige, performReset, autoBuildStep, autoExpeditionStep, startExpedition,
     };
 })();
@@ -6573,7 +6976,15 @@ window.CHANGELOG_DATA = {
         if (!Array.isArray(state.expedition.history)) state.expedition.history = [];
         if (!state.expedition.mastery || typeof state.expedition.mastery !== 'object') state.expedition.mastery = {};
         if (typeof state.expedition.dry !== 'number') state.expedition.dry = 0;
-        if (!state.stats) state.stats = { playSeconds: 0, resets: { relic: 0, star: 0, core: 0 }, expeditions: 0, expeditionsFailed: 0, artifactsFound: 0, maxChallengeStars: 0, events: 0, history: [] };
+        if (!state.stats) state.stats = { playSeconds: 0, resets: { relic: 0, star: 0, core: 0, ash: 0 }, expeditions: 0, expeditionsFailed: 0, artifactsFound: 0, maxChallengeStars: 0, events: 0, history: [] };
+        state.stats.resets = state.stats.resets || {};
+        for (const k of ['relic', 'star', 'core', 'ash']) {
+            if (state.stats.resets[k] === undefined) state.stats.resets[k] = 0;
+        }
+        /* 领地：旧档没有这个字段 */
+        state.plots = state.plots || {};
+        if (!Array.isArray(state.plots.claimed)) state.plots.claimed = [];
+        if (window.Plots) state.plots.claimed = state.plots.claimed.filter(id => !!Plots.byId(id));
         if (!state.settings) state.settings = { theme: 'dark', autosave: true, autoBuild: true, autoExpedition: true, buyAmount: 1 };
         if (!state.market) state.market = { resources: {}, heat: {}, volume: 0, trades: 0 };
         for (const k in RESOURCES_CONFIG) {
@@ -7116,6 +7527,10 @@ window.CHANGELOG_DATA = {
             else if (key === 'luck') out.push('召唤运气 +' + v.toFixed(2));
             else if (key === 'summonDiscount') out.push('召唤消耗 ' + U.fmtPct(-v, 1));
             else if (key === 'heroPower') out.push('英雄效果 ' + U.fmtPct(v, 1));
+            else if (key === 'plotCost') out.push('领地开拓成本 ' + U.fmtPct(v, 1));
+            else if (key === 'ashGain') out.push('归墟之烬获取 ' + U.fmtPct(v, 1));
+            else if (key === 'resonancePower') out.push('套装共鸣效果 ' + U.fmtPct(v, 1));
+            else if (key === 'blessingOffers') out.push('轮回祝福候选 +' + v);
             else if (key === 'special') {
                 const names = {
                     autoBuild: '解锁自动建造', autoExpedition: '解锁自动远征',
@@ -7359,6 +7774,23 @@ window.CHANGELOG_DATA = {
             if (r.relics[1]) loot.push('奥术遗物 ' + r.relics[0] + '~' + r.relics[1]);
             html += '<div>可能收获：' + G.esc(loot.join('、')) + '</div>';
             html += '<div class="kv"><span>秘宝概率</span><span>' + U.fmtPct(r.artifact) + '</span></div>';
+            return html;
+        }
+
+        if (type === 'plot') {
+            const cfg = window.Plots ? Plots.byId(arg) : null;
+            if (!cfg) return null;
+            const claimed = Plots.isClaimed(s, cfg.id);
+            let html = '<h4>' + cfg.icon + ' ' + G.esc(cfg.name) + '</h4>';
+            html += '<div class="dim">' + G.esc(cfg.desc) + '</div><hr>';
+            html += '<div class="kv"><span>状态</span><span class="' + (claimed ? 'pos' : 'dim') + '">' +
+                (claimed ? '已开拓（永久保留）' : '未开拓') + '</span></div>';
+            html += '<div class="kv"><span>需要科技</span><span>' + G.esc(cfg.tech || '—') + '</span></div>';
+            if (!claimed) html += '<div class="kv"><span>开拓成本</span><span>' + G.priceHtml(Plots.cost(s, cfg.id)) + '</span></div>';
+            html += '<hr>';
+            for (const line of G.effectLines(cfg.effect)) {
+                html += '<div class="kv"><span>' + G.esc(line) + '</span><span></span></div>';
+            }
             return html;
         }
 
@@ -7813,7 +8245,8 @@ window.CHANGELOG_DATA = {
             '<span class="chip" data-tip="text|' + G.esc(ae.desc || '') + '">' + G.esc(ae.name) + ' ' + Math.ceil(ae.remain) + '日</span>').join('') : '<span class="hint">无</span>';
         let html = '<div class="panel-title">统计</div><div class="stat-grid">';
         html += '<div>游玩时长 <b>' + U.fmtDuration(st.playSeconds) + '</b></div>';
-        html += '<div>重置次数 <b>' + (st.resets.relic + st.resets.star + st.resets.core) + '</b></div>';
+        html += '<div>重置次数 <b>' + ((st.resets.relic || 0) + (st.resets.star || 0) + (st.resets.core || 0) + (st.resets.ash || 0)) + '</b></div>';
+        if (window.Plots) html += '<div>领地 <b>' + Plots.claimedCount(s) + '</b> / ' + PLOTS_CONFIG.length + '</div>';
         html += '<div>远征 <b>' + st.expeditions + '</b>（败 ' + st.expeditionsFailed + '）</div>';
         html += '<div>秘宝 <b>' + st.artifactsFound + '</b></div>';
         html += '<div>成就 <b>' + Object.keys(s.achievements).length + '/' + ACHIEVEMENTS_CONFIG.length + '</b></div>';
@@ -7970,6 +8403,86 @@ window.CHANGELOG_DATA = {
     }
 
     window.TabBuildings = { render, filters };
+})();
+
+</script>
+<script>
+/* ===== js/ui/tab-plots.js ===== */
+/* 领地标签页：开拓地块（永久保留） */
+(function () {
+    const U = window.Utils;
+    const G = window.UI;
+
+    function plotCard(cfg) {
+        const s = GameState;
+        const claimed = Plots.isClaimed(s, cfg.id);
+        const unlocked = Plots.unlocked(s, cfg.id);
+        const c = Plots.cost(s, cfg.id);
+        const affordable = ResourcesManager.canAfford(c);
+
+        let cls = 'card compact';
+        if (!unlocked) cls += ' locked';
+        else if (!claimed && affordable) cls += ' affordable';
+        if (claimed) cls += ' researched';
+
+        let html = '<div class="' + cls + '" data-tip="plot|' + G.esc(cfg.id) + '">';
+        html += '<div class="card-head"><div class="card-name">' + cfg.icon + ' ' + G.esc(cfg.name) +
+            (claimed ? '<span class="tag">已开拓</span>' : '') + '</div>' +
+            '<div class="card-count" style="font-size:.72rem">' + Plots.claimedCount(s) + ' / ' + PLOTS_CONFIG.length + '</div></div>';
+        html += '<div class="card-desc">' + G.esc(cfg.desc) + '</div>';
+
+        if (!unlocked) {
+            html += '<div class="card-desc">需要科技：<b>' + G.esc(cfg.tech) + '</b></div>';
+            html += '<div class="card-tip"><span>点击前往科技页</span><span></span></div></div>';
+            return html;
+        }
+        if (claimed) {
+            html += '<div class="card-tip"><span>加成已永久生效</span><span></span></div></div>';
+            return html;
+        }
+        html += '<div class="card-actions">';
+        html += '<button class="btn primary wide-action" data-act="plot|' + G.esc(cfg.id) + '"' + (affordable ? '' : ' disabled') + '>' +
+            (affordable ? '开拓' : '资源不足') + '</button>';
+        html += '</div>';
+        html += '<div class="plot-cost">' + G.priceHtml(c) + '</div>';
+        html += '</div>';
+        return html;
+    }
+
+    function render() {
+        const s = GameState;
+        if (!s.techs['领地开拓'] || !s.techs['领地开拓'].researched) {
+            return '<div class="tab-intro">领地尚未开放。研究科技「<b>领地开拓</b>」（学徒时代）后，' +
+                '就可以在城墙之外开拓地块。</div>';
+        }
+        const claimed = Plots.claimedCount(s);
+        let html = '<div class="tab-intro">用资源开拓城墙之外的地块：<b>开拓一次永久保留</b>，' +
+            '重置也不会失去，加成一直计入汇总。每块地都需要先研究对应科技，成本固定不涨 —— ' +
+            '所以它是一条很长、但看得见尽头的路。</div>';
+
+        html += '<div class="card-stats" style="margin-bottom:10px">';
+        html += '<div class="row"><span class="k">已开拓</span><span class="v pos">' + claimed + ' / ' + PLOTS_CONFIG.length + '</span></div>';
+        const disc = EffectsManager.additive(s, 'plotCost');
+        if (disc < 0) {
+            html += '<div class="row"><span class="k">传承「领地工程」折扣</span><span class="v">' + U.fmtPct(disc, 1) + '</span></div>';
+        }
+        html += '</div>';
+
+        /* 已开拓的排前面，方便看进度 */
+        const list = PLOTS_CONFIG.slice().sort((a, b) => {
+            const ca = Plots.isClaimed(s, a.id) ? 0 : 1;
+            const cb = Plots.isClaimed(s, b.id) ? 0 : 1;
+            return ca - cb;
+        });
+        html += '<div class="card-grid wide">' + list.map(plotCard).join('') + '</div>';
+
+        if (claimed >= PLOTS_CONFIG.length) {
+            html += '<div class="hint mt6">所有领地都已开拓 —— 这一层已经走完了。</div>';
+        }
+        return html;
+    }
+
+    window.TabPlots = { render, plotCard };
 })();
 
 </script>
@@ -8253,6 +8766,15 @@ window.CHANGELOG_DATA = {
                 '</b> 星辉与 <b>' + U.fmtInt(Actions.relicGain(s) * 5) + '</b> 奥术遗物' + starBonusNote(s),
             need: s => (s.techs['虚空撕裂'] && s.techs['虚空撕裂'].researched) ? null : '需要先研究「虚空撕裂」（第 6 时代 · 虚空时代）',
         },
+        ash: {
+            title: '万象归墟', type: 'ash',
+            desc: '连「重置」这个词也一起归零，最后只剩下余烬。最深的一层重置，产出归墟之烬。' +
+                '需要先把文明重新推到「永寂仪式」这一步才能再次执行。',
+            gainText: s => '获得 <b>' + U.fmtInt(Actions.ashGain(s)) + '</b> 归墟之烬、<b>' + U.fmtInt(Actions.coreGain(s) * 2) +
+                '</b> 原初之核、<b>' + U.fmtInt(Actions.starGain(s) * 2) + '</b> 星辉与 <b>' +
+                U.fmtInt(Actions.relicGain(s) * 10) + '</b> 奥术遗物' + starBonusNote(s),
+            need: s => (s.techs['永寂仪式'] && s.techs['永寂仪式'].researched) ? null : '需要先研究「永寂仪式」（第 8 时代 · 归墟时代）',
+        },
     };
 
     function resetCard(key) {
@@ -8328,10 +8850,10 @@ window.CHANGELOG_DATA = {
     function renderAscend() {
         const s = GameState;
         let html = '<div class="tab-intro">重置会清空这一轮的所有建设，但把进度压缩成 <b>传承资源</b>：' +
-            '奥术遗物、星辉与原初之核。用它们购买永久强化，下一轮会快得多。</div>';
+            '奥术遗物、星辉、原初之核与归墟之烬。用它们购买永久强化，下一轮会快得多。</div>';
 
         html += '<div class="section-title">重置方式</div>';
-        html += resetCard('relic') + resetCard('star') + resetCard('core');
+        html += resetCard('relic') + resetCard('star') + resetCard('core') + resetCard('ash');
 
         /* 轮回祝福：当前这条时间线选中的那一个 */
         html += '<div class="section-title">轮回祝福</div>';
@@ -8354,7 +8876,8 @@ window.CHANGELOG_DATA = {
 
         html += '<div class="section-title">传承强化</div>';
         html += '<div class="perm-tabs">';
-        const trees = [['relic', '🏛️ 奥术遗物', '奥术遗物'], ['star', '⭐ 星辉', '星辉'], ['core', '🌑 原初之核', '原初之核']];
+        const trees = [['relic', '🏛️ 奥术遗物', '奥术遗物'], ['star', '⭐ 星辉', '星辉'],
+            ['core', '🌑 原初之核', '原初之核'], ['ash', '🌘 归墟之烬', '归墟之烬']];
         for (const [key, label, res] of trees) {
             html += '<button class="btn tiny' + (permTree.current === key ? ' active' : '') + '" data-act="permtree|' + key + '">' +
                 label + '（' + U.fmtNum(ResourcesManager.amount(res)) + '）</button>';
@@ -8986,6 +9509,7 @@ window.CHANGELOG_DATA = {
 
     const TABS = [
         { id: 'buildings', name: '建筑', icon: '🏠', render: () => TabBuildings.render() },
+        { id: 'plots', name: '领地', icon: '🏕️', gate: s => s.techs['领地开拓'] && s.techs['领地开拓'].researched, render: () => TabPlots.render() },
         { id: 'techs', name: '科技', icon: '📖', render: () => TabResearch.renderTechs() },
         { id: 'upgrades', name: '升级', icon: '⚗️', render: () => TabResearch.renderUpgrades() },
         { id: 'policies', name: '国策', icon: '⚖️', render: () => TabAscend.renderPolicies() },
@@ -9251,6 +9775,11 @@ window.CHANGELOG_DATA = {
             case 'blessingPick':
                 showBlessingPick();
                 break;
+            case 'plot': {
+                const r = Plots.claim(s, arg1);
+                if (r.msg) G.toast(r.msg, r.ok ? 'gold' : 'bad');
+                break;
+            }
             case 'eventchoice': {
                 const choice = EventEngine.resolve(s, Number(arg1));
                 if (choice && choice.ok === false) G.toast(choice.msg, 'bad');
@@ -9319,16 +9848,19 @@ window.CHANGELOG_DATA = {
             relic: ['时空回响', '把这条时间线折叠起来重新展开。'],
             star: ['星辰升华', '将整座城市升华为星光，得到更深一层的传承资源。'],
             core: ['原初归寂', '让世界回到被书写之前的空白。'],
+            ash: ['万象归墟', '连「重置」这个词也一起归零，最后只剩下余烬。'],
         }[key];
         const gain = {
             relic: () => U.fmtInt(Actions.relicGain(s)) + ' 奥术遗物',
             star: () => U.fmtInt(Actions.relicGain(s) * 2) + ' 奥术遗物、' + U.fmtInt(Actions.starGain(s)) + ' 星辉',
             core: () => U.fmtInt(Actions.relicGain(s) * 5) + ' 奥术遗物、' + U.fmtInt(Actions.starGain(s) * 1.5) + ' 星辉、' + U.fmtInt(Actions.coreGain(s)) + ' 原初之核',
+            ash: () => U.fmtInt(Actions.relicGain(s) * 10) + ' 奥术遗物、' + U.fmtInt(Actions.starGain(s) * 2) + ' 星辉、' +
+                U.fmtInt(Actions.coreGain(s) * 2) + ' 原初之核、' + U.fmtInt(Actions.ashGain(s)) + ' 归墟之烬',
         }[key];
         const text = '<b>' + info[0] + '</b><br>' + info[1] +
             '<br><br>将获得：<b>' + gain() + '</b>' +
             '<br><br>会清空：资源、建筑、科技、升级、政策、人口。' +
-            '<br>会保留：传承资源与强化、成就、试炼进度、统计数据' +
+            '<br>会保留：传承资源与强化、成就、试炼进度、已开拓的领地、统计数据' +
             (EffectsManager.hasSpecial(s, 'keepArtifacts') ? '、全部秘宝' : '（秘宝会在重置时失去，需要传承「记忆水晶」才能保留）') + '。';
         G.confirmBox(info[0], text, () => {
             const r = Actions.prestige(s, key);

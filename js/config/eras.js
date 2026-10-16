@@ -7,6 +7,8 @@
         { id: 4, name: '高塔时代', motto: '我们把城市举向天空，为了离星辰更近。', test: s => s.techs['浮空石'] && s.techs['浮空石'].researched },
         { id: 5, name: '星界时代', motto: '星图另一端，也许还有别的废墟。', test: s => s.techs['星界航行'] && s.techs['星界航行'].researched },
         { id: 6, name: '虚空时代', motto: '当规则也能被书写，重建便成了创世。', test: s => s.techs['虚空撕裂'] && s.techs['虚空撕裂'].researched },
+        { id: 7, name: '星渊时代', motto: '城市把手伸进星渊，边界从此只是选项。', test: s => s.techs['相位工学'] && s.techs['相位工学'].researched },
+        { id: 8, name: '归墟时代', motto: '当世界本身成为材料，重建就是在复述自己。', test: s => s.techs['归墟之门'] && s.techs['归墟之门'].researched },
     ];
 
     window.ERAS = ERAS;

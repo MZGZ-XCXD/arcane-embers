@@ -1,6 +1,6 @@
 /* 游戏状态与资源管理 */
 (function () {
-    const SAVE_VERSION = 7;
+    const SAVE_VERSION = 8;
 
     /* 全局唯一状态对象（引用始终不变，便于各模块共享） */
     const GameState = {
@@ -22,6 +22,7 @@
         artifacts: { inventory: [], equipped: [], slots: 3 },
         queue: { items: [] },
         run: { blessings: [], offers: [] },     // 本轮（这条时间线）的轮回祝福
+        plots: { claimed: [] },                 // 已开拓的领地（永久保留）
         heroes: null,
         market: { resources: {}, heat: {}, volume: 0, trades: 0 },
         expedition: { active: [], auto: false, history: [], mastery: {}, dry: 0 },
@@ -41,7 +42,7 @@
         return {
             playSeconds: 0,
             startedAt: Date.now(),
-            resets: { relic: 0, star: 0, core: 0 },
+            resets: { relic: 0, star: 0, core: 0, ash: 0 },
             expeditions: 0,
             expeditionsFailed: 0,
             artifactsFound: 0,
@@ -103,6 +104,7 @@
         s.artifacts = { inventory: [], equipped: [], slots: 3 };
         s.queue = { items: [] };
         s.run = { blessings: [], offers: [] };      // 轮回祝福是「本轮」的东西，重开/清档一律清空
+        s.plots = { claimed: [] };                  // 领地是永久的，但「新档」从零开始（重置时由 performReset 保留）
         s.heroes = freshHeroes();
         s.market = { resources: {}, heat: {}, volume: 0, trades: 0 };
         s.expedition = { active: [], auto: false, history: [], mastery: {}, dry: 0 };

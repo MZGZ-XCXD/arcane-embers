@@ -5,6 +5,7 @@
 
     const TABS = [
         { id: 'buildings', name: '建筑', icon: '🏠', render: () => TabBuildings.render() },
+        { id: 'plots', name: '领地', icon: '🏕️', gate: s => s.techs['领地开拓'] && s.techs['领地开拓'].researched, render: () => TabPlots.render() },
         { id: 'techs', name: '科技', icon: '📖', render: () => TabResearch.renderTechs() },
         { id: 'upgrades', name: '升级', icon: '⚗️', render: () => TabResearch.renderUpgrades() },
         { id: 'policies', name: '国策', icon: '⚖️', render: () => TabAscend.renderPolicies() },
@@ -270,6 +271,11 @@
             case 'blessingPick':
                 showBlessingPick();
                 break;
+            case 'plot': {
+                const r = Plots.claim(s, arg1);
+                if (r.msg) G.toast(r.msg, r.ok ? 'gold' : 'bad');
+                break;
+            }
             case 'eventchoice': {
                 const choice = EventEngine.resolve(s, Number(arg1));
                 if (choice && choice.ok === false) G.toast(choice.msg, 'bad');
@@ -338,16 +344,19 @@
             relic: ['时空回响', '把这条时间线折叠起来重新展开。'],
             star: ['星辰升华', '将整座城市升华为星光，得到更深一层的传承资源。'],
             core: ['原初归寂', '让世界回到被书写之前的空白。'],
+            ash: ['万象归墟', '连「重置」这个词也一起归零，最后只剩下余烬。'],
         }[key];
         const gain = {
             relic: () => U.fmtInt(Actions.relicGain(s)) + ' 奥术遗物',
             star: () => U.fmtInt(Actions.relicGain(s) * 2) + ' 奥术遗物、' + U.fmtInt(Actions.starGain(s)) + ' 星辉',
             core: () => U.fmtInt(Actions.relicGain(s) * 5) + ' 奥术遗物、' + U.fmtInt(Actions.starGain(s) * 1.5) + ' 星辉、' + U.fmtInt(Actions.coreGain(s)) + ' 原初之核',
+            ash: () => U.fmtInt(Actions.relicGain(s) * 10) + ' 奥术遗物、' + U.fmtInt(Actions.starGain(s) * 2) + ' 星辉、' +
+                U.fmtInt(Actions.coreGain(s) * 2) + ' 原初之核、' + U.fmtInt(Actions.ashGain(s)) + ' 归墟之烬',
         }[key];
         const text = '<b>' + info[0] + '</b><br>' + info[1] +
             '<br><br>将获得：<b>' + gain() + '</b>' +
             '<br><br>会清空：资源、建筑、科技、升级、政策、人口。' +
-            '<br>会保留：传承资源与强化、成就、试炼进度、统计数据' +
+            '<br>会保留：传承资源与强化、成就、试炼进度、已开拓的领地、统计数据' +
             (EffectsManager.hasSpecial(s, 'keepArtifacts') ? '、全部秘宝' : '（秘宝会在重置时失去，需要传承「记忆水晶」才能保留）') + '。';
         G.confirmBox(info[0], text, () => {
             const r = Actions.prestige(s, key);

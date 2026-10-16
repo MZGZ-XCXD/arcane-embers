@@ -17,10 +17,16 @@
     }
 
     /* 抽 n 个不重复的候选，返回 id 数组 */
+    /* 候选数量：基础 3 个，传承「祝福之心 / 命运抉择」每级 +1 */
+    function offerCount(state) {
+        const extra = window.EffectsManager ? EffectsManager.additive(state, 'blessingOffers') : 0;
+        return Utils.clamp(OFFER_COUNT + Math.round(extra), 2, BLESSINGS_CONFIG.length);
+    }
+
     function roll(state, n) {
         const pool = BLESSINGS_CONFIG.slice();
         const out = [];
-        const want = Math.min(n || OFFER_COUNT, pool.length);
+        const want = Math.min(n || offerCount(state), pool.length);
         for (let i = 0; i < want; i++) {
             out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0].id);
         }
@@ -31,7 +37,7 @@
     function beginRun(state) {
         state.run = state.run || {};
         state.run.blessings = [];
-        state.run.offers = roll(state, OFFER_COUNT);
+        state.run.offers = roll(state);
         return state.run.offers;
     }
 
@@ -60,5 +66,5 @@
         return !!(state.run && Array.isArray(state.run.offers) && state.run.offers.length);
     }
 
-    window.Blessings = { OFFER_COUNT, byId, current, roll, beginRun, take, skip, hasOffer };
+    window.Blessings = { OFFER_COUNT, offerCount, byId, current, roll, beginRun, take, skip, hasOffer };
 })();

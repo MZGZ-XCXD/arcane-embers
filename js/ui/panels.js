@@ -219,6 +219,23 @@
             return html;
         }
 
+        if (type === 'plot') {
+            const cfg = window.Plots ? Plots.byId(arg) : null;
+            if (!cfg) return null;
+            const claimed = Plots.isClaimed(s, cfg.id);
+            let html = '<h4>' + cfg.icon + ' ' + G.esc(cfg.name) + '</h4>';
+            html += '<div class="dim">' + G.esc(cfg.desc) + '</div><hr>';
+            html += '<div class="kv"><span>状态</span><span class="' + (claimed ? 'pos' : 'dim') + '">' +
+                (claimed ? '已开拓（永久保留）' : '未开拓') + '</span></div>';
+            html += '<div class="kv"><span>需要科技</span><span>' + G.esc(cfg.tech || '—') + '</span></div>';
+            if (!claimed) html += '<div class="kv"><span>开拓成本</span><span>' + G.priceHtml(Plots.cost(s, cfg.id)) + '</span></div>';
+            html += '<hr>';
+            for (const line of G.effectLines(cfg.effect)) {
+                html += '<div class="kv"><span>' + G.esc(line) + '</span><span></span></div>';
+            }
+            return html;
+        }
+
         if (type === 'artifact') {
             const list = s.artifacts.inventory.concat(s.artifacts.equipped.filter(Boolean));
             const art = list.find(a => a.id === arg);
@@ -670,7 +687,8 @@
             '<span class="chip" data-tip="text|' + G.esc(ae.desc || '') + '">' + G.esc(ae.name) + ' ' + Math.ceil(ae.remain) + '日</span>').join('') : '<span class="hint">无</span>';
         let html = '<div class="panel-title">统计</div><div class="stat-grid">';
         html += '<div>游玩时长 <b>' + U.fmtDuration(st.playSeconds) + '</b></div>';
-        html += '<div>重置次数 <b>' + (st.resets.relic + st.resets.star + st.resets.core) + '</b></div>';
+        html += '<div>重置次数 <b>' + ((st.resets.relic || 0) + (st.resets.star || 0) + (st.resets.core || 0) + (st.resets.ash || 0)) + '</b></div>';
+        if (window.Plots) html += '<div>领地 <b>' + Plots.claimedCount(s) + '</b> / ' + PLOTS_CONFIG.length + '</div>';
         html += '<div>远征 <b>' + st.expeditions + '</b>（败 ' + st.expeditionsFailed + '）</div>';
         html += '<div>秘宝 <b>' + st.artifactsFound + '</b></div>';
         html += '<div>成就 <b>' + Object.keys(s.achievements).length + '/' + ACHIEVEMENTS_CONFIG.length + '</b></div>';

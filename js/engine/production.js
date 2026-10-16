@@ -8,6 +8,13 @@
     const ITERATIONS = 3;
     const DT = 0.25;
 
+    /* 成本增长率整体上调（v0.9.0 起）：
+       中后期扩张原来太轻松（一轮能铺上千座建筑），这里把「每多建一座就涨一点价」的幅度
+       统一抬高一点。建筑与升级用 GROWTH_BUMP，传承用 PERM_GROWTH_BUMP。
+       想回到旧手感就把这两个数设成 0 —— 全项目只有这一处需要改。 */
+    const GROWTH_BUMP = 0.02;
+    const PERM_GROWTH_BUMP = 0.10;
+
     function resolve(v, state) { return typeof v === 'function' ? v(state) : (v || {}); }
 
     /* 取建筑当前模式（未设置模式时就是自身） */
@@ -20,7 +27,7 @@
     }
 
     function stdCost(baseCost, growth, count, costMult) {
-        const g = 1 + (growth - 1) * Math.max(0.05, costMult);
+        const g = 1 + (growth + GROWTH_BUMP - 1) * Math.max(0.05, costMult);
         const price = {};
         for (const r in baseCost) price[r] = Math.floor(baseCost[r] * Math.pow(g, count));
         return price;
@@ -456,6 +463,7 @@
     }
 
     window.ProductionEngine = {
+        GROWTH_BUMP, PERM_GROWTH_BUMP,
         computeProductionAndCaps,
         updatePrices,
         happinessMult,

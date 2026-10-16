@@ -172,7 +172,15 @@
         if (!Array.isArray(state.expedition.history)) state.expedition.history = [];
         if (!state.expedition.mastery || typeof state.expedition.mastery !== 'object') state.expedition.mastery = {};
         if (typeof state.expedition.dry !== 'number') state.expedition.dry = 0;
-        if (!state.stats) state.stats = { playSeconds: 0, resets: { relic: 0, star: 0, core: 0 }, expeditions: 0, expeditionsFailed: 0, artifactsFound: 0, maxChallengeStars: 0, events: 0, history: [] };
+        if (!state.stats) state.stats = { playSeconds: 0, resets: { relic: 0, star: 0, core: 0, ash: 0 }, expeditions: 0, expeditionsFailed: 0, artifactsFound: 0, maxChallengeStars: 0, events: 0, history: [] };
+        state.stats.resets = state.stats.resets || {};
+        for (const k of ['relic', 'star', 'core', 'ash']) {
+            if (state.stats.resets[k] === undefined) state.stats.resets[k] = 0;
+        }
+        /* 领地：旧档没有这个字段 */
+        state.plots = state.plots || {};
+        if (!Array.isArray(state.plots.claimed)) state.plots.claimed = [];
+        if (window.Plots) state.plots.claimed = state.plots.claimed.filter(id => !!Plots.byId(id));
         if (!state.settings) state.settings = { theme: 'dark', autosave: true, autoBuild: true, autoExpedition: true, buyAmount: 1 };
         if (!state.market) state.market = { resources: {}, heat: {}, volume: 0, trades: 0 };
         for (const k in RESOURCES_CONFIG) {

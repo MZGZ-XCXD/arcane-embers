@@ -69,6 +69,14 @@
         s => window.QueueEngine && QueueEngine.slots(s) >= 8, { queueDiscount: 0.03 }, '队列订单材料 −3%');
     A('城建大师', '累计建成 300 座建筑。',
         s => (s.stats.totalBuildingBuilt || 0) >= 300, { queueDiscount: 0.02 }, '队列订单材料 −2%');
+    A('星渊来客', '进入星渊时代。',
+        s => s.techs['相位工学'].researched, { globalProd: 0.15 }, '所有建筑产出 +15%');
+    A('归墟之门', '进入归墟时代。',
+        s => s.techs['归墟之门'].researched, { globalProd: 0.3 }, '所有建筑产出 +30%');
+    A('开拓者', '开拓全部领地。',
+        s => window.Plots ? Plots.claimedCount(s) >= PLOTS_CONFIG.length : false, { plotCost: -0.1 }, '领地开拓成本 −10%');
+    A('万象归墟', '完成一次「万象归墟」。',
+        s => (s.stats.resets.ash || 0) >= 1, { ashGain: 0.3 }, '归墟之烬获取 +30%');
 
     window.ACHIEVEMENTS_CONFIG = LIST;
 })();

@@ -12,6 +12,8 @@
         'artifactSlots',
         /* 建造队列与英雄召唤相关 */
         'queueSlots', 'queueDiscount', 'powerMult', 'luck', 'summonDiscount', 'heroPower',
+        /* 领地 / 第四层重置 / 套装共鸣 / 轮回祝福 */
+        'plotCost', 'ashGain', 'resonancePower', 'blessingOffers',
     ];
 
     function emptyEffects() {
@@ -144,11 +146,19 @@
                 if (!art || !art.set) continue;
                 setCount[art.set] = (setCount[art.set] || 0) + 1;
             }
+            /* 传承「星渊共振」会放大共鸣效果。
+               注意读的是同一轮汇总里的 resonancePower —— 传承在上面已经算过了。 */
+            const resoScale = 1 + (e.resonancePower || 0);
             for (const set of ARTIFACT_SETS) {
                 const n = setCount[set.key] || 0;
-                if (n >= 2 && set.two) applyEffect(e, set.two.eff, 1, '共鸣·' + set.name + '（2 件）');
-                if (n >= 3 && set.three) applyEffect(e, set.three.eff, 1, '共鸣·' + set.name + '（3 件）');
+                if (n >= 2 && set.two) applyEffect(e, set.two.eff, resoScale, '共鸣·' + set.name + '（2 件）');
+                if (n >= 3 && set.three) applyEffect(e, set.three.eff, resoScale, '共鸣·' + set.name + '（3 件）');
             }
+        }
+
+        /* 领地：开拓过的地块永久提供加成 */
+        if (window.Plots) {
+            for (const p of Plots.effects(state)) applyEffect(e, p.effect, 1, '领地·' + p.name);
         }
 
         /* 轮回祝福：本轮选中的那个，重置时重抽 */

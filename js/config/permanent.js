@@ -102,6 +102,16 @@
         eff: { luck: 0.2, summonDiscount: 0.05 },
         desc: '在传送阵边缘点上一圈微光。召唤运气每级 +0.2，消耗每级 −5%。',
     });
+    P('领地工程', {
+        tree: 'relic', cost: 20, costG: 1.8, max: 5, techReq: '领地开拓',
+        eff: { plotCost: -0.12 },
+        desc: '把开拓流程写成一本手册发给每个人。领地开拓成本每级 −12%（最多 −60%）。',
+    });
+    P('勘探队', {
+        tree: 'relic', cost: 25, costG: 1.85, max: 5, techReq: '城防',
+        eff: { artifactQuality: 0.15 },
+        desc: '一支专门翻废墟的队伍，知道哪块石头下面藏着东西。秘宝品质每级 +0.15。',
+    });
 
     /* ---------------- 星辉 ---------------- */
     P('星辉灌注', {
@@ -162,6 +172,16 @@
         eff: { luck: 0.5, summonDiscount: 0.08 },
         desc: '亲手编一段更好的运气。召唤运气每级 +0.5，召唤消耗每级 −8%。',
     });
+    P('归墟预演', {
+        tree: 'star', cost: 15, costG: 2.2, max: 3, techReq: '虚空撕裂',
+        eff: { ashGain: 0.5 },
+        desc: '在星辉里把最后那一步先演一遍。归墟之烬的获取每级 +50%。',
+    });
+    P('祝福之心', {
+        tree: 'star', cost: 10, costG: 2.0, max: 2,
+        eff: { blessingOffers: 1 },
+        desc: '看得见更多的岔路。每次重置的轮回祝福候选 +1（每级）。',
+    });
 
     /* ---------------- 原初之核 ---------------- */
     P('原初之力', {
@@ -192,6 +212,42 @@
         tree: 'core', cost: 2, costG: 2.5, max: 3, techReq: '召唤法阵',
         eff: { heroPower: 1.0, queueSlots: 2 },
         desc: '让所有时间线的英雄同时回应你：英雄效果每级 +100%，建造队列每级 +2 槽位。',
+    });
+    P('烬火之约', {
+        tree: 'core', cost: 6, costG: 2.3, max: 5,
+        eff: { ashGain: 0.6 },
+        desc: '与世界约好：结束之后总要剩下一点什么。归墟之烬的获取每级 +60%。',
+    });
+    P('星渊共振', {
+        tree: 'core', cost: 8, costG: 2.3, max: 3, techReq: '城防',
+        eff: { resonancePower: 0.25 },
+        desc: '让秘宝之间的共鸣更响亮。秘宝套装共鸣的效果每级 +25%。',
+    });
+
+    /* ---------------- 归墟之烬 ---------------- */
+    P('恒星之心', {
+        tree: 'ash', cost: 2, costG: 1.9, max: 5, eff: { globalProd: 0.5 },
+        desc: '一颗还在缓慢燃烧的恒星被塞进了地基。所有建筑产出每级 +50%。',
+    });
+    P('无垠仓储', {
+        tree: 'ash', cost: 3, costG: 2.0, max: 5, eff: { capAll: 1.0 },
+        desc: '仓库的墙壁不再需要"外面"这个概念。所有存量上限每级 +100%。',
+    });
+    P('虚空回廊', {
+        tree: 'ash', cost: 4, costG: 2.2, max: 3, eff: { queueSlots: 3 },
+        desc: '工地把门开在虚空里，几处能同时开工。建造队列每级 +3 槽位。',
+    });
+    P('烬火余温', {
+        tree: 'ash', cost: 5, costG: 2.1, max: 5, eff: { resetGain: 0.4 },
+        desc: '每一次归零都留下一点温度。重置收益每级 +40%。',
+    });
+    P('命运抉择', {
+        tree: 'ash', cost: 6, costG: 2.4, max: 2, eff: { blessingOffers: 1 },
+        desc: '岔路在你面前显形。每次重置的轮回祝福候选 +1（每级）。',
+    });
+    P('万象时钟', {
+        tree: 'ash', cost: 10, costG: 2.2, max: 3, eff: { speed: 0.15 },
+        desc: '一只指针指向所有方向。世界流速每级 +15%。',
     });
 
     window.PERMANENT_CONFIG = REG;

@@ -62,11 +62,16 @@
     }
 
     /* ---------------- 传承（永久强化） ---------------- */
+    /* 传承树 → 对应货币。加新树时只改这里 */
+    const TREE_RES = { relic: '奥术遗物', star: '星辉', core: '原初之核', ash: '归墟之烬' };
+
     function permanentCost(state, name) {
         const cfg = PERMANENT_CONFIG[name];
         const lvl = state.permanent[name].level;
-        const res = cfg.tree === 'relic' ? '奥术遗物' : (cfg.tree === 'star' ? '星辉' : '原初之核');
-        return { res: res, amount: Math.ceil(cfg.cost * Math.pow(cfg.costG, lvl)) };
+        const res = TREE_RES[cfg.tree] || '奥术遗物';
+        /* 传承的成本增长率同样整体上调（PERM_GROWTH_BUMP，见 production.js） */
+        const growth = cfg.costG + (window.ProductionEngine ? ProductionEngine.PERM_GROWTH_BUMP : 0);
+        return { res: res, amount: Math.ceil(cfg.cost * Math.pow(growth, lvl)) };
     }
 
     function buyPermanent(state, name) {
@@ -152,6 +157,16 @@
         return Math.max(1, Math.floor(Math.sqrt(Math.max(1, stars)) / 4 * eMult * starMult));
     }
 
+    /* 第四层重置的产出：照旧是「上一层货币的平方根」，
+       再乘上传承「归墟预演 / 烬火之约」的 ashGain 加成。 */
+    function ashGain(state) {
+        const cores = ResourcesManager.amount('原初之核');
+        const eMult = (1 + EffectsManager.additive(state, 'resetGain')) *
+            (1 + EffectsManager.additive(state, 'ashGain'));
+        const starMult = 1 + activeStars(state) * 0.05;
+        return Math.max(1, Math.floor(Math.sqrt(Math.max(1, cores)) * 0.8 * eMult * starMult));
+    }
+
     function resetAvailability(state) {
         const researched = name => !!(state.techs[name] && state.techs[name].researched);
         return {
@@ -162,6 +177,7 @@
             relic: state.resources['魔法知识'].cap >= 200,
             star: researched('星辉共鸣'),      // 第 4 时代 · 高塔时代
             core: researched('虚空撕裂'),      // 第 6 时代 · 虚空时代
+            ash: researched('永寂仪式'),       // 第 8 时代 · 归墟时代（第四层重置）
         };
     }
 
@@ -192,11 +208,13 @@
         const keepRelic = ResourcesManager.amount('奥术遗物');
         const keepStar = ResourcesManager.amount('星辉');
         const keepCore = ResourcesManager.amount('原初之核');
+        const keepAsh = ResourcesManager.amount('归墟之烬');
         const achievements = state.achievements;
         const stats = state.stats;
         const settings = state.settings;
         const permanent = state.permanent;
         const challenges = state.challenges;
+        const plots = state.plots;                // 领地开拓一次永久保留
         const heroes = state.heroes;              // 英雄收藏跨重置保留
         const expeditionHistory = state.expedition.history;
 
@@ -207,6 +225,7 @@
         state.settings = settings;
         state.permanent = permanent;
         state.challenges = challenges;
+        state.plots = plots;
         state.heroes = heroes;
         state.expedition.history = expeditionHistory;
         /* 英雄收藏：只有「跨越时间线」的那一档（EX）会留下来，
@@ -226,6 +245,7 @@
         state.resources['奥术遗物'].amount = keepRelic + (opts.relic || 0);
         state.resources['星辉'].amount = keepStar + (opts.star || 0);
         state.resources['原初之核'].amount = keepCore + (opts.core || 0);
+        state.resources['归墟之烬'].amount = keepAsh + (opts.ash || 0);
         state.stats.resets[opts.type] = (state.stats.resets[opts.type] || 0) + 1;
         state.stats.history.unshift({ day: state.stats.playSeconds, type: opts.type });
         if (state.stats.history.length > 50) state.stats.history.pop();
@@ -299,6 +319,16 @@
             performReset(state, { type: 'core', relic: relics, star: stars, core: cores, label: '原初归寂' });
             return { ok: true, msg: '原初归寂！获得 ' + Utils.fmtInt(cores) + ' 原初之核、' + Utils.fmtInt(stars) + ' 星辉与 ' + Utils.fmtInt(relics) + ' 奥术遗物。' };
         }
+        if (type === 'ash') {
+            if (!avail.ash) return { ok: false, msg: '需要先研究「永寂仪式」（第 8 时代 · 归墟时代）。' };
+            const relics = relicGain(state) * 10;
+            const stars = starGain(state) * 2;
+            const cores = coreGain(state) * 2;
+            const ash = ashGain(state);
+            performReset(state, { type: 'ash', relic: relics, star: stars, core: cores, ash: ash, label: '万象归墟' });
+            return { ok: true, msg: '万象归墟！获得 ' + Utils.fmtInt(ash) + ' 归墟之烬、' + Utils.fmtInt(cores) +
+                ' 原初之核、' + Utils.fmtInt(stars) + ' 星辉与 ' + Utils.fmtInt(relics) + ' 奥术遗物。' };
+        }
         return { ok: false };
     }
 
@@ -349,6 +379,7 @@
         buyBuilding, setBuildingActive, setBuildingMode,
         research, buyUpgrade, setPolicy, buyPermanent, permanentCost, permVisible,
         toggleChallenge, activeStars, relicGain, starGain, coreGain, resetAvailability,
+        ashGain,
         prestige, performReset, autoBuildStep, autoExpeditionStep, startExpedition,
     };
 })();
