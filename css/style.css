@@ -473,7 +473,7 @@ h1, h2, h3, .serif { font-family: "Palatino Linotype", "Songti SC", Georgia, ser
 .expedition-region { display: flex; flex-direction: column; gap: 6px; font-size: .78rem; }
 
 /* ---------------- 建造队列 ---------------- */
-.queue-list { display: flex; flex-direction: column; gap: 6px; max-height: 34vh; overflow-y: auto; }
+.queue-list { display: flex; flex-direction: column; gap: 6px; max-height: 46vh; overflow-y: auto; }
 .queue-item {
     background: var(--bg-card); border: 1px solid var(--border-card);
     border-radius: 9px; padding: 6px 8px; cursor: help;
@@ -485,13 +485,13 @@ h1, h2, h3, .serif { font-family: "Palatino Linotype", "Songti SC", Georgia, ser
 }
 .q-name {
     font-weight: 600; color: var(--text); flex: 1 1 auto;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    overflow-wrap: anywhere; white-space: normal; line-height: 1.35;
 }
 .q-time { color: var(--accent-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .q-foot { margin-top: 5px; }
 .card-name .tag.queue { color: var(--accent); border-color: var(--accent); }
 .queue-item.waiting { border-left: 3px solid var(--warn); }
-.q-est { font-size: .72rem; color: var(--text-secondary); margin: 4px 0 0; display: flex; flex-wrap: wrap; gap: 4px 8px; }
+.q-est { font-size: .72rem; color: var(--text); opacity: .85; margin: 5px 0 0; display: flex; flex-wrap: wrap; gap: 4px 8px; line-height: 1.5; }
 .q-est span.lack { color: var(--bad); }
 
 /* 事件选项：需求不足时置灰并标出缺口 */

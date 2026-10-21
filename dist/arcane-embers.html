@@ -482,7 +482,7 @@ h1, h2, h3, .serif { font-family: "Palatino Linotype", "Songti SC", Georgia, ser
 .expedition-region { display: flex; flex-direction: column; gap: 6px; font-size: .78rem; }
 
 /* ---------------- 建造队列 ---------------- */
-.queue-list { display: flex; flex-direction: column; gap: 6px; max-height: 34vh; overflow-y: auto; }
+.queue-list { display: flex; flex-direction: column; gap: 6px; max-height: 46vh; overflow-y: auto; }
 .queue-item {
     background: var(--bg-card); border: 1px solid var(--border-card);
     border-radius: 9px; padding: 6px 8px; cursor: help;
@@ -494,13 +494,13 @@ h1, h2, h3, .serif { font-family: "Palatino Linotype", "Songti SC", Georgia, ser
 }
 .q-name {
     font-weight: 600; color: var(--text); flex: 1 1 auto;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    overflow-wrap: anywhere; white-space: normal; line-height: 1.35;
 }
 .q-time { color: var(--accent-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .q-foot { margin-top: 5px; }
 .card-name .tag.queue { color: var(--accent); border-color: var(--accent); }
 .queue-item.waiting { border-left: 3px solid var(--warn); }
-.q-est { font-size: .72rem; color: var(--text-secondary); margin: 4px 0 0; display: flex; flex-wrap: wrap; gap: 4px 8px; }
+.q-est { font-size: .72rem; color: var(--text); opacity: .85; margin: 5px 0 0; display: flex; flex-wrap: wrap; gap: 4px 8px; line-height: 1.5; }
 .q-est span.lack { color: var(--bad); }
 
 /* 事件选项：需求不足时置灰并标出缺口 */
@@ -3179,6 +3179,11 @@ window.CHANGELOG_DATA = {
     "source": "CHANGELOG.md",
     "overview": [
         {
+            "version": "0.11.3",
+            "date": "2026-10-21",
+            "summary": "修复建造队列信息多时被截断：名称可换行、造价行完整显示、列表更高"
+        },
+        {
             "version": "0.11.2",
             "date": "2026-10-21",
             "summary": "建筑的 +5 / +10 改为逐座订单：只占一格、逐座付价，超过仓储上限时停下并提示"
@@ -3340,6 +3345,18 @@ window.CHANGELOG_DATA = {
         }
     ],
     "versions": [
+        {
+            "version": "0.11.3",
+            "date": "2026-10-21",
+            "sections": [
+                {
+                    "title": "修复",
+                    "items": [
+                        "修复建造队列卡片在信息较多时显示不全：建筑名不再被省略号截断、可以换行；「已建 / 总数 · 下一座需要」固定显示；队列列表高度从 34vh 提高到 46vh，三条订单可以完整看到；等待材料时显示「等待材料」。"
+                    ]
+                }
+            ]
+        },
         {
             "version": "0.11.2",
             "date": "2026-10-21",
@@ -8584,9 +8601,9 @@ window.CHANGELOG_DATA = {
             html += '<div class="queue-list">';
             for (const it of items) {
                 html += '<div class="queue-item waiting" data-tip="queue|' + G.esc(it.id) + '">';
-                html += '<div class="q-head"><span class="q-kind">' + G.esc(QueueEngine.KIND_LABEL[it.kind]) + '</span>' +
-                    '<span class="q-name">' + G.esc(it.name) + (it.count > 1 ? ' ×' + it.count : '') +
+                html += '<div class="q-head"><span class="q-kind">' + G.esc(QueueEngine.KIND_LABEL[it.kind]) +
                     (it.seq ? '·逐座' : '') + '</span>' +
+                    '<span class="q-name">' + G.esc(it.name) + (it.count > 1 ? ' ×' + it.count : '') + '</span>' +
                     '<span class="q-time" data-q-time="' + G.esc(it.id) + '"></span></div>';
                 html += G.bar(0).replace('class="bar "', 'class="bar" data-q-bar="' + G.esc(it.id) + '"');
                 html += '<div class="q-est" data-q-est="' + G.esc(it.id) + '"></div>';
@@ -8618,11 +8635,11 @@ window.CHANGELOG_DATA = {
                 ref.bar.className = 'bar ' + (blocked ? 'bad' : '');
             }
             if (blocked) G.setText(ref.time, '上限不足：' + blocked);
-            else if (eta === null) G.setText(ref.time, '无法估算');
+            else if (eta === null) G.setText(ref.time, it.seq ? '等待材料' : '无法估算');
             else if (eta <= 1e-9) G.setText(ref.time, '材料已就绪');
             else G.setText(ref.time, U.fmtDuration(eta) + ' 后建成');
             const cost = QueueEngine.currentCost(s, it) || {};
-            G.setHTML(ref.est, (it.seq ? '已建 ' + it.built + ' / ' + it.count + ' · 下一座需要：' : '需要：') +
+            G.setHTML(ref.est, (it.seq ? it.built + '/' + it.count + ' · 下一座：' : '需要：') +
                 G.priceHtml(cost));
         }
     }

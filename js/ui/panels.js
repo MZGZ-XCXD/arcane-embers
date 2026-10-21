@@ -595,9 +595,9 @@
             html += '<div class="queue-list">';
             for (const it of items) {
                 html += '<div class="queue-item waiting" data-tip="queue|' + G.esc(it.id) + '">';
-                html += '<div class="q-head"><span class="q-kind">' + G.esc(QueueEngine.KIND_LABEL[it.kind]) + '</span>' +
-                    '<span class="q-name">' + G.esc(it.name) + (it.count > 1 ? ' ×' + it.count : '') +
+                html += '<div class="q-head"><span class="q-kind">' + G.esc(QueueEngine.KIND_LABEL[it.kind]) +
                     (it.seq ? '·逐座' : '') + '</span>' +
+                    '<span class="q-name">' + G.esc(it.name) + (it.count > 1 ? ' ×' + it.count : '') + '</span>' +
                     '<span class="q-time" data-q-time="' + G.esc(it.id) + '"></span></div>';
                 html += G.bar(0).replace('class="bar "', 'class="bar" data-q-bar="' + G.esc(it.id) + '"');
                 html += '<div class="q-est" data-q-est="' + G.esc(it.id) + '"></div>';
@@ -629,11 +629,11 @@
                 ref.bar.className = 'bar ' + (blocked ? 'bad' : '');
             }
             if (blocked) G.setText(ref.time, '上限不足：' + blocked);
-            else if (eta === null) G.setText(ref.time, '无法估算');
+            else if (eta === null) G.setText(ref.time, it.seq ? '等待材料' : '无法估算');
             else if (eta <= 1e-9) G.setText(ref.time, '材料已就绪');
             else G.setText(ref.time, U.fmtDuration(eta) + ' 后建成');
             const cost = QueueEngine.currentCost(s, it) || {};
-            G.setHTML(ref.est, (it.seq ? '已建 ' + it.built + ' / ' + it.count + ' · 下一座需要：' : '需要：') +
+            G.setHTML(ref.est, (it.seq ? it.built + '/' + it.count + ' · 下一座：' : '需要：') +
                 G.priceHtml(cost));
         }
     }
