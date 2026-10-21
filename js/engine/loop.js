@@ -64,9 +64,14 @@
                     '，带回：' + (lootText || '几乎没有东西'));
                 if (window.UI && UI.toast) UI.toast((result.success ? '⚔️ 远征成功：' : '🏳️ 远征受挫：') + result.regionName, result.success ? 'gold' : 'bad');
                 if (result.artifactObj) {
-                    Artifacts.addToInventory(state, result.artifactObj);
-                    EventEngine.addLog(state, '💠 发现秘宝「' + result.artifactObj.name + '」！');
-                    if (window.UI && UI.toast) UI.toast('💠 发现秘宝：' + result.artifactObj.name, 'gold');
+                    const got = Artifacts.addToInventory(state, result.artifactObj);
+                    if (got && got.filtered) {
+                        EventEngine.addLog(state, '🗑️ 自动丢弃秘宝「' + got.name + '」（命中过滤规则）。');
+                        if (window.UI && UI.toast) UI.toast('🗑️ 已按过滤丢弃秘宝：' + got.name);
+                    } else {
+                        EventEngine.addLog(state, '💠 发现秘宝「' + result.artifactObj.name + '」！');
+                        if (window.UI && UI.toast) UI.toast('💠 发现秘宝：' + result.artifactObj.name, 'gold');
+                    }
                 }
                 if (result.heroDrop) {
                     EventEngine.addLog(state, '🧭 在「' + result.regionName + '」里结识了「' + result.heroDrop.hero.name + '」' +

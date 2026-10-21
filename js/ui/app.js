@@ -291,6 +291,22 @@
             case 'resume':
                 setPaused(false);
                 break;
+            case 'afiltermodal':
+                Panels.artifactFilterModal();
+                break;
+            case 'afilter': {
+                const f = Artifacts.filterOf(s);
+                const toggle = (arr, v) => {
+                    const i = arr.indexOf(v);
+                    if (i >= 0) arr.splice(i, 1); else arr.push(v);
+                };
+                if (arg1 === 'enabled') f.enabled = !f.enabled;
+                else if (arg1 === 'neg') f.negative = !f.negative;
+                else if (arg1 === 'tier') toggle(f.tiers, Number(arg2));
+                else if (arg1 === 'set') toggle(f.sets, arg2);
+                Panels.artifactFilterModal();
+                break;
+            }
             case 'theme':
                 s.settings.theme = s.settings.theme === 'dark' ? 'light' : 'dark';
                 applyTheme();
@@ -420,7 +436,9 @@
         if (!node.getAttribute) return;
         const act = node.getAttribute('data-act');
         if (act && node.type === 'checkbox') {
-            handleAct(act, null, null, e, node);
+            /* 复选框也支持 "动作|参数" 形式（秘宝过滤就用到） */
+            const parts = act.split('|');
+            handleAct(parts[0], parts[1], parts[2], e, node);
             return;
         }
         if (node.hasAttribute && node.hasAttribute('data-policy')) {

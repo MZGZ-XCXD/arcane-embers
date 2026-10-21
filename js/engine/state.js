@@ -46,6 +46,7 @@
             expeditions: 0,
             expeditionsFailed: 0,
             artifactsFound: 0,
+            artifactsFiltered: 0,
             maxChallengeStars: 0,
             events: 0,
             peakPopulation: 0,
@@ -64,6 +65,7 @@
             autoExpedition: true,
             autoUpgrade: true,
             buyAmount: 1,
+            artifactFilter: { enabled: false, tiers: [], sets: [], negative: false },
         };
     }
 

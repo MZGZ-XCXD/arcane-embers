@@ -3173,6 +3173,11 @@ window.CHANGELOG_DATA = {
     "source": "CHANGELOG.md",
     "overview": [
         {
+            "version": "0.11.0",
+            "date": "2026-10-21",
+            "summary": "新增秘宝过滤：可按层级 / 流派 / 负面词条自动丢弃，设置跨重置保留"
+        },
+        {
             "version": "0.10.3",
             "date": "2026-10-21",
             "summary": "暂停后弹出确认窗，可直接继续或保持暂停；空格再按一次也能继续"
@@ -3319,6 +3324,19 @@ window.CHANGELOG_DATA = {
         }
     ],
     "versions": [
+        {
+            "version": "0.11.0",
+            "date": "2026-10-21",
+            "sections": [
+                {
+                    "title": "新增",
+                    "items": [
+                        "秘宝过滤：远征页新增「秘宝过滤」入口，可以按层级（1~6 层）、流派（炽焰 / 星界 / 虚空 / 生灵 / 金石）或「带负面词条」勾选要自动丢弃的秘宝。",
+                        "命中的秘宝在带回时直接丢弃，不占库存；命中任意一条规则就会丢。设置跨重置保留，弹窗里显示累计已丢弃数量。"
+                    ]
+                }
+            ]
+        },
         {
             "version": "0.10.3",
             "date": "2026-10-21",
@@ -4052,6 +4070,7 @@ window.CHANGELOG_DATA = {
             expeditions: 0,
             expeditionsFailed: 0,
             artifactsFound: 0,
+            artifactsFiltered: 0,
             maxChallengeStars: 0,
             events: 0,
             peakPopulation: 0,
@@ -4070,6 +4089,7 @@ window.CHANGELOG_DATA = {
             autoExpedition: true,
             autoUpgrade: true,
             buyAmount: 1,
+            artifactFilter: { enabled: false, tiers: [], sets: [], negative: false },
         };
     }
 
@@ -5288,7 +5308,63 @@ window.CHANGELOG_DATA = {
     }
 
     /* 把秘宝加入库存（库存在重置时会被清空，除记忆水晶外） */
+    /* ---------- 自动丢弃过滤 ----------
+       黑名单语义：勾选的层级 / 流派 / 负面词条，命中任意一条就丢。 */
+    function filterOf(state) {
+        if (!state.settings) state.settings = {};
+        let f = state.settings.artifactFilter;
+        if (!f || typeof f !== 'object') {
+            f = state.settings.artifactFilter = { enabled: false, tiers: [], sets: [], negative: false };
+        }
+        if (!Array.isArray(f.tiers)) f.tiers = [];
+        if (!Array.isArray(f.sets)) f.sets = [];
+        if (typeof f.enabled !== 'boolean') f.enabled = false;
+        if (typeof f.negative !== 'boolean') f.negative = false;
+        return f;
+    }
+
+    /* 一件秘宝是否带负面词条：建筑产出/上限变低、建筑消耗变高、资源/全局产出为负、
+       民望为负、成本增长率为正。cons 为负是「少消耗」，算正面。 */
+    function hasNegative(artifact) {
+        if (!artifact || !Array.isArray(artifact.effects)) return false;
+        for (const eff of artifact.effects) {
+            if (!eff || typeof eff !== 'object') continue;
+            for (const key in eff) {
+                const v = eff[key];
+                if (key === 'resourceProd') {
+                    for (const r in v) if (typeof v[r] === 'number' && v[r] < -1e-9) return true;
+                    continue;
+                }
+                if (typeof v === 'number') {
+                    if (key === 'globalCost') { if (v > 1e-9) return true; }
+                    else if (v < -1e-9) return true;
+                    continue;
+                }
+                if (v && typeof v === 'object') {
+                    if (typeof v.prod === 'number' && v.prod < -1e-9) return true;
+                    if (typeof v.cap === 'number' && v.cap < -1e-9) return true;
+                    if (typeof v.cons === 'number' && v.cons > 1e-9) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    function matchesFilter(state, artifact) {
+        const f = filterOf(state);
+        if (!f.enabled || !artifact) return false;
+        if (f.tiers.indexOf(artifact.tier) >= 0) return true;
+        if (artifact.set && f.sets.indexOf(artifact.set) >= 0) return true;
+        if (f.negative && hasNegative(artifact)) return true;
+        return false;
+    }
+
     function addToInventory(state, artifact) {
+        if (matchesFilter(state, artifact)) {
+            state.stats.artifactsFiltered = (state.stats.artifactsFiltered || 0) + 1;
+            artifact.filtered = true;
+            return artifact;                    // 调用方看 .filtered 决定提示，不加入库存
+        }
         if (state.artifacts.inventory.length >= 12) {
             state.artifacts.inventory.shift();
         }
@@ -5375,6 +5451,7 @@ window.CHANGELOG_DATA = {
     window.Artifacts = {
         generate, addToInventory, equip, unequip, discard, describe, artifactSlots,
         setByKey, setFromId, setStatus,
+        filterOf, hasNegative, matchesFilter,
     };
 })();
 
@@ -6429,7 +6506,8 @@ window.CHANGELOG_DATA = {
             buff: (name, label, days, effect, desc) => buff(state, label, days, effect, desc),
             artifact: tier => {
                 const a = Artifacts.generate(state, tier || 3);
-                Artifacts.addToInventory(state, a);
+                const got = Artifacts.addToInventory(state, a);
+                if (got && got.filtered) addLog(state, '🗑️ 自动丢弃秘宝「' + got.name + '」（命中过滤规则）。');
                 return a;
             },
         };
@@ -7188,7 +7266,8 @@ window.CHANGELOG_DATA = {
         if (!Array.isArray(state.expedition.history)) state.expedition.history = [];
         if (!state.expedition.mastery || typeof state.expedition.mastery !== 'object') state.expedition.mastery = {};
         if (typeof state.expedition.dry !== 'number') state.expedition.dry = 0;
-        if (!state.stats) state.stats = { playSeconds: 0, resets: { relic: 0, star: 0, core: 0, ash: 0 }, expeditions: 0, expeditionsFailed: 0, artifactsFound: 0, maxChallengeStars: 0, events: 0, history: [] };
+        if (!state.stats) state.stats = { playSeconds: 0, resets: { relic: 0, star: 0, core: 0, ash: 0 }, expeditions: 0, expeditionsFailed: 0, artifactsFound: 0, artifactsFiltered: 0, maxChallengeStars: 0, events: 0, history: [] };
+        if (state.stats.artifactsFiltered === undefined) state.stats.artifactsFiltered = 0;
         state.stats.resets = state.stats.resets || {};
         for (const k of ['relic', 'star', 'core', 'ash']) {
             if (state.stats.resets[k] === undefined) state.stats.resets[k] = 0;
@@ -7199,6 +7278,9 @@ window.CHANGELOG_DATA = {
         if (window.Plots) state.plots.claimed = state.plots.claimed.filter(id => !!Plots.byId(id));
         if (!state.settings) state.settings = { theme: 'dark', autosave: true, autoBuild: true, autoExpedition: true, buyAmount: 1 };
         if (state.settings.autoUpgrade === undefined) state.settings.autoUpgrade = true;
+        if (!state.settings.artifactFilter || typeof state.settings.artifactFilter !== 'object') {
+            state.settings.artifactFilter = { enabled: false, tiers: [], sets: [], negative: false };
+        }
         if (!state.market) state.market = { resources: {}, heat: {}, volume: 0, trades: 0 };
         for (const k in RESOURCES_CONFIG) {
             if (!RESOURCES_CONFIG[k].prestige && !state.market.resources[k]) state.market.resources[k] = { mode: 'off', level: 1 };
@@ -7373,9 +7455,14 @@ window.CHANGELOG_DATA = {
                     '，带回：' + (lootText || '几乎没有东西'));
                 if (window.UI && UI.toast) UI.toast((result.success ? '⚔️ 远征成功：' : '🏳️ 远征受挫：') + result.regionName, result.success ? 'gold' : 'bad');
                 if (result.artifactObj) {
-                    Artifacts.addToInventory(state, result.artifactObj);
-                    EventEngine.addLog(state, '💠 发现秘宝「' + result.artifactObj.name + '」！');
-                    if (window.UI && UI.toast) UI.toast('💠 发现秘宝：' + result.artifactObj.name, 'gold');
+                    const got = Artifacts.addToInventory(state, result.artifactObj);
+                    if (got && got.filtered) {
+                        EventEngine.addLog(state, '🗑️ 自动丢弃秘宝「' + got.name + '」（命中过滤规则）。');
+                        if (window.UI && UI.toast) UI.toast('🗑️ 已按过滤丢弃秘宝：' + got.name);
+                    } else {
+                        EventEngine.addLog(state, '💠 发现秘宝「' + result.artifactObj.name + '」！');
+                        if (window.UI && UI.toast) UI.toast('💠 发现秘宝：' + result.artifactObj.name, 'gold');
+                    }
                 }
                 if (result.heroDrop) {
                     EventEngine.addLog(state, '🧭 在「' + result.regionName + '」里结识了「' + result.heroDrop.hero.name + '」' +
@@ -8559,10 +8646,33 @@ window.CHANGELOG_DATA = {
         G.openModal(html);
     }
 
+    /* 秘宝过滤：黑名单式勾选，命中的秘宝带回时直接丢弃 */
+    function artifactFilterModal() {
+        const s = GameState;
+        const f = Artifacts.filterOf(s);
+        const box = (act, checked, label) =>
+            '<label class="hint" style="cursor:pointer;display:inline-flex;align-items:center;gap:5px;margin:0 14px 7px 0">' +
+            '<input type="checkbox" data-act="' + act + '"' + (checked ? ' checked' : '') + '> ' + label + '</label>';
+        let html = '<h4>秘宝过滤</h4>';
+        html += '<div class="hint">勾选的类别在带回时直接丢弃，不进库存。命中任意一条就会丢；设置跨重置保留。</div><hr>';
+        html += box('afilter|enabled|1', f.enabled, '<b>启用自动丢弃</b>');
+        html += '<div class="section-sub">按层级</div>';
+        for (let t = 1; t <= 6; t++) html += box('afilter|tier|' + t, f.tiers.indexOf(t) >= 0, '第 ' + t + ' 层');
+        html += '<div class="section-sub">按流派</div>';
+        for (const set of (window.ARTIFACT_SETS || [])) {
+            html += box('afilter|set|' + set.key, f.sets.indexOf(set.key) >= 0, set.icon + ' ' + G.esc(set.name));
+        }
+        html += '<div class="section-sub">词条</div>';
+        html += box('afilter|neg|1', f.negative, '丢弃带负面词条的秘宝');
+        html += '<hr><div class="kv"><span>已自动丢弃</span><span>' + (s.stats.artifactsFiltered || 0) + ' 件</span></div>';
+        html += '<div class="modal-actions"><button class="btn primary" data-act="closemodal">完成</button></div>';
+        G.openModal(html);
+    }
+
     window.Panels = {
         tipHtml, renderHeader, renderPopulation, renderResources,
         renderEvent, renderExpeditionPanel, renderLog, renderStats, renderQueue,
-        exportModal, importModal, offlineModal,
+        exportModal, importModal, offlineModal, artifactFilterModal,
     };
 })();
 
@@ -9331,6 +9441,18 @@ window.CHANGELOG_DATA = {
 
         /* 秘宝 */
         html += '<div class="section-title">秘宝</div>';
+        html += '<div class="btn-row" style="margin:-2px 0 8px">' +
+            '<button class="btn tiny" data-act="afiltermodal">⚙ 秘宝过滤</button>' +
+            '<span class="hint">勾选要自动丢弃的类别</span></div>';
+        const af = Artifacts.filterOf(s);
+        if (af.enabled) {
+            const bits = [];
+            if (af.tiers.length) bits.push('第' + af.tiers.slice().sort((a, b) => a - b).join('/') + '层');
+            if (af.sets.length) bits.push(af.sets.join('、'));
+            if (af.negative) bits.push('负面词条');
+            html += '<div class="hint">自动丢弃：<b>' + (bits.length ? G.esc(bits.join(' + ')) : '未选择类别') + '</b>' +
+                (s.stats.artifactsFiltered ? '（已丢 ' + s.stats.artifactsFiltered + ' 件）' : '') + '</div>';
+        }
         const slots = Artifacts.artifactSlots(s);
         while (s.artifacts.equipped.length < slots) s.artifacts.equipped.push(null);
         html += '<div class="slots">';
@@ -10075,6 +10197,22 @@ window.CHANGELOG_DATA = {
             case 'resume':
                 setPaused(false);
                 break;
+            case 'afiltermodal':
+                Panels.artifactFilterModal();
+                break;
+            case 'afilter': {
+                const f = Artifacts.filterOf(s);
+                const toggle = (arr, v) => {
+                    const i = arr.indexOf(v);
+                    if (i >= 0) arr.splice(i, 1); else arr.push(v);
+                };
+                if (arg1 === 'enabled') f.enabled = !f.enabled;
+                else if (arg1 === 'neg') f.negative = !f.negative;
+                else if (arg1 === 'tier') toggle(f.tiers, Number(arg2));
+                else if (arg1 === 'set') toggle(f.sets, arg2);
+                Panels.artifactFilterModal();
+                break;
+            }
             case 'theme':
                 s.settings.theme = s.settings.theme === 'dark' ? 'light' : 'dark';
                 applyTheme();
@@ -10204,7 +10342,9 @@ window.CHANGELOG_DATA = {
         if (!node.getAttribute) return;
         const act = node.getAttribute('data-act');
         if (act && node.type === 'checkbox') {
-            handleAct(act, null, null, e, node);
+            /* 复选框也支持 "动作|参数" 形式（秘宝过滤就用到） */
+            const parts = act.split('|');
+            handleAct(parts[0], parts[1], parts[2], e, node);
             return;
         }
         if (node.hasAttribute && node.hasAttribute('data-policy')) {

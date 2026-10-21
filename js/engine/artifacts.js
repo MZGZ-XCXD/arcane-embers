@@ -133,7 +133,63 @@
     }
 
     /* 把秘宝加入库存（库存在重置时会被清空，除记忆水晶外） */
+    /* ---------- 自动丢弃过滤 ----------
+       黑名单语义：勾选的层级 / 流派 / 负面词条，命中任意一条就丢。 */
+    function filterOf(state) {
+        if (!state.settings) state.settings = {};
+        let f = state.settings.artifactFilter;
+        if (!f || typeof f !== 'object') {
+            f = state.settings.artifactFilter = { enabled: false, tiers: [], sets: [], negative: false };
+        }
+        if (!Array.isArray(f.tiers)) f.tiers = [];
+        if (!Array.isArray(f.sets)) f.sets = [];
+        if (typeof f.enabled !== 'boolean') f.enabled = false;
+        if (typeof f.negative !== 'boolean') f.negative = false;
+        return f;
+    }
+
+    /* 一件秘宝是否带负面词条：建筑产出/上限变低、建筑消耗变高、资源/全局产出为负、
+       民望为负、成本增长率为正。cons 为负是「少消耗」，算正面。 */
+    function hasNegative(artifact) {
+        if (!artifact || !Array.isArray(artifact.effects)) return false;
+        for (const eff of artifact.effects) {
+            if (!eff || typeof eff !== 'object') continue;
+            for (const key in eff) {
+                const v = eff[key];
+                if (key === 'resourceProd') {
+                    for (const r in v) if (typeof v[r] === 'number' && v[r] < -1e-9) return true;
+                    continue;
+                }
+                if (typeof v === 'number') {
+                    if (key === 'globalCost') { if (v > 1e-9) return true; }
+                    else if (v < -1e-9) return true;
+                    continue;
+                }
+                if (v && typeof v === 'object') {
+                    if (typeof v.prod === 'number' && v.prod < -1e-9) return true;
+                    if (typeof v.cap === 'number' && v.cap < -1e-9) return true;
+                    if (typeof v.cons === 'number' && v.cons > 1e-9) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    function matchesFilter(state, artifact) {
+        const f = filterOf(state);
+        if (!f.enabled || !artifact) return false;
+        if (f.tiers.indexOf(artifact.tier) >= 0) return true;
+        if (artifact.set && f.sets.indexOf(artifact.set) >= 0) return true;
+        if (f.negative && hasNegative(artifact)) return true;
+        return false;
+    }
+
     function addToInventory(state, artifact) {
+        if (matchesFilter(state, artifact)) {
+            state.stats.artifactsFiltered = (state.stats.artifactsFiltered || 0) + 1;
+            artifact.filtered = true;
+            return artifact;                    // 调用方看 .filtered 决定提示，不加入库存
+        }
         if (state.artifacts.inventory.length >= 12) {
             state.artifacts.inventory.shift();
         }
@@ -220,5 +276,6 @@
     window.Artifacts = {
         generate, addToInventory, equip, unequip, discard, describe, artifactSlots,
         setByKey, setFromId, setStatus,
+        filterOf, hasNegative, matchesFilter,
     };
 })();

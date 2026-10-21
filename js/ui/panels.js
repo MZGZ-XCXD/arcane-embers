@@ -782,9 +782,32 @@
         G.openModal(html);
     }
 
+    /* 秘宝过滤：黑名单式勾选，命中的秘宝带回时直接丢弃 */
+    function artifactFilterModal() {
+        const s = GameState;
+        const f = Artifacts.filterOf(s);
+        const box = (act, checked, label) =>
+            '<label class="hint" style="cursor:pointer;display:inline-flex;align-items:center;gap:5px;margin:0 14px 7px 0">' +
+            '<input type="checkbox" data-act="' + act + '"' + (checked ? ' checked' : '') + '> ' + label + '</label>';
+        let html = '<h4>秘宝过滤</h4>';
+        html += '<div class="hint">勾选的类别在带回时直接丢弃，不进库存。命中任意一条就会丢；设置跨重置保留。</div><hr>';
+        html += box('afilter|enabled|1', f.enabled, '<b>启用自动丢弃</b>');
+        html += '<div class="section-sub">按层级</div>';
+        for (let t = 1; t <= 6; t++) html += box('afilter|tier|' + t, f.tiers.indexOf(t) >= 0, '第 ' + t + ' 层');
+        html += '<div class="section-sub">按流派</div>';
+        for (const set of (window.ARTIFACT_SETS || [])) {
+            html += box('afilter|set|' + set.key, f.sets.indexOf(set.key) >= 0, set.icon + ' ' + G.esc(set.name));
+        }
+        html += '<div class="section-sub">词条</div>';
+        html += box('afilter|neg|1', f.negative, '丢弃带负面词条的秘宝');
+        html += '<hr><div class="kv"><span>已自动丢弃</span><span>' + (s.stats.artifactsFiltered || 0) + ' 件</span></div>';
+        html += '<div class="modal-actions"><button class="btn primary" data-act="closemodal">完成</button></div>';
+        G.openModal(html);
+    }
+
     window.Panels = {
         tipHtml, renderHeader, renderPopulation, renderResources,
         renderEvent, renderExpeditionPanel, renderLog, renderStats, renderQueue,
-        exportModal, importModal, offlineModal,
+        exportModal, importModal, offlineModal, artifactFilterModal,
     };
 })();

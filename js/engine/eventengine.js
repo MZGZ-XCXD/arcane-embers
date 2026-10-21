@@ -53,7 +53,8 @@
             buff: (name, label, days, effect, desc) => buff(state, label, days, effect, desc),
             artifact: tier => {
                 const a = Artifacts.generate(state, tier || 3);
-                Artifacts.addToInventory(state, a);
+                const got = Artifacts.addToInventory(state, a);
+                if (got && got.filtered) addLog(state, '🗑️ 自动丢弃秘宝「' + got.name + '」（命中过滤规则）。');
                 return a;
             },
         };

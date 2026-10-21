@@ -145,6 +145,18 @@
 
         /* 秘宝 */
         html += '<div class="section-title">秘宝</div>';
+        html += '<div class="btn-row" style="margin:-2px 0 8px">' +
+            '<button class="btn tiny" data-act="afiltermodal">⚙ 秘宝过滤</button>' +
+            '<span class="hint">勾选要自动丢弃的类别</span></div>';
+        const af = Artifacts.filterOf(s);
+        if (af.enabled) {
+            const bits = [];
+            if (af.tiers.length) bits.push('第' + af.tiers.slice().sort((a, b) => a - b).join('/') + '层');
+            if (af.sets.length) bits.push(af.sets.join('、'));
+            if (af.negative) bits.push('负面词条');
+            html += '<div class="hint">自动丢弃：<b>' + (bits.length ? G.esc(bits.join(' + ')) : '未选择类别') + '</b>' +
+                (s.stats.artifactsFiltered ? '（已丢 ' + s.stats.artifactsFiltered + ' 件）' : '') + '</div>';
+        }
         const slots = Artifacts.artifactSlots(s);
         while (s.artifacts.equipped.length < slots) s.artifacts.equipped.push(null);
         html += '<div class="slots">';
