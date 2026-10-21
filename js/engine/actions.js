@@ -8,7 +8,8 @@
     function buyBuilding(state, name, amount) {
         const res = QueueEngine.enqueue(state, 'building', name, amount === undefined ? 1 : amount);
         if (!res.ok) return { ok: false, msg: res.msg };
-        return { ok: true, built: res.instant || 0, queued: res.queued || 0, msg: res.msg };
+        const built = res.instant !== undefined ? res.instant : (res.built || 0);
+        return { ok: true, built: built, queued: res.queued || 0, msg: res.msg };
     }
 
     function setBuildingActive(state, name, active) {

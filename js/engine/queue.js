@@ -64,6 +64,8 @@
         if (item.kind === 'building') {
             const b = state.buildings[item.name];
             if (!b) return null;
+            /* 逐座订单：只算「下一座」的价钱，绝不要求整批材料一次性到齐 */
+            if (item.seq) return ProductionEngine.buildingPriceCount(state, item.name, b.count);
             const total = {};
             for (let i = 0; i < item.count; i++) {
                 const price = ProductionEngine.buildingPriceCount(state, item.name, b.count + i);
@@ -176,6 +178,72 @@
     }
 
     /* ------------ 队列订单 ------------ */
+    /* 逐座建造：每次只付下一座的价钱，能建几座建几座；
+       下一座的价钱超过存量上限时停下并记录 blocked，等上限提高后继续。 */
+    function processSequential(state, item) {
+        const b = state.buildings[item.name];
+        if (!b || !item.remaining) return 0;
+        let built = 0;
+        item.blocked = null;
+        while (item.remaining > 0) {
+            const price = applyDiscount(ProductionEngine.buildingPriceCount(state, item.name, b.count), discount(state));
+            let blocked = null;
+            for (const k in price) {
+                const r = state.resources[k];
+                if (r && !RESOURCES_CONFIG[k].prestige && price[k] > r.cap + 1e-6) { blocked = k; break; }
+            }
+            if (blocked) { item.blocked = blocked; break; }
+            if (!ResourcesManager.canAfford(price)) break;
+            ResourcesManager.spend(price);
+            b.count += 1;
+            b.active += 1;
+            state.stats.totalBuildingBuilt += 1;
+            item.remaining -= 1;
+            item.built = (item.built || 0) + 1;
+            built++;
+        }
+        if (built) {
+            ProductionEngine.updatePrices(state);
+            ProductionEngine.computeProductionAndCaps(state);
+            EventEngine.addLog(state, '🏗️ 建成「' + item.name + '」×' + built +
+                (item.remaining > 0 ? '（订单剩余 ' + item.remaining + ' 座）' : '（订单完成）'));
+            if (window.UI && UI.toast) UI.toast('🏗️ 建造完成：' + item.name + ' ×' + built, 'gold');
+        }
+        return built;
+    }
+
+    function enqueueBuild(state, name, count, queueIfUnaffordable) {
+        const b = state.buildings[name];
+        if (!b) return { ok: false, msg: '未知建筑。' };
+        const canNow = maxAffordable(state, name, count);
+        if (canNow < count && queueIfUnaffordable && isFull(state)) {
+            return { ok: false, msg: '队列已满（' + used(state) + ' / ' + slots(state) + '），请等待或取消一项。' };
+        }
+        const item = {
+            id: 'q' + (seq++),
+            kind: 'building', name: name, count: count,
+            remaining: count, built: 0, seq: true,
+            cost: null, est: {}, blocked: null,
+        };
+        const builtNow = processSequential(state, item);
+        if (item.remaining <= 0) {
+            return { ok: true, instant: builtNow, msg: '建造完成：' + name + (builtNow > 1 ? ' ×' + builtNow : '') };
+        }
+        if (!queueIfUnaffordable) {
+            return { ok: builtNow > 0, built: builtNow, msg: builtNow > 0 ? '已建成 ' + builtNow + ' 座。' : '资源不足。' };
+        }
+        item.est = currentCost(state, item) || {};
+        state.queue.items.push(item);
+        EventEngine.addLog(state, '📝 建造「' + name + '」×' + count + ' 已加入队列（逐座建造' +
+            (builtNow ? '，已建 ' + builtNow + ' 座' : '') + '）。');
+        ProductionEngine.updatePrices(state);
+        ProductionEngine.computeProductionAndCaps(state);
+        return {
+            ok: true, built: builtNow, queued: item.remaining, item: item,
+            msg: (builtNow ? '已建成 ' + builtNow + ' 座，' : '') + '剩余 ' + item.remaining + ' 座已排队（逐座建造）',
+        };
+    }
+
     function enqueue(state, kind, name, amount, opts) {
         opts = opts || {};
         const queueIfUnaffordable = opts.queueIfUnaffordable !== false;
@@ -190,6 +258,9 @@
 
         const invalid = validate(state, kind, name);
         if (invalid) return { ok: false, msg: invalid };
+
+        /* 建筑：一律走逐座订单（材料够的部分会立刻建成） */
+        if (kind === 'building') return enqueueBuild(state, name, count, queueIfUnaffordable);
 
         /* 1) 资源足够 → 立即完成，不进队列 */
         const doneNow = instant(state, kind, name, count);
@@ -227,16 +298,22 @@
         if (idx < 0) return { ok: false };
         const item = state.queue.items[idx];
         state.queue.items.splice(idx, 1);
-        EventEngine.addLog(state, '↩️ 已取消' + KIND_LABEL[item.kind] + '「' + item.name + '」（尚未投入材料）。');
+        if (item.seq && item.built > 0) {
+            EventEngine.addLog(state, '↩️ 已取消建造「' + item.name + '」（已建成 ' + item.built +
+                ' 座，剩余 ' + item.remaining + ' 座不再建造）。');
+        } else {
+            EventEngine.addLog(state, '↩️ 已取消' + KIND_LABEL[item.kind] + '「' + item.name + '」（尚未投入材料）。');
+        }
         ProductionEngine.updatePrices(state);
         ProductionEngine.computeProductionAndCaps(state);
-        return { ok: true, msg: '已取消：' + item.name };
+        return { ok: true, msg: '已取消：' + item.name + (item.seq && item.built ? '（已建 ' + item.built + ' 座）' : '') };
     }
 
     function clear(state) { state.queue.items = []; }
 
     /* 材料就绪度 0~1（面板进度条用） */
     function progress(state, item) {
+        if (item.seq) return item.count ? Utils.clamp(item.built / item.count, 0, 1) : 0;
         const cost = currentCost(state, item);
         if (!cost) return 0;
         let min = 1;
@@ -291,6 +368,11 @@
                 EventEngine.addLog(state, '⚠️ 订单「' + it.name + '」已失效（' + invalid + '），自动撤单。');
                 continue;
             }
+            if (it.seq) {
+                processSequential(state, it);
+                if (it.remaining <= 0) done.push(it);
+                continue;
+            }
             const cost = currentCost(state, it);
             if (!cost) { done.push(it); continue; }
             it.est = cost;
@@ -308,7 +390,8 @@
     function queuedCount(state, kind, name) {
         let n = 0;
         for (const it of state.queue.items) {
-            if (it.kind === kind && it.name === name) n += it.count;
+            if (it.kind !== kind || it.name !== name) continue;
+            n += it.seq ? it.remaining : it.count;
         }
         return n;
     }

@@ -386,14 +386,18 @@
             const eta = QueueEngine.eta(GameState, it);
             const blocked = QueueEngine.capBlocked(GameState, it);
             let html = '<h4>' + G.esc(it.name) + (it.count > 1 ? ' ×' + it.count : '') +
-                ' · ' + G.esc(QueueEngine.KIND_LABEL[it.kind]) + '</h4>';
-            html += '<div class="kv"><span>材料已备</span><span>' + U.fmtPct(QueueEngine.progress(GameState, it), 0) + '</span></div>';
+                (it.seq ? '（逐座）' : '') + ' · ' + G.esc(QueueEngine.KIND_LABEL[it.kind]) + '</h4>';
+            html += '<div class="kv"><span>' + (it.seq ? '订单进度' : '材料已备') + '</span><span>' +
+                U.fmtPct(QueueEngine.progress(GameState, it), 0) + '</span></div>';
             html += '<div class="kv"><span>预计建成</span><span>' +
                 (blocked ? '<span class="lack">上限不足</span>' : (eta === null ? '无法估算' : (eta <= 1e-9 ? '材料已就绪' : U.fmtDuration(eta) + ' 后'))) +
                 '</span></div>';
-            html += '<hr><div>还需要凑齐：</div><div>' + G.priceHtml(cost) + '</div>';
-            if (blocked) html += '<div class="neg">「' + G.esc(blocked) + '」的仓储上限低于这笔订单所需，订单永远凑不齐；先去提升上限或取消订单。</div>';
-            html += '<hr><div class="dim">订单只是「排队等材料」，材料一凑齐就会立即建成；取消订单不会损失任何材料。</div>';
+            html += '<hr><div>' + (it.seq ? '下一座还需要：' : '还需要凑齐：') + '</div><div>' + G.priceHtml(cost) + '</div>';
+            if (blocked) html += '<div class="neg">「' + G.esc(blocked) + '」的仓储上限低于' +
+                (it.seq ? '下一座' : '这笔订单') + '所需，先提升上限，订单会自动继续。</div>';
+            html += '<hr><div class="dim">' + (it.seq
+                ? '逐座建造：每次只付下一座的材料，能建几座建几座；取消后已建成的不会消失。'
+                : '订单只是「排队等材料」，材料一凑齐就会立即建成；取消订单不会损失任何材料。') + '</div>';
             return html;
         }
 
@@ -592,7 +596,8 @@
             for (const it of items) {
                 html += '<div class="queue-item waiting" data-tip="queue|' + G.esc(it.id) + '">';
                 html += '<div class="q-head"><span class="q-kind">' + G.esc(QueueEngine.KIND_LABEL[it.kind]) + '</span>' +
-                    '<span class="q-name">' + G.esc(it.name) + (it.count > 1 ? ' ×' + it.count : '') + '</span>' +
+                    '<span class="q-name">' + G.esc(it.name) + (it.count > 1 ? ' ×' + it.count : '') +
+                    (it.seq ? '·逐座' : '') + '</span>' +
                     '<span class="q-time" data-q-time="' + G.esc(it.id) + '"></span></div>';
                 html += G.bar(0).replace('class="bar "', 'class="bar" data-q-bar="' + G.esc(it.id) + '"');
                 html += '<div class="q-est" data-q-est="' + G.esc(it.id) + '"></div>';
@@ -623,12 +628,13 @@
                 ref.bar.firstElementChild.style.width = (p * 100).toFixed(1) + '%';
                 ref.bar.className = 'bar ' + (blocked ? 'bad' : '');
             }
-            if (blocked) G.setText(ref.time, '上限不足');
+            if (blocked) G.setText(ref.time, '上限不足：' + blocked);
             else if (eta === null) G.setText(ref.time, '无法估算');
             else if (eta <= 1e-9) G.setText(ref.time, '材料已就绪');
             else G.setText(ref.time, U.fmtDuration(eta) + ' 后建成');
             const cost = QueueEngine.currentCost(s, it) || {};
-            G.setHTML(ref.est, '需要：' + G.priceHtml(cost));
+            G.setHTML(ref.est, (it.seq ? '已建 ' + it.built + ' / ' + it.count + ' · 下一座需要：' : '需要：') +
+                G.priceHtml(cost));
         }
     }
 

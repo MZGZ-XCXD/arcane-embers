@@ -3179,6 +3179,11 @@ window.CHANGELOG_DATA = {
     "source": "CHANGELOG.md",
     "overview": [
         {
+            "version": "0.11.2",
+            "date": "2026-10-21",
+            "summary": "建筑的 +5 / +10 改为逐座订单：只占一格、逐座付价，超过仓储上限时停下并提示"
+        },
+        {
             "version": "0.11.1",
             "date": "2026-10-21",
             "summary": "建筑数量旁新增 − / +，可以按座停用或启用"
@@ -3335,6 +3340,19 @@ window.CHANGELOG_DATA = {
         }
     ],
     "versions": [
+        {
+            "version": "0.11.2",
+            "date": "2026-10-21",
+            "sections": [
+                {
+                    "title": "修复",
+                    "items": [
+                        "建筑的 +5 / +10 改成「逐座订单」：一个订单只占一个队列格，每次只按下一座的价钱扣材料，不再要求整批材料一次凑齐。材料暂时不够就等；下一座的价钱超过仓储上限时停在队列里并显示「上限不足」，上限提高后自动继续。",
+                        "批量建造只买得起一部分时，剩余数量不再被静默丢弃：先建能建的部分，其余留在同一个订单里继续逐座建造。"
+                    ]
+                }
+            ]
+        },
         {
             "version": "0.11.1",
             "date": "2026-10-21",
@@ -5691,6 +5709,8 @@ window.CHANGELOG_DATA = {
         if (item.kind === 'building') {
             const b = state.buildings[item.name];
             if (!b) return null;
+            /* 逐座订单：只算「下一座」的价钱，绝不要求整批材料一次性到齐 */
+            if (item.seq) return ProductionEngine.buildingPriceCount(state, item.name, b.count);
             const total = {};
             for (let i = 0; i < item.count; i++) {
                 const price = ProductionEngine.buildingPriceCount(state, item.name, b.count + i);
@@ -5803,6 +5823,72 @@ window.CHANGELOG_DATA = {
     }
 
     /* ------------ 队列订单 ------------ */
+    /* 逐座建造：每次只付下一座的价钱，能建几座建几座；
+       下一座的价钱超过存量上限时停下并记录 blocked，等上限提高后继续。 */
+    function processSequential(state, item) {
+        const b = state.buildings[item.name];
+        if (!b || !item.remaining) return 0;
+        let built = 0;
+        item.blocked = null;
+        while (item.remaining > 0) {
+            const price = applyDiscount(ProductionEngine.buildingPriceCount(state, item.name, b.count), discount(state));
+            let blocked = null;
+            for (const k in price) {
+                const r = state.resources[k];
+                if (r && !RESOURCES_CONFIG[k].prestige && price[k] > r.cap + 1e-6) { blocked = k; break; }
+            }
+            if (blocked) { item.blocked = blocked; break; }
+            if (!ResourcesManager.canAfford(price)) break;
+            ResourcesManager.spend(price);
+            b.count += 1;
+            b.active += 1;
+            state.stats.totalBuildingBuilt += 1;
+            item.remaining -= 1;
+            item.built = (item.built || 0) + 1;
+            built++;
+        }
+        if (built) {
+            ProductionEngine.updatePrices(state);
+            ProductionEngine.computeProductionAndCaps(state);
+            EventEngine.addLog(state, '🏗️ 建成「' + item.name + '」×' + built +
+                (item.remaining > 0 ? '（订单剩余 ' + item.remaining + ' 座）' : '（订单完成）'));
+            if (window.UI && UI.toast) UI.toast('🏗️ 建造完成：' + item.name + ' ×' + built, 'gold');
+        }
+        return built;
+    }
+
+    function enqueueBuild(state, name, count, queueIfUnaffordable) {
+        const b = state.buildings[name];
+        if (!b) return { ok: false, msg: '未知建筑。' };
+        const canNow = maxAffordable(state, name, count);
+        if (canNow < count && queueIfUnaffordable && isFull(state)) {
+            return { ok: false, msg: '队列已满（' + used(state) + ' / ' + slots(state) + '），请等待或取消一项。' };
+        }
+        const item = {
+            id: 'q' + (seq++),
+            kind: 'building', name: name, count: count,
+            remaining: count, built: 0, seq: true,
+            cost: null, est: {}, blocked: null,
+        };
+        const builtNow = processSequential(state, item);
+        if (item.remaining <= 0) {
+            return { ok: true, instant: builtNow, msg: '建造完成：' + name + (builtNow > 1 ? ' ×' + builtNow : '') };
+        }
+        if (!queueIfUnaffordable) {
+            return { ok: builtNow > 0, built: builtNow, msg: builtNow > 0 ? '已建成 ' + builtNow + ' 座。' : '资源不足。' };
+        }
+        item.est = currentCost(state, item) || {};
+        state.queue.items.push(item);
+        EventEngine.addLog(state, '📝 建造「' + name + '」×' + count + ' 已加入队列（逐座建造' +
+            (builtNow ? '，已建 ' + builtNow + ' 座' : '') + '）。');
+        ProductionEngine.updatePrices(state);
+        ProductionEngine.computeProductionAndCaps(state);
+        return {
+            ok: true, built: builtNow, queued: item.remaining, item: item,
+            msg: (builtNow ? '已建成 ' + builtNow + ' 座，' : '') + '剩余 ' + item.remaining + ' 座已排队（逐座建造）',
+        };
+    }
+
     function enqueue(state, kind, name, amount, opts) {
         opts = opts || {};
         const queueIfUnaffordable = opts.queueIfUnaffordable !== false;
@@ -5817,6 +5903,9 @@ window.CHANGELOG_DATA = {
 
         const invalid = validate(state, kind, name);
         if (invalid) return { ok: false, msg: invalid };
+
+        /* 建筑：一律走逐座订单（材料够的部分会立刻建成） */
+        if (kind === 'building') return enqueueBuild(state, name, count, queueIfUnaffordable);
 
         /* 1) 资源足够 → 立即完成，不进队列 */
         const doneNow = instant(state, kind, name, count);
@@ -5854,16 +5943,22 @@ window.CHANGELOG_DATA = {
         if (idx < 0) return { ok: false };
         const item = state.queue.items[idx];
         state.queue.items.splice(idx, 1);
-        EventEngine.addLog(state, '↩️ 已取消' + KIND_LABEL[item.kind] + '「' + item.name + '」（尚未投入材料）。');
+        if (item.seq && item.built > 0) {
+            EventEngine.addLog(state, '↩️ 已取消建造「' + item.name + '」（已建成 ' + item.built +
+                ' 座，剩余 ' + item.remaining + ' 座不再建造）。');
+        } else {
+            EventEngine.addLog(state, '↩️ 已取消' + KIND_LABEL[item.kind] + '「' + item.name + '」（尚未投入材料）。');
+        }
         ProductionEngine.updatePrices(state);
         ProductionEngine.computeProductionAndCaps(state);
-        return { ok: true, msg: '已取消：' + item.name };
+        return { ok: true, msg: '已取消：' + item.name + (item.seq && item.built ? '（已建 ' + item.built + ' 座）' : '') };
     }
 
     function clear(state) { state.queue.items = []; }
 
     /* 材料就绪度 0~1（面板进度条用） */
     function progress(state, item) {
+        if (item.seq) return item.count ? Utils.clamp(item.built / item.count, 0, 1) : 0;
         const cost = currentCost(state, item);
         if (!cost) return 0;
         let min = 1;
@@ -5918,6 +6013,11 @@ window.CHANGELOG_DATA = {
                 EventEngine.addLog(state, '⚠️ 订单「' + it.name + '」已失效（' + invalid + '），自动撤单。');
                 continue;
             }
+            if (it.seq) {
+                processSequential(state, it);
+                if (it.remaining <= 0) done.push(it);
+                continue;
+            }
             const cost = currentCost(state, it);
             if (!cost) { done.push(it); continue; }
             it.est = cost;
@@ -5935,7 +6035,8 @@ window.CHANGELOG_DATA = {
     function queuedCount(state, kind, name) {
         let n = 0;
         for (const it of state.queue.items) {
-            if (it.kind === kind && it.name === name) n += it.count;
+            if (it.kind !== kind || it.name !== name) continue;
+            n += it.seq ? it.remaining : it.count;
         }
         return n;
     }
@@ -6705,7 +6806,8 @@ window.CHANGELOG_DATA = {
     function buyBuilding(state, name, amount) {
         const res = QueueEngine.enqueue(state, 'building', name, amount === undefined ? 1 : amount);
         if (!res.ok) return { ok: false, msg: res.msg };
-        return { ok: true, built: res.instant || 0, queued: res.queued || 0, msg: res.msg };
+        const built = res.instant !== undefined ? res.instant : (res.built || 0);
+        return { ok: true, built: built, queued: res.queued || 0, msg: res.msg };
     }
 
     function setBuildingActive(state, name, active) {
@@ -8273,14 +8375,18 @@ window.CHANGELOG_DATA = {
             const eta = QueueEngine.eta(GameState, it);
             const blocked = QueueEngine.capBlocked(GameState, it);
             let html = '<h4>' + G.esc(it.name) + (it.count > 1 ? ' ×' + it.count : '') +
-                ' · ' + G.esc(QueueEngine.KIND_LABEL[it.kind]) + '</h4>';
-            html += '<div class="kv"><span>材料已备</span><span>' + U.fmtPct(QueueEngine.progress(GameState, it), 0) + '</span></div>';
+                (it.seq ? '（逐座）' : '') + ' · ' + G.esc(QueueEngine.KIND_LABEL[it.kind]) + '</h4>';
+            html += '<div class="kv"><span>' + (it.seq ? '订单进度' : '材料已备') + '</span><span>' +
+                U.fmtPct(QueueEngine.progress(GameState, it), 0) + '</span></div>';
             html += '<div class="kv"><span>预计建成</span><span>' +
                 (blocked ? '<span class="lack">上限不足</span>' : (eta === null ? '无法估算' : (eta <= 1e-9 ? '材料已就绪' : U.fmtDuration(eta) + ' 后'))) +
                 '</span></div>';
-            html += '<hr><div>还需要凑齐：</div><div>' + G.priceHtml(cost) + '</div>';
-            if (blocked) html += '<div class="neg">「' + G.esc(blocked) + '」的仓储上限低于这笔订单所需，订单永远凑不齐；先去提升上限或取消订单。</div>';
-            html += '<hr><div class="dim">订单只是「排队等材料」，材料一凑齐就会立即建成；取消订单不会损失任何材料。</div>';
+            html += '<hr><div>' + (it.seq ? '下一座还需要：' : '还需要凑齐：') + '</div><div>' + G.priceHtml(cost) + '</div>';
+            if (blocked) html += '<div class="neg">「' + G.esc(blocked) + '」的仓储上限低于' +
+                (it.seq ? '下一座' : '这笔订单') + '所需，先提升上限，订单会自动继续。</div>';
+            html += '<hr><div class="dim">' + (it.seq
+                ? '逐座建造：每次只付下一座的材料，能建几座建几座；取消后已建成的不会消失。'
+                : '订单只是「排队等材料」，材料一凑齐就会立即建成；取消订单不会损失任何材料。') + '</div>';
             return html;
         }
 
@@ -8479,7 +8585,8 @@ window.CHANGELOG_DATA = {
             for (const it of items) {
                 html += '<div class="queue-item waiting" data-tip="queue|' + G.esc(it.id) + '">';
                 html += '<div class="q-head"><span class="q-kind">' + G.esc(QueueEngine.KIND_LABEL[it.kind]) + '</span>' +
-                    '<span class="q-name">' + G.esc(it.name) + (it.count > 1 ? ' ×' + it.count : '') + '</span>' +
+                    '<span class="q-name">' + G.esc(it.name) + (it.count > 1 ? ' ×' + it.count : '') +
+                    (it.seq ? '·逐座' : '') + '</span>' +
                     '<span class="q-time" data-q-time="' + G.esc(it.id) + '"></span></div>';
                 html += G.bar(0).replace('class="bar "', 'class="bar" data-q-bar="' + G.esc(it.id) + '"');
                 html += '<div class="q-est" data-q-est="' + G.esc(it.id) + '"></div>';
@@ -8510,12 +8617,13 @@ window.CHANGELOG_DATA = {
                 ref.bar.firstElementChild.style.width = (p * 100).toFixed(1) + '%';
                 ref.bar.className = 'bar ' + (blocked ? 'bad' : '');
             }
-            if (blocked) G.setText(ref.time, '上限不足');
+            if (blocked) G.setText(ref.time, '上限不足：' + blocked);
             else if (eta === null) G.setText(ref.time, '无法估算');
             else if (eta <= 1e-9) G.setText(ref.time, '材料已就绪');
             else G.setText(ref.time, U.fmtDuration(eta) + ' 后建成');
             const cost = QueueEngine.currentCost(s, it) || {};
-            G.setHTML(ref.est, '需要：' + G.priceHtml(cost));
+            G.setHTML(ref.est, (it.seq ? '已建 ' + it.built + ' / ' + it.count + ' · 下一座需要：' : '需要：') +
+                G.priceHtml(cost));
         }
     }
 
