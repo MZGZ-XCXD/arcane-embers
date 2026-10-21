@@ -167,6 +167,13 @@
             case 'toggle':
                 Actions.setBuildingActive(s, arg1, 'toggle');
                 break;
+            case 'active': {
+                const b = s.buildings[arg1];
+                if (!b) break;
+                const next = Math.max(0, Math.min(b.count, Math.round(b.active) + Number(arg2)));
+                Actions.setBuildingActive(s, arg1, next);
+                break;
+            }
             case 'mode':
                 Actions.setBuildingMode(s, arg1, Number(arg2));
                 break;

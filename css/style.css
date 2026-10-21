@@ -435,6 +435,12 @@ h1, h2, h3, .serif { font-family: "Palatino Linotype", "Songti SC", Georgia, ser
     font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 .card-count small { font-size: .68rem; color: var(--text-dim); font-weight: 400; }
+.count-stepper { display: inline-flex; align-items: center; gap: 4px; }
+.count-stepper .btn.step {
+    min-width: 24px; height: 24px; padding: 0 4px; line-height: 1;
+    font-size: .85rem; font-weight: 700;
+}
+.count-stepper .count-num { min-width: 58px; text-align: center; }
 .card-desc { font-size: .75rem; color: var(--text-secondary); line-height: 1.5; margin: 6px 0; }
 .card-stats { display: flex; flex-direction: column; gap: 2px; font-size: .75rem; margin: 6px 0; }
 .card-stats .row { display: flex; justify-content: space-between; gap: 8px; }

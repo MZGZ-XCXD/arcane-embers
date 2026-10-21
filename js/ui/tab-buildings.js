@@ -32,7 +32,13 @@
             (queued > 0 ? '<span class="tag queue">排队中 ×' + queued + '</span>' : '') +
             (b.active > 0 && st.efficiency < 0.995 ? '<span class="tag warn">受限 ' + U.fmtPct(st.efficiency, 0) + '</span>' : '') +
             '</div>';
-        html += '<div class="card-count">' + Math.round(b.active) + '<small> / ' + b.count + '</small></div></div>';
+        html += '<div class="card-count"><span class="count-stepper">' +
+            '<button class="btn tiny step" data-act="active|' + G.esc(name) + '|-1"' +
+            (b.active <= 0 ? ' disabled' : '') + ' title="停用 1 座">−</button>' +
+            '<span class="count-num">' + Math.round(b.active) + '<small> / ' + b.count + '</small></span>' +
+            '<button class="btn tiny step" data-act="active|' + G.esc(name) + '|1"' +
+            (b.active >= b.count ? ' disabled' : '') + ' title="启用 1 座">+</button>' +
+            '</span></div></div>';
 
         if (!unlocked) {
             html += '<div class="card-desc">需要科技：<b>' + G.esc(cfg.tech) + '</b></div>';
