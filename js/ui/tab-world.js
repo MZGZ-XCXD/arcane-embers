@@ -98,7 +98,7 @@
         return html;
     }
 
-    function artifactCard(art, slot) {
+    function artifactCard(art, slot, idx, total) {
         let html = '<div class="artifact" data-tip="artifact|' + G.esc(art.id) + '">';
         html += '<div class="an"><span>' + G.esc(art.name) + '</span><span>💠</span></div>';
         const set = window.Artifacts.setByKey ? Artifacts.setByKey(art.set) : null;
@@ -108,6 +108,10 @@
         }
         html += '<div class="btn-row mt6">';
         if (slot === undefined) {
+            html += '<button class="btn tiny" data-act="artmove|' + G.esc(art.id) + '|-1"' +
+                (idx > 0 ? '' : ' disabled') + ' title="向前移动">←</button>';
+            html += '<button class="btn tiny" data-act="artmove|' + G.esc(art.id) + '|1"' +
+                (idx < total - 1 ? '' : ' disabled') + ' title="向后移动">→</button>';
             html += '<button class="btn tiny primary" data-act="equip|' + G.esc(art.id) + '">装备</button>';
             html += '<button class="btn tiny danger" data-act="discard|' + G.esc(art.id) + '">丢弃</button>';
         } else {
@@ -165,7 +169,9 @@
             html += art ? artifactCard(art, i) : '<div class="slot-empty">空置基座</div>';
         }
         html += '</div>';
-        html += '<div class="hint mt6">秘宝库存 ' + s.artifacts.inventory.length + ' / 12（重置时会失去，除非拥有传承「记忆水晶」）</div>';
+        html += '<div class="hint mt6">秘宝库存 ' + s.artifacts.inventory.length + ' / 12' +
+            (s.artifacts.inventory.length >= 12 ? '（已满：新秘宝不会带回，先丢弃一件）' : '') +
+            '（重置时会失去，除非拥有传承「记忆水晶」）</div>';
 
         /* 套装共鸣：装备同一流派 2 件 / 3 件触发，凑套装本身就是一个取舍 */
         if (window.ARTIFACT_SETS && window.Artifacts.setStatus) {
@@ -185,7 +191,8 @@
             }
         }
         if (s.artifacts.inventory.length) {
-            html += '<div class="card-grid wide mt6">' + s.artifacts.inventory.map(a => artifactCard(a)).join('') + '</div>';
+            html += '<div class="card-grid wide mt6">' +
+                s.artifacts.inventory.map((a, i, arr) => artifactCard(a, undefined, i, arr.length)).join('') + '</div>';
         }
 
         /* 区域 */

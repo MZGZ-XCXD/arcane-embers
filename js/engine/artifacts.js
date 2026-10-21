@@ -190,11 +190,27 @@
             artifact.filtered = true;
             return artifact;                    // 调用方看 .filtered 决定提示，不加入库存
         }
+        /* 库存满了不再自动挤掉最旧的一件——那会让整列秘宝集体左移，
+           看起来像「自动排序」。满格时新秘宝不带回，由调用方提示玩家先丢弃。 */
         if (state.artifacts.inventory.length >= 12) {
-            state.artifacts.inventory.shift();
+            artifact.skipped = 'full';
+            return artifact;
         }
         state.artifacts.inventory.push(artifact);
         return artifact;
+    }
+
+    /* 手动调整库存顺序：和相邻一件交换，不自动排序 */
+    function move(state, id, dir) {
+        const list = state.artifacts.inventory;
+        const idx = list.findIndex(a => a.id === id);
+        if (idx < 0) return { ok: false };
+        const to = idx + (dir < 0 ? -1 : 1);
+        if (to < 0 || to >= list.length) return { ok: false };
+        const tmp = list[idx];
+        list[idx] = list[to];
+        list[to] = tmp;
+        return { ok: true };
     }
 
     function equip(state, id) {
@@ -277,5 +293,6 @@
         generate, addToInventory, equip, unequip, discard, describe, artifactSlots,
         setByKey, setFromId, setStatus,
         filterOf, hasNegative, matchesFilter,
+        move,
     };
 })();

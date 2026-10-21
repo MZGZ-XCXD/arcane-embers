@@ -3179,6 +3179,11 @@ window.CHANGELOG_DATA = {
     "source": "CHANGELOG.md",
     "overview": [
         {
+            "version": "0.11.4",
+            "date": "2026-10-21",
+            "summary": "秘宝库存满时不再自动挤掉最旧的一件；新增 ← / → 手动调整顺序"
+        },
+        {
             "version": "0.11.3",
             "date": "2026-10-21",
             "summary": "修复建造队列信息多时被截断：名称可换行、造价行完整显示、列表更高"
@@ -3345,6 +3350,19 @@ window.CHANGELOG_DATA = {
         }
     ],
     "versions": [
+        {
+            "version": "0.11.4",
+            "date": "2026-10-21",
+            "sections": [
+                {
+                    "title": "变更",
+                    "items": [
+                        "秘宝库存满 12 件时不再自动挤掉最旧的一件（以前每来一件，整列都会左移，看起来像自动排序）。现在新秘宝不会带回，并提示先丢弃一件。",
+                        "秘宝库存卡片新增 ← / → 按钮，可以手动调整顺序；顺序会随存档保存。第一件的左移和最后一件的右移按钮自动禁用。"
+                    ]
+                }
+            ]
+        },
         {
             "version": "0.11.3",
             "date": "2026-10-21",
@@ -5423,11 +5441,27 @@ window.CHANGELOG_DATA = {
             artifact.filtered = true;
             return artifact;                    // 调用方看 .filtered 决定提示，不加入库存
         }
+        /* 库存满了不再自动挤掉最旧的一件——那会让整列秘宝集体左移，
+           看起来像「自动排序」。满格时新秘宝不带回，由调用方提示玩家先丢弃。 */
         if (state.artifacts.inventory.length >= 12) {
-            state.artifacts.inventory.shift();
+            artifact.skipped = 'full';
+            return artifact;
         }
         state.artifacts.inventory.push(artifact);
         return artifact;
+    }
+
+    /* 手动调整库存顺序：和相邻一件交换，不自动排序 */
+    function move(state, id, dir) {
+        const list = state.artifacts.inventory;
+        const idx = list.findIndex(a => a.id === id);
+        if (idx < 0) return { ok: false };
+        const to = idx + (dir < 0 ? -1 : 1);
+        if (to < 0 || to >= list.length) return { ok: false };
+        const tmp = list[idx];
+        list[idx] = list[to];
+        list[to] = tmp;
+        return { ok: true };
     }
 
     function equip(state, id) {
@@ -5510,6 +5544,7 @@ window.CHANGELOG_DATA = {
         generate, addToInventory, equip, unequip, discard, describe, artifactSlots,
         setByKey, setFromId, setStatus,
         filterOf, hasNegative, matchesFilter,
+        move,
     };
 })();
 
@@ -6648,7 +6683,8 @@ window.CHANGELOG_DATA = {
             artifact: tier => {
                 const a = Artifacts.generate(state, tier || 3);
                 const got = Artifacts.addToInventory(state, a);
-                if (got && got.filtered) addLog(state, '🗑️ 自动丢弃秘宝「' + got.name + '」（命中过滤规则）。');
+                if (got && got.skipped === 'full') addLog(state, '🈵 秘宝库存已满，未能带回「' + got.name + '」。');
+                else if (got && got.filtered) addLog(state, '🗑️ 自动丢弃秘宝「' + got.name + '」（命中过滤规则）。');
                 return a;
             },
         };
@@ -7598,7 +7634,10 @@ window.CHANGELOG_DATA = {
                 if (window.UI && UI.toast) UI.toast((result.success ? '⚔️ 远征成功：' : '🏳️ 远征受挫：') + result.regionName, result.success ? 'gold' : 'bad');
                 if (result.artifactObj) {
                     const got = Artifacts.addToInventory(state, result.artifactObj);
-                    if (got && got.filtered) {
+                    if (got && got.skipped === 'full') {
+                        EventEngine.addLog(state, '🈵 秘宝库存已满，未能带回「' + got.name + '」；先丢弃一件再来。');
+                        if (window.UI && UI.toast) UI.toast('🈵 秘宝库存已满：' + got.name, 'bad');
+                    } else if (got && got.filtered) {
                         EventEngine.addLog(state, '🗑️ 自动丢弃秘宝「' + got.name + '」（命中过滤规则）。');
                         if (window.UI && UI.toast) UI.toast('🗑️ 已按过滤丢弃秘宝：' + got.name);
                     } else {
@@ -9549,7 +9588,7 @@ window.CHANGELOG_DATA = {
         return html;
     }
 
-    function artifactCard(art, slot) {
+    function artifactCard(art, slot, idx, total) {
         let html = '<div class="artifact" data-tip="artifact|' + G.esc(art.id) + '">';
         html += '<div class="an"><span>' + G.esc(art.name) + '</span><span>💠</span></div>';
         const set = window.Artifacts.setByKey ? Artifacts.setByKey(art.set) : null;
@@ -9559,6 +9598,10 @@ window.CHANGELOG_DATA = {
         }
         html += '<div class="btn-row mt6">';
         if (slot === undefined) {
+            html += '<button class="btn tiny" data-act="artmove|' + G.esc(art.id) + '|-1"' +
+                (idx > 0 ? '' : ' disabled') + ' title="向前移动">←</button>';
+            html += '<button class="btn tiny" data-act="artmove|' + G.esc(art.id) + '|1"' +
+                (idx < total - 1 ? '' : ' disabled') + ' title="向后移动">→</button>';
             html += '<button class="btn tiny primary" data-act="equip|' + G.esc(art.id) + '">装备</button>';
             html += '<button class="btn tiny danger" data-act="discard|' + G.esc(art.id) + '">丢弃</button>';
         } else {
@@ -9616,7 +9659,9 @@ window.CHANGELOG_DATA = {
             html += art ? artifactCard(art, i) : '<div class="slot-empty">空置基座</div>';
         }
         html += '</div>';
-        html += '<div class="hint mt6">秘宝库存 ' + s.artifacts.inventory.length + ' / 12（重置时会失去，除非拥有传承「记忆水晶」）</div>';
+        html += '<div class="hint mt6">秘宝库存 ' + s.artifacts.inventory.length + ' / 12' +
+            (s.artifacts.inventory.length >= 12 ? '（已满：新秘宝不会带回，先丢弃一件）' : '') +
+            '（重置时会失去，除非拥有传承「记忆水晶」）</div>';
 
         /* 套装共鸣：装备同一流派 2 件 / 3 件触发，凑套装本身就是一个取舍 */
         if (window.ARTIFACT_SETS && window.Artifacts.setStatus) {
@@ -9636,7 +9681,8 @@ window.CHANGELOG_DATA = {
             }
         }
         if (s.artifacts.inventory.length) {
-            html += '<div class="card-grid wide mt6">' + s.artifacts.inventory.map(a => artifactCard(a)).join('') + '</div>';
+            html += '<div class="card-grid wide mt6">' +
+                s.artifacts.inventory.map((a, i, arr) => artifactCard(a, undefined, i, arr.length)).join('') + '</div>';
         }
 
         /* 区域 */
@@ -10375,6 +10421,9 @@ window.CHANGELOG_DATA = {
                 Panels.artifactFilterModal();
                 break;
             }
+            case 'artmove':
+                Artifacts.move(s, arg1, Number(arg2));
+                break;
             case 'theme':
                 s.settings.theme = s.settings.theme === 'dark' ? 'light' : 'dark';
                 applyTheme();

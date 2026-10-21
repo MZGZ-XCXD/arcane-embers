@@ -54,7 +54,8 @@
             artifact: tier => {
                 const a = Artifacts.generate(state, tier || 3);
                 const got = Artifacts.addToInventory(state, a);
-                if (got && got.filtered) addLog(state, '🗑️ 自动丢弃秘宝「' + got.name + '」（命中过滤规则）。');
+                if (got && got.skipped === 'full') addLog(state, '🈵 秘宝库存已满，未能带回「' + got.name + '」。');
+                else if (got && got.filtered) addLog(state, '🗑️ 自动丢弃秘宝「' + got.name + '」（命中过滤规则）。');
                 return a;
             },
         };

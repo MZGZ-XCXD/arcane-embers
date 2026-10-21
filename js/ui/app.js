@@ -314,6 +314,9 @@
                 Panels.artifactFilterModal();
                 break;
             }
+            case 'artmove':
+                Artifacts.move(s, arg1, Number(arg2));
+                break;
             case 'theme':
                 s.settings.theme = s.settings.theme === 'dark' ? 'light' : 'dark';
                 applyTheme();

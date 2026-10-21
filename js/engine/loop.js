@@ -65,7 +65,10 @@
                 if (window.UI && UI.toast) UI.toast((result.success ? '⚔️ 远征成功：' : '🏳️ 远征受挫：') + result.regionName, result.success ? 'gold' : 'bad');
                 if (result.artifactObj) {
                     const got = Artifacts.addToInventory(state, result.artifactObj);
-                    if (got && got.filtered) {
+                    if (got && got.skipped === 'full') {
+                        EventEngine.addLog(state, '🈵 秘宝库存已满，未能带回「' + got.name + '」；先丢弃一件再来。');
+                        if (window.UI && UI.toast) UI.toast('🈵 秘宝库存已满：' + got.name, 'bad');
+                    } else if (got && got.filtered) {
                         EventEngine.addLog(state, '🗑️ 自动丢弃秘宝「' + got.name + '」（命中过滤规则）。');
                         if (window.UI && UI.toast) UI.toast('🗑️ 已按过滤丢弃秘宝：' + got.name);
                     } else {
