@@ -286,8 +286,10 @@
                 G.toast(SaveEngine.save(s) ? '已保存。' : '保存失败（浏览器限制了本地存储）。', 'gold');
                 break;
             case 'pause':
-                s.paused = !s.paused;
-                G.closeModal();
+                setPaused(!s.paused);
+                break;
+            case 'resume':
+                setPaused(false);
                 break;
             case 'theme':
                 s.settings.theme = s.settings.theme === 'dark' ? 'light' : 'dark';
@@ -454,6 +456,29 @@
         document.body.className = GameState.settings.theme === 'dark' ? 'dark-theme' : 'light-theme';
     }
 
+    /* ---------------- 暂停确认 ---------------- */
+    function pauseModalOpen() {
+        const root = document.getElementById('modal-root');
+        return !!(root && root.querySelector('[data-act="resume"]'));
+    }
+    function showPauseModal() {
+        G.openModal(
+            '<h4>游戏已暂停</h4>' +
+            '<div class="hint">时间已经停止：生产、建造队列与远征都不会推进。' +
+            '回来时点「继续游戏」，或者再按一次空格。</div>' +
+            '<div class="modal-actions">' +
+            '<button class="btn" data-act="closemodal">保持暂停</button>' +
+            '<button class="btn primary" data-act="resume">继续游戏</button>' +
+            '</div>'
+        );
+    }
+    function setPaused(paused) {
+        GameState.paused = !!paused;
+        if (GameState.paused) showPauseModal();
+        else G.closeModal();
+        render(true);
+    }
+
     /* ---------------- 快捷键 ---------------- */
     document.addEventListener('keydown', e => {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -465,7 +490,10 @@
             render();
         }
         if (e.key === ' ') {
-            GameState.paused = !GameState.paused;
+            /* 其他弹窗开着时不要让空格穿透到暂停；暂停确认窗里再按空格 = 继续 */
+            const modalOpen = document.getElementById('modal-root').innerHTML.trim() !== '';
+            if (modalOpen && !pauseModalOpen()) return;
+            setPaused(!GameState.paused);
             e.preventDefault();
         }
         if (e.key === 's' && (e.ctrlKey || e.metaKey)) {

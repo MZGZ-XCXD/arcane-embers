@@ -3173,6 +3173,11 @@ window.CHANGELOG_DATA = {
     "source": "CHANGELOG.md",
     "overview": [
         {
+            "version": "0.10.3",
+            "date": "2026-10-21",
+            "summary": "暂停后弹出确认窗，可直接继续或保持暂停；空格再按一次也能继续"
+        },
+        {
             "version": "0.10.2",
             "date": "2026-10-21",
             "summary": "修复「大型矿脉枢纽」「元素熔炉核心」的加成只显示不生效；修复「元素倾向」有一项加成空转"
@@ -3314,6 +3319,18 @@ window.CHANGELOG_DATA = {
         }
     ],
     "versions": [
+        {
+            "version": "0.10.3",
+            "date": "2026-10-21",
+            "sections": [
+                {
+                    "title": "新增",
+                    "items": [
+                        "点击暂停或按空格暂停后，会弹出暂停确认窗：可以点「继续游戏」马上恢复，也可以点「保持暂停」关掉窗口但保持暂停。暂停状态下再按一次空格同样会继续。"
+                    ]
+                }
+            ]
+        },
         {
             "version": "0.10.2",
             "date": "2026-10-21",
@@ -10053,8 +10070,10 @@ window.CHANGELOG_DATA = {
                 G.toast(SaveEngine.save(s) ? '已保存。' : '保存失败（浏览器限制了本地存储）。', 'gold');
                 break;
             case 'pause':
-                s.paused = !s.paused;
-                G.closeModal();
+                setPaused(!s.paused);
+                break;
+            case 'resume':
+                setPaused(false);
                 break;
             case 'theme':
                 s.settings.theme = s.settings.theme === 'dark' ? 'light' : 'dark';
@@ -10221,6 +10240,29 @@ window.CHANGELOG_DATA = {
         document.body.className = GameState.settings.theme === 'dark' ? 'dark-theme' : 'light-theme';
     }
 
+    /* ---------------- 暂停确认 ---------------- */
+    function pauseModalOpen() {
+        const root = document.getElementById('modal-root');
+        return !!(root && root.querySelector('[data-act="resume"]'));
+    }
+    function showPauseModal() {
+        G.openModal(
+            '<h4>游戏已暂停</h4>' +
+            '<div class="hint">时间已经停止：生产、建造队列与远征都不会推进。' +
+            '回来时点「继续游戏」，或者再按一次空格。</div>' +
+            '<div class="modal-actions">' +
+            '<button class="btn" data-act="closemodal">保持暂停</button>' +
+            '<button class="btn primary" data-act="resume">继续游戏</button>' +
+            '</div>'
+        );
+    }
+    function setPaused(paused) {
+        GameState.paused = !!paused;
+        if (GameState.paused) showPauseModal();
+        else G.closeModal();
+        render(true);
+    }
+
     /* ---------------- 快捷键 ---------------- */
     document.addEventListener('keydown', e => {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -10232,7 +10274,10 @@ window.CHANGELOG_DATA = {
             render();
         }
         if (e.key === ' ') {
-            GameState.paused = !GameState.paused;
+            /* 其他弹窗开着时不要让空格穿透到暂停；暂停确认窗里再按空格 = 继续 */
+            const modalOpen = document.getElementById('modal-root').innerHTML.trim() !== '';
+            if (modalOpen && !pauseModalOpen()) return;
+            setPaused(!GameState.paused);
             e.preventDefault();
         }
         if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
