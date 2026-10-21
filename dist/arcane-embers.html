@@ -3169,6 +3169,11 @@ window.CHANGELOG_DATA = {
     "source": "CHANGELOG.md",
     "overview": [
         {
+            "version": "0.10.1",
+            "date": "2026-10-21",
+            "summary": "新增「军力」浮窗（每种军备建筑提供多少、每座数值与加成、解锁科技）；升级 / 国策里的军备加成改写成「军力 +x%」"
+        },
+        {
             "version": "0.10.0",
             "date": "2026-10-21",
             "summary": "新传承「自动研习」（自动买升级）；「魔力配给」重做；军力不足建议值 40% 时远征成功率归零；修复自动远征从不出发；修复军备建筑的产出加成不生效；建筑浮窗缺料标红；政策点不足时滑杆会退回并提示"
@@ -3300,6 +3305,24 @@ window.CHANGELOG_DATA = {
         }
     ],
     "versions": [
+        {
+            "version": "0.10.1",
+            "date": "2026-10-21",
+            "sections": [
+                {
+                    "title": "新增",
+                    "items": [
+                        "「军力」浮窗：鼠标移到左侧军力（手机点一下）可以看每种军备建筑各提供了多少军力、每座数值与加成、英雄 / 传承的军力倍率，以及解锁它们的科技。"
+                    ]
+                },
+                {
+                    "title": "变更",
+                    "items": [
+                        "作用在军备建筑上的效果文案由「产出 +4%」改为「军力 +4%」，城防修缮、军团操典、尚武风气等不再看起来像没生效。"
+                    ]
+                }
+            ]
+        },
         {
             "version": "0.10.0",
             "date": "2026-10-21",
@@ -7611,7 +7634,11 @@ window.CHANGELOG_DATA = {
             const v = eff[key];
             if (BUILDINGS_CONFIG[key] && typeof v === 'object') {
                 const bits = [];
-                if (typeof v.prod === 'number') bits.push('产出 ' + U.fmtPct(v.prod, 1));
+                /* 军备建筑不产资源，它的 prod 实际加的是军力，照写「产出」会让玩家以为没变 */
+                const bcfg = BUILDINGS_CONFIG[key];
+                const powerOnly = bcfg && bcfg.providesLocal && bcfg.providesLocal.power &&
+                    (!bcfg.produces || Object.keys(bcfg.produces).length === 0);
+                if (typeof v.prod === 'number') bits.push((powerOnly ? '军力 ' : '产出 ') + U.fmtPct(v.prod, 1));
                 if (typeof v.cons === 'number') bits.push('消耗 ' + U.fmtPct(v.cons, 1));
                 if (typeof v.cap === 'number') bits.push('上限 ' + U.fmtPct(v.cap, 1));
                 out.push(key + '：' + bits.join('，'));
@@ -7780,7 +7807,10 @@ window.CHANGELOG_DATA = {
                 html += '<hr>';
                 for (const m of st.modifiers) {
                     const bits = [];
-                    if (m.prod) bits.push('产出 +' + U.fmtPct(m.prod));
+                    const mcfg = BUILDINGS_CONFIG[m.target];
+                    const mPowerOnly = mcfg && mcfg.providesLocal && mcfg.providesLocal.power &&
+                        (!mcfg.produces || Object.keys(mcfg.produces).length === 0);
+                    if (m.prod) bits.push((mPowerOnly ? '军力 +' : '产出 +') + U.fmtPct(m.prod));
                     if (m.cons) bits.push('消耗 +' + U.fmtPct(m.cons));
                     if (m.cap) bits.push('上限 +' + U.fmtPct(m.cap));
                     html += '<div class="kv"><span>' + G.esc(m.target) + '</span><span class="pos">' + bits.join('，') + '</span></div>';
@@ -7843,6 +7873,52 @@ window.CHANGELOG_DATA = {
             }
             html += '<hr><div class="kv"><span>当前产出乘数</span><span class="pos">×' +
                 ProductionEngine.happinessMult(s).toFixed(2) + '</span></div>';
+            return html;
+        }
+
+        /* 军力来源：哪些军备建筑提供了多少，以及军力倍率来自哪里 */
+        if (type === 'power') {
+            const power = s.localResources.power;
+            const e = EffectsManager.get(s);
+            const rows = [], techs = [];
+            let sum = 0;
+            for (const name in s.buildings) {
+                const b = s.buildings[name];
+                const cfg = BUILDINGS_CONFIG[name];
+                if (!b || !b.active || !cfg) continue;
+                const st = ProductionEngine.getBuildingStats(s, name);
+                if (!st || !st.providesLocal || !(st.providesLocal.power > 0)) continue;
+                const per = st.providesLocal.power;          // 已含军力倍率与建筑自身加成
+                const total = per * b.active * b.efficiency;
+                sum += total;
+                rows.push({
+                    name: name, count: b.active, per: per, total: total,
+                    own: (e.buildings[name] && e.buildings[name].prod) || 0,
+                    eff: b.efficiency,
+                });
+                if (cfg.tech && techs.indexOf(cfg.tech) < 0) techs.push(cfg.tech);
+            }
+            rows.sort((a, b) => b.total - a.total);
+            let html = '<h4>军力 ' + U.fmtNum(power.amount) + '</h4>';
+            html += '<div class="dim">军力由军备建筑提供，远征成功率按这个数值判定。' +
+                '建筑自身的升级加成与「尚武风气」已经算进每座提供的军力。</div><hr>';
+            if (!rows.length) {
+                return html + '<div class="dim">还没有军备建筑。研究「城防」并建造「石砌城墙」后，这里会列出每一座来源。</div>';
+            }
+            for (const r of rows.slice(0, 10)) {
+                html += '<div class="kv"><span>' + G.esc(r.name) + ' ×' + Math.round(r.count) +
+                    (r.eff < 0.995 ? '<span class="neg">（效率 ' + U.fmtPct(r.eff, 0) + '）</span>' : '') +
+                    '</span><span>' + U.fmtNum(r.total) + '<span class="dim">（每座 ' + U.fmtNum(r.per) +
+                    (r.own > 0.0005 ? '，加成 +' + U.fmtPct(r.own, 0) : '') + '）</span></span></div>';
+            }
+            if (rows.length > 10) html += '<div class="dim">…共 ' + rows.length + ' 种军备建筑</div>';
+            html += '<hr><div class="kv"><span>建筑提供合计</span><span>' + U.fmtNum(sum) + '</span></div>';
+            const pm = e.powerMult || 0;
+            if (Math.abs(pm) > 1e-9) {
+                html += '<div class="kv"><span>英雄 / 传承军力倍率</span><span class="' + (pm >= 0 ? 'pos' : 'neg') + '">' +
+                    (pm >= 0 ? '+' : '') + U.fmtPct(pm, 0) + '</span></div>';
+            }
+            if (techs.length) html += '<div class="kv"><span>解锁科技</span><span>' + techs.map(G.esc).join('、') + '</span></div>';
             return html;
         }
 
@@ -8103,7 +8179,7 @@ window.CHANGELOG_DATA = {
             html += '<div class="pop-line" data-tip="happy" style="cursor:help"><span>民望</span><span class="value"><span id="pop-happy"></span> <small id="pop-mult"></small></span></div>';
             html += G.bar(0, 'good').replace('class="bar good"', 'class="bar good" id="happy-bar"');
             html += '<div class="stat-grid">';
-            html += '<div>军力 <b id="pop-power"></b></div>';
+            html += '<div data-tip="power" style="cursor:help">军力 <b id="pop-power"></b></div>';
             html += '<div>建筑 <b id="pop-buildings"></b></div>';
             html += '<div>时代 <b id="pop-era"></b></div>';
             html += '<div>遗迹 <b id="pop-expeditions"></b></div>';

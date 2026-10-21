@@ -260,7 +260,11 @@
             const v = eff[key];
             if (BUILDINGS_CONFIG[key] && typeof v === 'object') {
                 const bits = [];
-                if (typeof v.prod === 'number') bits.push('产出 ' + U.fmtPct(v.prod, 1));
+                /* 军备建筑不产资源，它的 prod 实际加的是军力，照写「产出」会让玩家以为没变 */
+                const bcfg = BUILDINGS_CONFIG[key];
+                const powerOnly = bcfg && bcfg.providesLocal && bcfg.providesLocal.power &&
+                    (!bcfg.produces || Object.keys(bcfg.produces).length === 0);
+                if (typeof v.prod === 'number') bits.push((powerOnly ? '军力 ' : '产出 ') + U.fmtPct(v.prod, 1));
                 if (typeof v.cons === 'number') bits.push('消耗 ' + U.fmtPct(v.cons, 1));
                 if (typeof v.cap === 'number') bits.push('上限 ' + U.fmtPct(v.cap, 1));
                 out.push(key + '：' + bits.join('，'));

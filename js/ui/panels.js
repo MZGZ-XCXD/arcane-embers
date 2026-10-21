@@ -107,7 +107,10 @@
                 html += '<hr>';
                 for (const m of st.modifiers) {
                     const bits = [];
-                    if (m.prod) bits.push('产出 +' + U.fmtPct(m.prod));
+                    const mcfg = BUILDINGS_CONFIG[m.target];
+                    const mPowerOnly = mcfg && mcfg.providesLocal && mcfg.providesLocal.power &&
+                        (!mcfg.produces || Object.keys(mcfg.produces).length === 0);
+                    if (m.prod) bits.push((mPowerOnly ? '军力 +' : '产出 +') + U.fmtPct(m.prod));
                     if (m.cons) bits.push('消耗 +' + U.fmtPct(m.cons));
                     if (m.cap) bits.push('上限 +' + U.fmtPct(m.cap));
                     html += '<div class="kv"><span>' + G.esc(m.target) + '</span><span class="pos">' + bits.join('，') + '</span></div>';
@@ -170,6 +173,52 @@
             }
             html += '<hr><div class="kv"><span>当前产出乘数</span><span class="pos">×' +
                 ProductionEngine.happinessMult(s).toFixed(2) + '</span></div>';
+            return html;
+        }
+
+        /* 军力来源：哪些军备建筑提供了多少，以及军力倍率来自哪里 */
+        if (type === 'power') {
+            const power = s.localResources.power;
+            const e = EffectsManager.get(s);
+            const rows = [], techs = [];
+            let sum = 0;
+            for (const name in s.buildings) {
+                const b = s.buildings[name];
+                const cfg = BUILDINGS_CONFIG[name];
+                if (!b || !b.active || !cfg) continue;
+                const st = ProductionEngine.getBuildingStats(s, name);
+                if (!st || !st.providesLocal || !(st.providesLocal.power > 0)) continue;
+                const per = st.providesLocal.power;          // 已含军力倍率与建筑自身加成
+                const total = per * b.active * b.efficiency;
+                sum += total;
+                rows.push({
+                    name: name, count: b.active, per: per, total: total,
+                    own: (e.buildings[name] && e.buildings[name].prod) || 0,
+                    eff: b.efficiency,
+                });
+                if (cfg.tech && techs.indexOf(cfg.tech) < 0) techs.push(cfg.tech);
+            }
+            rows.sort((a, b) => b.total - a.total);
+            let html = '<h4>军力 ' + U.fmtNum(power.amount) + '</h4>';
+            html += '<div class="dim">军力由军备建筑提供，远征成功率按这个数值判定。' +
+                '建筑自身的升级加成与「尚武风气」已经算进每座提供的军力。</div><hr>';
+            if (!rows.length) {
+                return html + '<div class="dim">还没有军备建筑。研究「城防」并建造「石砌城墙」后，这里会列出每一座来源。</div>';
+            }
+            for (const r of rows.slice(0, 10)) {
+                html += '<div class="kv"><span>' + G.esc(r.name) + ' ×' + Math.round(r.count) +
+                    (r.eff < 0.995 ? '<span class="neg">（效率 ' + U.fmtPct(r.eff, 0) + '）</span>' : '') +
+                    '</span><span>' + U.fmtNum(r.total) + '<span class="dim">（每座 ' + U.fmtNum(r.per) +
+                    (r.own > 0.0005 ? '，加成 +' + U.fmtPct(r.own, 0) : '') + '）</span></span></div>';
+            }
+            if (rows.length > 10) html += '<div class="dim">…共 ' + rows.length + ' 种军备建筑</div>';
+            html += '<hr><div class="kv"><span>建筑提供合计</span><span>' + U.fmtNum(sum) + '</span></div>';
+            const pm = e.powerMult || 0;
+            if (Math.abs(pm) > 1e-9) {
+                html += '<div class="kv"><span>英雄 / 传承军力倍率</span><span class="' + (pm >= 0 ? 'pos' : 'neg') + '">' +
+                    (pm >= 0 ? '+' : '') + U.fmtPct(pm, 0) + '</span></div>';
+            }
+            if (techs.length) html += '<div class="kv"><span>解锁科技</span><span>' + techs.map(G.esc).join('、') + '</span></div>';
             return html;
         }
 
@@ -430,7 +479,7 @@
             html += '<div class="pop-line" data-tip="happy" style="cursor:help"><span>民望</span><span class="value"><span id="pop-happy"></span> <small id="pop-mult"></small></span></div>';
             html += G.bar(0, 'good').replace('class="bar good"', 'class="bar good" id="happy-bar"');
             html += '<div class="stat-grid">';
-            html += '<div>军力 <b id="pop-power"></b></div>';
+            html += '<div data-tip="power" style="cursor:help">军力 <b id="pop-power"></b></div>';
             html += '<div>建筑 <b id="pop-buildings"></b></div>';
             html += '<div>时代 <b id="pop-era"></b></div>';
             html += '<div>遗迹 <b id="pop-expeditions"></b></div>';
