@@ -113,7 +113,8 @@
                     if (m.prod) bits.push((mPowerOnly ? '军力 +' : '产出 +') + U.fmtPct(m.prod));
                     if (m.cons) bits.push('消耗 +' + U.fmtPct(m.cons));
                     if (m.cap) bits.push('上限 +' + U.fmtPct(m.cap));
-                    html += '<div class="kv"><span>' + G.esc(m.target) + '</span><span class="pos">' + bits.join('，') + '</span></div>';
+                    html += '<div class="kv"><span>每座 → ' + G.esc(m.target) + '</span><span class="pos">' + bits.join('，') +
+                        '（递减叠加，合计最多 +100%）</span></div>';
                 }
             }
             html += '<hr><div class="dim">点击卡片任意处 = 建造 ×1；名称旁出现「受限」标记时，说明它当前没有满效率运转。</div>';

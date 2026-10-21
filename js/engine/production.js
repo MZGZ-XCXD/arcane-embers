@@ -104,10 +104,36 @@
         return Utils.clamp(1 + (raw * 100 - 100) / HAPPINESS_PER_STEP, 0.1, 50);
     }
 
+    /* 支持型建筑的 modifiers：「大型矿脉枢纽」「元素熔炉核心」给指定建筑加产出 / 消耗 / 上限。
+       每座支持建筑按自己的启用数量与效率提供一份加成，叠加到目标建筑的倍率上。
+       （以前这些 modifiers 只在浮窗里显示，生产引擎从来没读过，等于整座建筑白建。） */
+    function modifierBoosts(state) {
+        const out = {};
+        for (const src in state.buildings) {
+            const b = state.buildings[src];
+            if (!b.active) continue;
+            const cfg = BUILDINGS_CONFIG[src];
+            if (!cfg || !cfg.modifiers || !cfg.modifiers.length) continue;
+            /* 递减叠加：每多一座只填掉剩余差距的一部分，合计永远不超过 +100%。
+               10 座「+25%/座」是 +94%，20 座是 +99.7%，不会像线性叠加那样爆到 +500%。 */
+            const n = b.active * (typeof b.efficiency === 'number' ? b.efficiency : 1);
+            const dim = per => per > 0 ? 1 - Math.pow(1 - Math.min(0.95, per), n) : per * n;
+            for (const m of cfg.modifiers) {
+                if (!m || !m.target) continue;
+                const o = out[m.target] || (out[m.target] = { prod: 0, cons: 0, cap: 0 });
+                if (typeof m.prod === 'number') o.prod += dim(m.prod);
+                if (typeof m.cons === 'number') o.cons += dim(m.cons);
+                if (typeof m.cap === 'number') o.cap += dim(m.cap);
+            }
+        }
+        return out;
+    }
+
     function computeProductionAndCaps(state) {
         const e = EffectsManager.refreshAllEffects(state);
         const perfectPop = !!e.specials.perfectEfficiency;
         const happyMult = happinessMult(state);
+        const boosts = modifierBoosts(state);
 
         /* ---------- 1. 收集建筑理论数据 ---------- */
         const raw = {};
@@ -117,7 +143,13 @@
             const baseCfg = BUILDINGS_CONFIG[name];
             if (!baseCfg) continue;
             const cfg = activeConfig(baseCfg, b);
-            const mult = EffectsManager.buildingMultipliers(state, name);
+            const baseMult = EffectsManager.buildingMultipliers(state, name);
+            const boost = boosts[name] || { prod: 0, cons: 0, cap: 0 };
+            const mult = {
+                prod: baseMult.prod + boost.prod,
+                cons: baseMult.cons + boost.cons,
+                cap: baseMult.cap + boost.cap,
+            };
 
             const prod = {};
             const baseProd = resolve(cfg.produces, state);
@@ -414,7 +446,13 @@
         const b = state.buildings[name];
         if (!cfg || !b) return null;
         const active = activeConfig(cfg, b);
-        const mult = EffectsManager.buildingMultipliers(state, name);
+        const baseMult = EffectsManager.buildingMultipliers(state, name);
+        const boost = modifierBoosts(state)[name] || { prod: 0, cons: 0, cap: 0 };
+        const mult = {
+            prod: baseMult.prod + boost.prod,
+            cons: baseMult.cons + boost.cons,
+            cap: baseMult.cap + boost.cap,
+        };
         const happyMult = happinessMult(state);
         const eff = b.active ? b.efficiency : 1;
         const prod = [], cons = [], caps = [];
