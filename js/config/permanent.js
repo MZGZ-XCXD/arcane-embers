@@ -75,7 +75,11 @@
     });
     P('自动远征', {
         tree: 'relic', cost: 90, req: '自动符文', max: 1, techReq: '城防', special: 'autoExpedition',
-        desc: '远征队学会自己出发。上一支队伍归来后会立刻前往同区域。',
+        desc: '远征队学会自己出发。上一支队伍归来后会立刻前往同区域；没有记录时从最高层往下找能打的。成功率低于 35% 或物资不足时不会派队。',
+    });
+    P('自动研习', {
+        tree: 'relic', cost: 70, req: '自动符文', max: 1, special: 'autoUpgrade',
+        desc: '书记官替你翻书：自动购买当前买得起、最便宜的可重复升级（可在设置中关闭）。和自动建造共用建造队列。',
     });
     P('时之匙', {
         tree: 'relic', cost: 35, costG: 2.4, max: 3, eff: { speed: 0.06 },

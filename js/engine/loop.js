@@ -108,6 +108,7 @@
                 autoBuildAcc = 0;
                 Actions.autoBuildStep(state);
                 Actions.autoExpeditionStep(state);
+                Actions.autoUpgradeStep(state);
             }
             autosaveAcc += dtReal;
             if (autosaveAcc >= 25 && state.settings.autosave) {

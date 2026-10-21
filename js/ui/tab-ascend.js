@@ -32,6 +32,7 @@
         if (lines.length) {
             html += '<div class="card-stats mt6">' + lines.map(e => '<div class="row"><span class="k">效果</span><span class="v">' + G.esc(e) + '</span></div>').join('') + '</div>';
         }
+        if (points <= 0) html += '<div class="hint neg mt6">政策点不足：拖动滑杆不会生效，先让「奥术议院」产出政策点。</div>';
         html += '</div>';
         return html;
     }

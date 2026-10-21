@@ -44,6 +44,18 @@
         return !!(cfg && cfg.freeFirst && !count);
     }
 
+    /* 本地资源（军力 / 人口）的提供倍率。
+       军备类建筑没有资源产出，国策与升级写在它们身上的 { prod } 只能落在「提供的军力」上，
+       否则尚武风气、城防修缮这类加成会静默失效。人口仍然只受 populationCap 影响。 */
+    function localProvideMultiplier(state, name, lr, e) {
+        if (lr === 'population') return 1 + (e.populationCap || 0);
+        if (lr === 'power') {
+            const b = (e.buildings || {})[name];
+            return (1 + (e.powerMult || 0)) * (1 + ((b && b.prod) || 0));
+        }
+        return 1;
+    }
+
     function buildingPrice(state, name) {
         const cfg = BUILDINGS_CONFIG[name];
         const b = state.buildings[name];
@@ -216,11 +228,8 @@
                 state.resources[k].cap += r.caps[k] * r.active * mult;
             }
             for (const lr in r.providesLocal) {
-                const v = r.providesLocal[lr] * effActive;
-                let mult = 1;
-                if (lr === 'population') mult = 1 + (e.populationCap || 0);
-                else if (lr === 'power') mult = 1 + (e.powerMult || 0);
-                state.localResources[lr].capacity += v * mult;
+                state.localResources[lr].capacity +=
+                    r.providesLocal[lr] * effActive * localProvideMultiplier(state, name, lr, e);
             }
             for (const lr in r.requiresLocal) {
                 state.localResources[lr].used += r.requiresLocal[lr] * effActive;
@@ -421,10 +430,15 @@
         }
         const baseCaps = resolve(active.caps, state);
         for (const r in baseCaps) caps.push({ res: r, per: baseCaps[r] * mult.cap, total: baseCaps[r] * mult.cap * b.active });
+        /* 悬浮提示里的「提供军力」要和生产结算用同一个倍率 */
+        const e = EffectsManager.get(state);
+        const provided = {};
+        const baseProvided = resolve(active.providesLocal, state);
+        for (const lr in baseProvided) provided[lr] = baseProvided[lr] * localProvideMultiplier(state, name, lr, e);
         return {
             prod: prod, cons: cons, caps: caps,
             efficiency: eff,
-            providesLocal: resolve(active.providesLocal, state),
+            providesLocal: provided,
             requiresLocal: cfg.pop ? { population: cfg.pop } : {},
             happiness: active.happiness || 0,
             modifiers: active.modifiers || [],

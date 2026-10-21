@@ -351,18 +351,50 @@
         return QueueEngine.enqueue(state, 'building', best, 1, { queueIfUnaffordable: false });
     }
 
+    /* 自动买升级：和自动建造共用建造队列，买得起才会下单 */
+    function autoUpgradeStep(state) {
+        if (!state.settings.autoUpgrade) return null;
+        if (!EffectsManager.hasSpecial(state, 'autoUpgrade')) return null;
+        if (QueueEngine.isFull(state)) return null;
+        let best = null, bestPrice = null;
+        for (const name in state.upgrades) {
+            const u = state.upgrades[name];
+            const cfg = UPGRADES_CONFIG[name];
+            if (!u || !cfg || !u.visible) continue;
+            if (u.level >= cfg.cap) continue;                       // 满级的不再浪费材料
+            const price = ProductionEngine.upgradePrice(state, name);
+            if (!ResourcesManager.canAfford(price)) continue;
+            let total = 0;
+            for (const k in price) total += price[k] / Math.max(1e-9, state.resources[k].cap);
+            if (!best || total < bestPrice) { best = name; bestPrice = total; }
+        }
+        if (!best) return null;
+        return QueueEngine.enqueue(state, 'upgrade', best, 1, { queueIfUnaffordable: false });
+    }
+
+    /* 自动远征：优先重复上一片区域；没有历史时从最高层往下找能打的。
+       成功率低于 35% 的不派队 —— 免得自动系统把物资全送进必败的远征。 */
+    const AUTO_EXP_MIN_CHANCE = 0.35;
     function autoExpeditionStep(state) {
         if (!state.settings.autoExpedition) return null;
         if (!EffectsManager.hasSpecial(state, 'autoExpedition')) return null;
-        if (state.expedition.active) return null;
+        if (ExpeditionEngine.activeCount(state) >= ExpeditionEngine.maxParties(state)) return null;
+
+        const order = [];
         const last = state.expedition.history[0];
-        const order = last ? last.region : null;
-        const regions = EXPEDITIONS_CONFIG.slice().reverse();
-        for (const r of regions) {
-            if (!order || r.name !== order) continue;
-            const check = ExpeditionEngine.canStart(state, r);
-            if (check.ok) return startExpedition(state, r.name);
-            return null;
+        if (last && ExpeditionEngine.findRegion(last.region)) order.push(last.region);
+        for (let i = EXPEDITIONS_CONFIG.length - 1; i >= 0; i--) {
+            const name = EXPEDITIONS_CONFIG[i].name;
+            if (order.indexOf(name) < 0) order.push(name);
+        }
+
+        for (const name of order) {
+            const region = ExpeditionEngine.findRegion(name);
+            if (!region) continue;
+            const check = ExpeditionEngine.canStart(state, region);
+            if (!check.ok) continue;
+            if (ExpeditionEngine.successChance(state, region) < AUTO_EXP_MIN_CHANCE) continue;
+            return startExpedition(state, name);
         }
         return null;
     }
@@ -379,5 +411,6 @@
         toggleChallenge, activeStars, relicGain, starGain, coreGain, resetAvailability,
         ashGain,
         prestige, performReset, autoBuildStep, autoExpeditionStep, startExpedition,
+        autoUpgradeStep, AUTO_EXP_MIN_CHANCE,
     };
 })();

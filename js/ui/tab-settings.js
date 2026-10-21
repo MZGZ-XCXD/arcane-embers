@@ -57,8 +57,14 @@
         html += autoRow({
             special: 'autoExpedition', setting: 'autoExpedition', act: 'toggleAutoExp',
             name: '自动远征',
-            desc: '上一支队伍归来后立刻前往同一区域',
+            desc: '上一支队伍归来后立刻前往同一区域，成功率低于 35% 不派队',
             how: '先在「传承 → 奥术遗物」里买「自动符文」，再买「自动远征」',
+        });
+        html += autoRow({
+            special: 'autoUpgrade', setting: 'autoUpgrade', act: 'toggleAutoUpgrade',
+            name: '自动研习（自动买升级）',
+            desc: '买得起就升，优先最便宜的可重复升级',
+            how: '先在「传承 → 奥术遗物」里买「自动符文」，再买「自动研习」',
         });
         html += '</div>';
         html += '<div class="hint mt6">离线收益上限 ' + (2 + EffectsManager.additive(s, 'offlineHours')) + ' 小时（' +

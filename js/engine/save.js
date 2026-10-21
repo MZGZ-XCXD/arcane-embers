@@ -182,6 +182,7 @@
         if (!Array.isArray(state.plots.claimed)) state.plots.claimed = [];
         if (window.Plots) state.plots.claimed = state.plots.claimed.filter(id => !!Plots.byId(id));
         if (!state.settings) state.settings = { theme: 'dark', autosave: true, autoBuild: true, autoExpedition: true, buyAmount: 1 };
+        if (state.settings.autoUpgrade === undefined) state.settings.autoUpgrade = true;
         if (!state.market) state.market = { resources: {}, heat: {}, volume: 0, trades: 0 };
         for (const k in RESOURCES_CONFIG) {
             if (!RESOURCES_CONFIG[k].prestige && !state.market.resources[k]) state.market.resources[k] = { mode: 'off', level: 1 };

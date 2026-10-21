@@ -323,6 +323,9 @@
             case 'toggleAutoExp':
                 s.settings.autoExpedition = !s.settings.autoExpedition;
                 break;
+            case 'toggleAutoUpgrade':
+                s.settings.autoUpgrade = !s.settings.autoUpgrade;
+                break;
             default:
                 break;
         }
@@ -420,7 +423,16 @@
         }
         if (node.hasAttribute && node.hasAttribute('data-policy')) {
             const name = node.getAttribute('data-policy');
-            Actions.setPolicy(GameState, name, Number(node.value));
+            const r = Actions.setPolicy(GameState, name, Number(node.value));
+            if (!r.ok) {
+                /* 政策点不够时滑杆会停在拖动后的位置，看起来像「拉了没用」：
+                   退回真实值并把原因提示出来。 */
+                const real = GameState.policies[name].value;
+                node.value = real;
+                const label = document.getElementById('policy-val-' + name);
+                if (label) label.textContent = real + (POLICIES_CONFIG[name].unit || '');
+                if (r.msg) G.toast(r.msg, 'bad');
+            }
             computeRefresh();
             return;
         }

@@ -38,10 +38,17 @@
         return Math.max(1, Math.round(days));
     }
 
+    /* 军力低于建议值的这个比例时，成功率直接为 0：低级队伍进高等级遗迹打不过。 */
+    const MIN_POWER_RATIO = 0.4;
+
     function successChance(state, region) {
         const power = state.localResources.power.amount * (1 + EffectsManager.additive(state, 'expeditionPower'));
         const ratio = power / Math.max(1, region.power);
-        return Utils.clamp(0.25 + 0.45 * Math.log10(1 + ratio * 3), 0.05, 0.98);
+        if (!isFinite(ratio) || ratio <= MIN_POWER_RATIO) return 0;
+        /* 0.4 ~ 0.8 倍建议军力之间线性爬升，达到 0.8 倍后沿用原来的曲线 */
+        const gate = Utils.clamp((ratio - MIN_POWER_RATIO) / 0.4, 0, 1);
+        const base = 0.25 + 0.45 * Math.log10(1 + ratio * 3);
+        return Utils.clamp(base * gate, 0, 0.98);
     }
 
     function canStart(state, region) {
@@ -165,5 +172,6 @@
     window.ExpeditionEngine = {
         findRegion, successChance, canStart, start, progress, remaining, finish,
         parties, activeCount, maxParties, durationOf, masteryCut, masteredClears,
+        MIN_POWER_RATIO,
     };
 })();

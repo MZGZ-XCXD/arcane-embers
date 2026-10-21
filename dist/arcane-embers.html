@@ -718,6 +718,8 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 .tooltip .kv { display: flex; justify-content: space-between; gap: 12px; }
 .tooltip .kv span { min-width: 0; }
 .tooltip .kv span:last-child { font-variant-numeric: tabular-nums; }
+/* 建筑浮窗里的「造价 / 材料」：不够的那一项标红（与卡片上的 .price 同一套语义） */
+.tooltip .lack { color: var(--bad); font-weight: 600; }
 .tooltip hr { border: none; border-top: 1px solid var(--border); margin: 5px 0; }
 .tooltip .dim { color: var(--text-dim); }
 
@@ -1921,14 +1923,20 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
 
     P('魔力配给', {
         tech: '魔网学', min: -30, max: 50, def: 0, cost: 2,
-        desc: '把魔力优先供给生产还是节约储备。正值提速但增加魔力消耗。',
+        desc: '把魔力优先供给研究还是节约储备。正值：研究建筑与魔法建筑加速，但消耗更多魔力与燃料；负值：压低消耗，研究与魔法建筑减产。',
         get: v => ({
-            魔力井: { prod: v * 0.012 },
-            魔网节点: { prod: v * 0.012, cons: v * 0.02 },
-            火之祭坛: { prod: v * 0.012, cons: v * 0.02 },
-            水之祭坛: { prod: v * 0.012, cons: v * 0.02 },
-            土之祭坛: { prod: v * 0.012, cons: v * 0.02 },
-            星辰塔: { prod: v * 0.01, cons: v * 0.02 },
+            /* 旧版只加「魔力产量」：魔力几乎总是满仓，多出来的产量直接被上限吃掉，
+               cons 又只加在耗魔建筑上 —— 拉满反而纯亏。现在把配给真正接到研究产出上，
+               并给负值一个明确用途（省魔力换减产）。 */
+            魔力井: { prod: v * 0.006 },
+            魔网节点: { prod: v * 0.008, cons: v * 0.008 },
+            火之祭坛: { prod: v * 0.006, cons: v * 0.008 },
+            水之祭坛: { prod: v * 0.006, cons: v * 0.008 },
+            土之祭坛: { prod: v * 0.006, cons: v * 0.008 },
+            星辰塔: { prod: v * 0.005, cons: v * 0.006 },
+            咒法学院: { prod: v * 0.006, cons: v * 0.006 },
+            大图书馆: { prod: v * 0.006, cons: v * 0.006 },
+            秘法实验室: { prod: v * 0.004, cons: v * 0.004 },
         }),
     });
 
@@ -2058,7 +2066,11 @@ input[type=range] { flex: 1 1 auto; accent-color: var(--accent); cursor: pointer
     });
     P('自动远征', {
         tree: 'relic', cost: 90, req: '自动符文', max: 1, techReq: '城防', special: 'autoExpedition',
-        desc: '远征队学会自己出发。上一支队伍归来后会立刻前往同区域。',
+        desc: '远征队学会自己出发。上一支队伍归来后会立刻前往同区域；没有记录时从最高层往下找能打的。成功率低于 35% 或物资不足时不会派队。',
+    });
+    P('自动研习', {
+        tree: 'relic', cost: 70, req: '自动符文', max: 1, special: 'autoUpgrade',
+        desc: '书记官替你翻书：自动购买当前买得起、最便宜的可重复升级（可在设置中关闭）。和自动建造共用建造队列。',
     });
     P('时之匙', {
         tree: 'relic', cost: 35, costG: 2.4, max: 3, eff: { speed: 0.06 },
@@ -3157,6 +3169,11 @@ window.CHANGELOG_DATA = {
     "source": "CHANGELOG.md",
     "overview": [
         {
+            "version": "0.10.0",
+            "date": "2026-10-21",
+            "summary": "新传承「自动研习」（自动买升级）；「魔力配给」重做；军力不足建议值 40% 时远征成功率归零；修复自动远征从不出发；修复军备建筑的产出加成不生效；建筑浮窗缺料标红；政策点不足时滑杆会退回并提示"
+        },
+        {
             "version": "0.9.0",
             "date": "2026-10-16",
             "summary": "新系统「领地」（开拓后永久保留）；时代 7 星渊 / 时代 8 归墟（12 科技 + 11 建筑）；第四层重置「万象归墟」与新传承资源归墟之烬；12 项新传承；成本增长率整体上调"
@@ -3283,6 +3300,34 @@ window.CHANGELOG_DATA = {
         }
     ],
     "versions": [
+        {
+            "version": "0.10.0",
+            "date": "2026-10-21",
+            "sections": [
+                {
+                    "title": "新增",
+                    "items": [
+                        "新传承「自动研习」：自动购买当前买得起、最便宜的可重复升级，设置里可以关闭。与自动建造共用建造队列。"
+                    ]
+                },
+                {
+                    "title": "变更",
+                    "items": [
+                        "「魔力配给」重做：不再只增加魔力产量。正值提高研究建筑与魔法建筑的产出，代价是更多魔力与燃料消耗；负值压低消耗，但产出降低。",
+                        "高等级远征在军力不足建议值 40% 时成功率为 0%，不会再出现「必败也能赢得奖励」的判定。"
+                    ]
+                },
+                {
+                    "title": "修复",
+                    "items": [
+                        "修复自动远征永远不出发的问题，现在队伍回来后会自动再次启程。",
+                        "修复军备建筑的「产出」加成不生效：国策「尚武风气」、升级「城防修缮」「军团操典」现在会真正提高军力。",
+                        "建筑浮窗「造价」里缺少的材料会标红。",
+                        "政策点不足时滑杆会退回真实值并提示，不再看起来像「拉了没反应」。"
+                    ]
+                }
+            ]
+        },
         {
             "version": "0.9.0",
             "date": "2026-10-16",
@@ -3961,6 +4006,7 @@ window.CHANGELOG_DATA = {
             autoBuild: true,
             autoBuildKeep: 0,
             autoExpedition: true,
+            autoUpgrade: true,
             buyAmount: 1,
         };
     }
@@ -4392,6 +4438,18 @@ window.CHANGELOG_DATA = {
         return !!(cfg && cfg.freeFirst && !count);
     }
 
+    /* 本地资源（军力 / 人口）的提供倍率。
+       军备类建筑没有资源产出，国策与升级写在它们身上的 { prod } 只能落在「提供的军力」上，
+       否则尚武风气、城防修缮这类加成会静默失效。人口仍然只受 populationCap 影响。 */
+    function localProvideMultiplier(state, name, lr, e) {
+        if (lr === 'population') return 1 + (e.populationCap || 0);
+        if (lr === 'power') {
+            const b = (e.buildings || {})[name];
+            return (1 + (e.powerMult || 0)) * (1 + ((b && b.prod) || 0));
+        }
+        return 1;
+    }
+
     function buildingPrice(state, name) {
         const cfg = BUILDINGS_CONFIG[name];
         const b = state.buildings[name];
@@ -4564,11 +4622,8 @@ window.CHANGELOG_DATA = {
                 state.resources[k].cap += r.caps[k] * r.active * mult;
             }
             for (const lr in r.providesLocal) {
-                const v = r.providesLocal[lr] * effActive;
-                let mult = 1;
-                if (lr === 'population') mult = 1 + (e.populationCap || 0);
-                else if (lr === 'power') mult = 1 + (e.powerMult || 0);
-                state.localResources[lr].capacity += v * mult;
+                state.localResources[lr].capacity +=
+                    r.providesLocal[lr] * effActive * localProvideMultiplier(state, name, lr, e);
             }
             for (const lr in r.requiresLocal) {
                 state.localResources[lr].used += r.requiresLocal[lr] * effActive;
@@ -4769,10 +4824,15 @@ window.CHANGELOG_DATA = {
         }
         const baseCaps = resolve(active.caps, state);
         for (const r in baseCaps) caps.push({ res: r, per: baseCaps[r] * mult.cap, total: baseCaps[r] * mult.cap * b.active });
+        /* 悬浮提示里的「提供军力」要和生产结算用同一个倍率 */
+        const e = EffectsManager.get(state);
+        const provided = {};
+        const baseProvided = resolve(active.providesLocal, state);
+        for (const lr in baseProvided) provided[lr] = baseProvided[lr] * localProvideMultiplier(state, name, lr, e);
         return {
             prod: prod, cons: cons, caps: caps,
             efficiency: eff,
-            providesLocal: resolve(active.providesLocal, state),
+            providesLocal: provided,
             requiresLocal: cfg.pop ? { population: cfg.pop } : {},
             happiness: active.happiness || 0,
             modifiers: active.modifiers || [],
@@ -6073,10 +6133,17 @@ window.CHANGELOG_DATA = {
         return Math.max(1, Math.round(days));
     }
 
+    /* 军力低于建议值的这个比例时，成功率直接为 0：低级队伍进高等级遗迹打不过。 */
+    const MIN_POWER_RATIO = 0.4;
+
     function successChance(state, region) {
         const power = state.localResources.power.amount * (1 + EffectsManager.additive(state, 'expeditionPower'));
         const ratio = power / Math.max(1, region.power);
-        return Utils.clamp(0.25 + 0.45 * Math.log10(1 + ratio * 3), 0.05, 0.98);
+        if (!isFinite(ratio) || ratio <= MIN_POWER_RATIO) return 0;
+        /* 0.4 ~ 0.8 倍建议军力之间线性爬升，达到 0.8 倍后沿用原来的曲线 */
+        const gate = Utils.clamp((ratio - MIN_POWER_RATIO) / 0.4, 0, 1);
+        const base = 0.25 + 0.45 * Math.log10(1 + ratio * 3);
+        return Utils.clamp(base * gate, 0, 0.98);
     }
 
     function canStart(state, region) {
@@ -6200,6 +6267,7 @@ window.CHANGELOG_DATA = {
     window.ExpeditionEngine = {
         findRegion, successChance, canStart, start, progress, remaining, finish,
         parties, activeCount, maxParties, durationOf, masteryCut, masteredClears,
+        MIN_POWER_RATIO,
     };
 })();
 
@@ -6779,18 +6847,50 @@ window.CHANGELOG_DATA = {
         return QueueEngine.enqueue(state, 'building', best, 1, { queueIfUnaffordable: false });
     }
 
+    /* 自动买升级：和自动建造共用建造队列，买得起才会下单 */
+    function autoUpgradeStep(state) {
+        if (!state.settings.autoUpgrade) return null;
+        if (!EffectsManager.hasSpecial(state, 'autoUpgrade')) return null;
+        if (QueueEngine.isFull(state)) return null;
+        let best = null, bestPrice = null;
+        for (const name in state.upgrades) {
+            const u = state.upgrades[name];
+            const cfg = UPGRADES_CONFIG[name];
+            if (!u || !cfg || !u.visible) continue;
+            if (u.level >= cfg.cap) continue;                       // 满级的不再浪费材料
+            const price = ProductionEngine.upgradePrice(state, name);
+            if (!ResourcesManager.canAfford(price)) continue;
+            let total = 0;
+            for (const k in price) total += price[k] / Math.max(1e-9, state.resources[k].cap);
+            if (!best || total < bestPrice) { best = name; bestPrice = total; }
+        }
+        if (!best) return null;
+        return QueueEngine.enqueue(state, 'upgrade', best, 1, { queueIfUnaffordable: false });
+    }
+
+    /* 自动远征：优先重复上一片区域；没有历史时从最高层往下找能打的。
+       成功率低于 35% 的不派队 —— 免得自动系统把物资全送进必败的远征。 */
+    const AUTO_EXP_MIN_CHANCE = 0.35;
     function autoExpeditionStep(state) {
         if (!state.settings.autoExpedition) return null;
         if (!EffectsManager.hasSpecial(state, 'autoExpedition')) return null;
-        if (state.expedition.active) return null;
+        if (ExpeditionEngine.activeCount(state) >= ExpeditionEngine.maxParties(state)) return null;
+
+        const order = [];
         const last = state.expedition.history[0];
-        const order = last ? last.region : null;
-        const regions = EXPEDITIONS_CONFIG.slice().reverse();
-        for (const r of regions) {
-            if (!order || r.name !== order) continue;
-            const check = ExpeditionEngine.canStart(state, r);
-            if (check.ok) return startExpedition(state, r.name);
-            return null;
+        if (last && ExpeditionEngine.findRegion(last.region)) order.push(last.region);
+        for (let i = EXPEDITIONS_CONFIG.length - 1; i >= 0; i--) {
+            const name = EXPEDITIONS_CONFIG[i].name;
+            if (order.indexOf(name) < 0) order.push(name);
+        }
+
+        for (const name of order) {
+            const region = ExpeditionEngine.findRegion(name);
+            if (!region) continue;
+            const check = ExpeditionEngine.canStart(state, region);
+            if (!check.ok) continue;
+            if (ExpeditionEngine.successChance(state, region) < AUTO_EXP_MIN_CHANCE) continue;
+            return startExpedition(state, name);
         }
         return null;
     }
@@ -6807,6 +6907,7 @@ window.CHANGELOG_DATA = {
         toggleChallenge, activeStars, relicGain, starGain, coreGain, resetAvailability,
         ashGain,
         prestige, performReset, autoBuildStep, autoExpeditionStep, startExpedition,
+        autoUpgradeStep, AUTO_EXP_MIN_CHANCE,
     };
 })();
 
@@ -6997,6 +7098,7 @@ window.CHANGELOG_DATA = {
         if (!Array.isArray(state.plots.claimed)) state.plots.claimed = [];
         if (window.Plots) state.plots.claimed = state.plots.claimed.filter(id => !!Plots.byId(id));
         if (!state.settings) state.settings = { theme: 'dark', autosave: true, autoBuild: true, autoExpedition: true, buyAmount: 1 };
+        if (state.settings.autoUpgrade === undefined) state.settings.autoUpgrade = true;
         if (!state.market) state.market = { resources: {}, heat: {}, volume: 0, trades: 0 };
         for (const k in RESOURCES_CONFIG) {
             if (!RESOURCES_CONFIG[k].prestige && !state.market.resources[k]) state.market.resources[k] = { mode: 'off', level: 1 };
@@ -7215,6 +7317,7 @@ window.CHANGELOG_DATA = {
                 autoBuildAcc = 0;
                 Actions.autoBuildStep(state);
                 Actions.autoExpeditionStep(state);
+                Actions.autoUpgradeStep(state);
             }
             autosaveAcc += dtReal;
             if (autosaveAcc >= 25 && state.settings.autosave) {
@@ -7768,7 +7871,8 @@ window.CHANGELOG_DATA = {
             let html = '<h4>' + G.esc(r.name) + ' · 第 ' + r.tier + ' 层</h4><div class="dim">' + G.esc(r.desc) + '</div><hr>';
             html += '<div class="kv"><span>建议军力</span><span>' + U.fmtInt(r.power) + '</span></div>';
             html += '<div class="kv"><span>你的军力</span><span class="' + (power >= r.power ? 'pos' : 'neg') + '">' + U.fmtInt(power) + '</span></div>';
-            html += '<div class="kv"><span>成功率</span><span>' + U.fmtPct(chance) + '</span></div>';
+            html += '<div class="kv"><span>成功率</span><span class="' + (chance <= 0 ? 'neg' : '') + '">' + U.fmtPct(chance) +
+                (chance <= 0 ? '（军力不足建议值的 ' + Math.round(ExpeditionEngine.MIN_POWER_RATIO * 100) + '%）' : '') + '</span></div>';
             const dur = ExpeditionEngine.durationOf(s, r);
             const cut = ExpeditionEngine.masteryCut(s, r);
             html += '<div class="kv"><span>耗时</span><span>' + dur + ' 日' +
@@ -8732,6 +8836,7 @@ window.CHANGELOG_DATA = {
         if (lines.length) {
             html += '<div class="card-stats mt6">' + lines.map(e => '<div class="row"><span class="k">效果</span><span class="v">' + G.esc(e) + '</span></div>').join('') + '</div>';
         }
+        if (points <= 0) html += '<div class="hint neg mt6">政策点不足：拖动滑杆不会生效，先让「奥术议院」产出政策点。</div>';
         html += '</div>';
         return html;
     }
@@ -9001,7 +9106,8 @@ window.CHANGELOG_DATA = {
         let cls = 'card' + (check.ok && !weak ? ' affordable' : '') + (busy ? ' disabled' : '');
         let html = '<div class="' + cls + '" data-tip="exp|' + G.esc(region.name) + '">';
         html += '<div class="card-head"><div class="card-name">' + G.esc(region.name) +
-            '<span class="tag">第' + region.tier + '层</span></div><div class="card-count" style="font-size:.78rem">' + U.fmtPct(chance) + '</div></div>';
+            '<span class="tag">第' + region.tier + '层</span></div><div class="card-count' +
+            (chance <= 0 ? ' neg' : '') + '" style="font-size:.78rem">' + U.fmtPct(chance) + '</div></div>';
         html += '<div class="card-desc">' + G.esc(region.desc) + '</div>';
         html += '<div class="card-stats">';
         html += '<div class="row"><span class="k">建议军力</span><span class="v ' + (power >= region.power ? 'pos' : 'neg') + '">' + U.fmtInt(region.power) + '</span></div>';
@@ -9015,7 +9121,9 @@ window.CHANGELOG_DATA = {
                 (got ? '（已结识）' : '（首次成功必得）') + '</div>';
         }
         html += '<div class="price">出发消耗：' + G.costHtml(region.cost) + '</div>';
-        if (weak) html += '<div class="hint neg">军力远低于建议值，成功率很低。</div>';
+        if (chance <= 0) html += '<div class="hint neg">军力不足建议值的 ' + Math.round(ExpeditionEngine.MIN_POWER_RATIO * 100) +
+            '%，本次必定失败。</div>';
+        else if (weak) html += '<div class="hint neg">军力远低于建议值，成功率很低。</div>';
         html += '<div class="card-actions"><button class="btn tiny primary" data-act="exp|' + G.esc(region.name) + '"' +
             (check.ok && !busy ? '' : ' disabled') + '>出发</button></div>';
         html += '</div>';
@@ -9413,8 +9521,14 @@ window.CHANGELOG_DATA = {
         html += autoRow({
             special: 'autoExpedition', setting: 'autoExpedition', act: 'toggleAutoExp',
             name: '自动远征',
-            desc: '上一支队伍归来后立刻前往同一区域',
+            desc: '上一支队伍归来后立刻前往同一区域，成功率低于 35% 不派队',
             how: '先在「传承 → 奥术遗物」里买「自动符文」，再买「自动远征」',
+        });
+        html += autoRow({
+            special: 'autoUpgrade', setting: 'autoUpgrade', act: 'toggleAutoUpgrade',
+            name: '自动研习（自动买升级）',
+            desc: '买得起就升，优先最便宜的可重复升级',
+            how: '先在「传承 → 奥术遗物」里买「自动符文」，再买「自动研习」',
         });
         html += '</div>';
         html += '<div class="hint mt6">离线收益上限 ' + (2 + EffectsManager.additive(s, 'offlineHours')) + ' 小时（' +
@@ -9839,6 +9953,9 @@ window.CHANGELOG_DATA = {
             case 'toggleAutoExp':
                 s.settings.autoExpedition = !s.settings.autoExpedition;
                 break;
+            case 'toggleAutoUpgrade':
+                s.settings.autoUpgrade = !s.settings.autoUpgrade;
+                break;
             default:
                 break;
         }
@@ -9936,7 +10053,16 @@ window.CHANGELOG_DATA = {
         }
         if (node.hasAttribute && node.hasAttribute('data-policy')) {
             const name = node.getAttribute('data-policy');
-            Actions.setPolicy(GameState, name, Number(node.value));
+            const r = Actions.setPolicy(GameState, name, Number(node.value));
+            if (!r.ok) {
+                /* 政策点不够时滑杆会停在拖动后的位置，看起来像「拉了没用」：
+                   退回真实值并把原因提示出来。 */
+                const real = GameState.policies[name].value;
+                node.value = real;
+                const label = document.getElementById('policy-val-' + name);
+                if (label) label.textContent = real + (POLICIES_CONFIG[name].unit || '');
+                if (r.msg) G.toast(r.msg, 'bad');
+            }
             computeRefresh();
             return;
         }

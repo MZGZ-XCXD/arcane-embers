@@ -74,7 +74,8 @@
         let cls = 'card' + (check.ok && !weak ? ' affordable' : '') + (busy ? ' disabled' : '');
         let html = '<div class="' + cls + '" data-tip="exp|' + G.esc(region.name) + '">';
         html += '<div class="card-head"><div class="card-name">' + G.esc(region.name) +
-            '<span class="tag">第' + region.tier + '层</span></div><div class="card-count" style="font-size:.78rem">' + U.fmtPct(chance) + '</div></div>';
+            '<span class="tag">第' + region.tier + '层</span></div><div class="card-count' +
+            (chance <= 0 ? ' neg' : '') + '" style="font-size:.78rem">' + U.fmtPct(chance) + '</div></div>';
         html += '<div class="card-desc">' + G.esc(region.desc) + '</div>';
         html += '<div class="card-stats">';
         html += '<div class="row"><span class="k">建议军力</span><span class="v ' + (power >= region.power ? 'pos' : 'neg') + '">' + U.fmtInt(region.power) + '</span></div>';
@@ -88,7 +89,9 @@
                 (got ? '（已结识）' : '（首次成功必得）') + '</div>';
         }
         html += '<div class="price">出发消耗：' + G.costHtml(region.cost) + '</div>';
-        if (weak) html += '<div class="hint neg">军力远低于建议值，成功率很低。</div>';
+        if (chance <= 0) html += '<div class="hint neg">军力不足建议值的 ' + Math.round(ExpeditionEngine.MIN_POWER_RATIO * 100) +
+            '%，本次必定失败。</div>';
+        else if (weak) html += '<div class="hint neg">军力远低于建议值，成功率很低。</div>';
         html += '<div class="card-actions"><button class="btn tiny primary" data-act="exp|' + G.esc(region.name) + '"' +
             (check.ok && !busy ? '' : ' disabled') + '>出发</button></div>';
         html += '</div>';

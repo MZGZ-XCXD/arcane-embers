@@ -62,6 +62,7 @@
             autoBuild: true,
             autoBuildKeep: 0,
             autoExpedition: true,
+            autoUpgrade: true,
             buyAmount: 1,
         };
     }

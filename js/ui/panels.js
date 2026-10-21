@@ -198,7 +198,8 @@
             let html = '<h4>' + G.esc(r.name) + ' · 第 ' + r.tier + ' 层</h4><div class="dim">' + G.esc(r.desc) + '</div><hr>';
             html += '<div class="kv"><span>建议军力</span><span>' + U.fmtInt(r.power) + '</span></div>';
             html += '<div class="kv"><span>你的军力</span><span class="' + (power >= r.power ? 'pos' : 'neg') + '">' + U.fmtInt(power) + '</span></div>';
-            html += '<div class="kv"><span>成功率</span><span>' + U.fmtPct(chance) + '</span></div>';
+            html += '<div class="kv"><span>成功率</span><span class="' + (chance <= 0 ? 'neg' : '') + '">' + U.fmtPct(chance) +
+                (chance <= 0 ? '（军力不足建议值的 ' + Math.round(ExpeditionEngine.MIN_POWER_RATIO * 100) + '%）' : '') + '</span></div>';
             const dur = ExpeditionEngine.durationOf(s, r);
             const cut = ExpeditionEngine.masteryCut(s, r);
             html += '<div class="kv"><span>耗时</span><span>' + dur + ' 日' +
