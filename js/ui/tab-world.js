@@ -191,8 +191,9 @@
             }
         }
         if (s.artifacts.inventory.length) {
+            const inv = Artifacts.sortedInventory(s);
             html += '<div class="card-grid wide mt6">' +
-                s.artifacts.inventory.map((a, i, arr) => artifactCard(a, undefined, i, arr.length)).join('') + '</div>';
+                inv.map((a, i, arr) => artifactCard(a, undefined, i, arr.length)).join('') + '</div>';
         }
 
         /* 区域 */

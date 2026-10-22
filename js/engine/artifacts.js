@@ -196,20 +196,49 @@
             artifact.skipped = 'full';
             return artifact;
         }
+        ensureOrder(state, artifact);
         state.artifacts.inventory.push(artifact);
         return artifact;
     }
 
+    /* 固定顺序号：显示只认 order，不看数组下标。
+       这样装备（splice）与卸下（push）都不会让库存“乱刷排序”。 */
+    function ensureOrder(state, art) {
+        if (!state.artifacts) state.artifacts = { inventory: [], equipped: [], slots: 3 };
+        const box = state.artifacts;
+        /* 每次扫描现有最大 order：重置 / 导入 / 老存档之后都不会从 1 重新发号，
+           否则新秘宝会插到最前面，看起来又像自动排序。 */
+        let max = box.orderSeq || 0;
+        for (const x of (box.inventory || [])) if (x && typeof x.order === 'number' && x.order > max) max = x.order;
+        for (const x of (box.equipped || [])) if (x && typeof x.order === 'number' && x.order > max) max = x.order;
+        if (typeof art.order !== 'number') {
+            art.order = max + 1;
+        }
+        box.orderSeq = Math.max(max, art.order);
+        return art;
+    }
+
+    /* 库存的稳定显示顺序（老存档没有 order 的按当前数组顺序补齐一次） */
+    function sortedInventory(state) {
+        const list = state.artifacts.inventory;
+        let need = false;
+        for (const a of list) if (a && typeof a.order !== 'number') need = true;
+        if (need) for (const a of list) ensureOrder(state, a);
+        return list.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+    }
+
     /* 手动调整库存顺序：和相邻一件交换，不自动排序 */
     function move(state, id, dir) {
-        const list = state.artifacts.inventory;
+        const list = sortedInventory(state);
         const idx = list.findIndex(a => a.id === id);
         if (idx < 0) return { ok: false };
         const to = idx + (dir < 0 ? -1 : 1);
         if (to < 0 || to >= list.length) return { ok: false };
-        const tmp = list[idx];
-        list[idx] = list[to];
-        list[to] = tmp;
+        const a = list[idx], b = list[to];
+        ensureOrder(state, a); ensureOrder(state, b);
+        const tmp = a.order;
+        a.order = b.order;
+        b.order = tmp;
         return { ok: true };
     }
 
@@ -293,6 +322,6 @@
         generate, addToInventory, equip, unequip, discard, describe, artifactSlots,
         setByKey, setFromId, setStatus,
         filterOf, hasNegative, matchesFilter,
-        move,
+        move, ensureOrder, sortedInventory,
     };
 })();
